@@ -1,0 +1,41 @@
+{
+  "canisters": {
+    "internet_identity": {
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "frontend": {},
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "type": "custom",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+    },
+    "trendlens_backend": {
+      "candid": "src/trendlens_backend/trendlens_backend.did",
+      "declarations": {
+        "node_compatibility": true
+      },
+      "package": "trendlens_backend",
+      "type": "rust"
+    },
+    "trendlens_frontend": {
+      "dependencies": [
+        "trendlens_backend"
+      ],
+      "source": [
+        "src/trendlens_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "trendlens_frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
