@@ -1,24 +1,24 @@
-<script>
+<script type="ts">
   import "../index.scss";
-  import { backend } from "$lib/canisters";
+  import { anonymousBackend, connect } from '$lib/canisters';
+	import { Principal } from '@dfinity/principal';
+	import { onMount } from 'svelte';
 
-  let greeting = "";
+  let greeting = $state("");
 
-  function onSubmit(event) {
-    const name = event.target.name.value;
-    backend.greet(name).then((response) => {
-      greeting = response;
-    });
-    return false;
-  }
+	onMount(async () => {
+		// if (!connectedBackend) connectedBackend = await connect();
+		if (!anonymousBackend) throw new Error('No backend connection');
+		greeting = await anonymousBackend.greet('user');
+	});
 </script>
 
 <main>
   <img src="/logo2.svg" alt="DFINITY logo" />
   <br />
   <br />
-  <form action="#" on:submit|preventDefault={onSubmit}>
-    <label for="name">Enter your name: &nbsp;</label>
+  <form action="#">
+    <label for="name">Enter your name tomek: &nbsp;</label>
     <input id="name" alt="Name" type="text" />
     <button type="submit">Click Me!</button>
   </form>
