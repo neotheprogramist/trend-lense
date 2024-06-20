@@ -13,7 +13,7 @@ export const connect = async (): Promise<ActorSubclass<_SERVICE>> => {
 			identityProvider:
 				process.env.DFX_NETWORK === 'ic'
 					? 'https://identity.ic0.app'
-					: `http://br5f7-7uaaa-aaaaa-qaaca-cai.localhost:4943/`,
+					: `http://${process.env.IDENTITY_CANISTER_ID}.localhost:4943/`,
 			onSuccess: () => resolve(undefined)
 		});
 	});
