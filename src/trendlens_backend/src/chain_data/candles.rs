@@ -1,15 +1,18 @@
 use super::{BTreeMap, Candle, Deserialize, Serialize, Timestamp, TimestampBased};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct CandlesStore {
     data: BTreeMap<Timestamp, Candle>,
 }
 
 impl CandlesStore {
     pub fn insert_many(&mut self, candle: Vec<Candle>) {
+        ic_cdk::println!("Inserting {} candles", candle.len());
         for c in candle {
             self.data.insert(c.timestamp, c);
         }
+
+        ic_cdk::println!("Inserted {} candles", self.data.len());
     }
 }
 

@@ -40,7 +40,7 @@ impl Into<Candle> for CandleStick {
             highest_price: self.highest_price,
             lowest_price: self.lowest_price,
             open_price: self.open_price,
-            timestamp: self.timestamp,
+            timestamp: self.timestamp / 1000,
         }
     }
 }

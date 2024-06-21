@@ -16,6 +16,12 @@ impl ChainData for Okx {
     type Item = ExchangeData;
     const KEY: Exchange = Exchange::Okx;
 
+    fn init() {
+        EXCHANGE_STORE.with_borrow_mut(|b| {
+            b.insert(Self::KEY, StorableWrapper(ExchangeData::default()));
+        });
+    }
+
     fn get_mut_chain_data() -> StorableWrapper<Self::Item> {
         EXCHANGE_STORE.with_borrow_mut(|b| b.get(&Self::KEY).unwrap())
     }
@@ -25,6 +31,8 @@ impl ChainData for Okx {
     }
 
     fn set_chain_data(data: StorableWrapper<Self::Item>) {
+        ic_cdk::println!("Setting chain data");
+        
         EXCHANGE_STORE.with_borrow_mut(|b| b.insert(Self::KEY, data));
     }
 }
@@ -59,8 +67,8 @@ impl ExternalProvider for Okx {
         let index_name = Okx::index_name(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
 
         let candle_request = IndexCandleStickRequest {
-            after_timestamp: Some(range.end),
-            before_timestamp: Some(range.start),
+            after_timestamp: None,
+            before_timestamp: Some(range.start * 1000),
             bar_size: Some(Okx::interval_string(interval)),
             index_name,
             results_limit: None,

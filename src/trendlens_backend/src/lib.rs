@@ -27,6 +27,11 @@ fn first_timestamp_to_fetch(start: u64, stop: u64, current: u64) -> Option<std::
     Some(current..stop)
 }
 
+#[ic_cdk::init]
+fn init() {
+    ic_cdk::println!("Initializing TrendLense backend canister");
+    Okx::init();
+}
 
 // TODO: split this function into smaller ones
 // TODO: handle errors, return to caller
@@ -53,8 +58,12 @@ async fn pull_candles(
         .last_timestamp()
         .unwrap_or(start_timestamp);
 
+    ic_cdk::println!("Last candle timestamp: {}", last_candle_timestamp);
+
     let range_to_fetch =
         first_timestamp_to_fetch(start_timestamp, end_timestamp, last_candle_timestamp);
+
+    ic_cdk::println!("Range to fetch: {:?}", range_to_fetch);
 
     // TODO: handle errors, return to caller
     let fetched_candles = match range_to_fetch {
@@ -63,9 +72,11 @@ async fn pull_candles(
             .await
             .unwrap_or_default(),
         None => {
-            return vec![];
+            vec![]
         }
     };
+
+    ic_cdk::println!("Fetched candles: {:?}", fetched_candles.len());
 
     let range_to_get = if range_to_fetch.is_some() {
         start_timestamp..last_candle_timestamp
@@ -73,7 +84,11 @@ async fn pull_candles(
         start_timestamp..end_timestamp
     };
 
+    ic_cdk::println!("Range to get: {:?}", range_to_get);
+
     let stored_candles = stored_exchange_data.candles.get_between(range_to_get);
+
+    ic_cdk::println!("Stored candles: {:?}", stored_candles.len());
 
     stored_exchange_data
         .candles
@@ -99,10 +114,7 @@ mod tests {
         let stop = 10;
         let current = 5;
 
-        assert_eq!(
-            first_timestamp_to_fetch(start, stop, current),
-            Some(5..10)
-        );
+        assert_eq!(first_timestamp_to_fetch(start, stop, current), Some(5..10));
     }
 
     #[test]
@@ -111,9 +123,6 @@ mod tests {
         let stop = 10;
         let current = 15;
 
-        assert_eq!(
-            first_timestamp_to_fetch(start, stop, current),
-            None
-        );
+        assert_eq!(first_timestamp_to_fetch(start, stop, current), None);
     }
 }
