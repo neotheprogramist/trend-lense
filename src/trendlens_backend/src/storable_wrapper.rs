@@ -18,6 +18,15 @@ where
     }
 }
 
+impl<T> std::ops::DerefMut for StorableWrapper<T>
+where
+    T: Serialize + for<'de> Deserialize<'de>,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 impl<T> Storable for StorableWrapper<T>
 where
     T: Serialize + for<'de> Deserialize<'de>,
