@@ -14,11 +14,10 @@ pub enum ExchangeErrors {
 }
 
 pub trait ExternalProvider {
-    async fn get_candles(
+    async fn fetch_candles(
         &self,
         pair: Pair,
-        from: u64,
-        to: u64,
+        range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors>;
 }
