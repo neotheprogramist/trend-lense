@@ -9,5 +9,5 @@ type Exchange = variant { Okx };
 type Pair = variant { BtcUsd; EthUsd };
 service : {
   __get_candid_interface_tmp_hack : () -> (text) query;
-  fetch_from_api : (Pair, Exchange) -> (vec Candle);
+  pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
 }
