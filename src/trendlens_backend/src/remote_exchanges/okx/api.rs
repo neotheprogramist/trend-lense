@@ -27,3 +27,59 @@ impl ApiRequest for IndexCandleStickRequest {
 
     type Response = Vec<CandleStick>;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_api_request() {
+        assert_eq!(
+            IndexCandleStickRequest::HOST, 
+            "www.okx.com"
+        );
+
+        assert_eq!(
+            IndexCandleStickRequest::URI, 
+            "api/v5/market/index-candles"
+        );
+
+        assert_eq!(
+            IndexCandleStickRequest::METHOD, 
+            HttpMethod::GET
+        );
+    }
+
+    #[test]
+    fn test_query_string_full() {
+        let request = IndexCandleStickRequest {
+            index_name: "BTC-USD".to_string(),
+            after_timestamp: Some(1),
+            before_timestamp: Some(2),
+            bar_size: Some("1m".to_string()),
+            results_limit: Some(1),
+        };
+
+        let query_string = request.to_query_string();
+
+        assert_eq!(
+            query_string,
+            "instId=BTC-USD&after=1&before=2&bar=1m&limit=1"
+        );
+    }
+
+    #[test]
+    fn test_query_string_missing() {
+        let request = IndexCandleStickRequest {
+            index_name: "BTC-USD".to_string(),
+            after_timestamp: None,
+            before_timestamp: None,
+            bar_size: None,
+            results_limit: None,
+        };
+
+        let query_string = request.to_query_string();
+
+        assert_eq!(query_string, "instId=BTC-USD");
+    }
+}

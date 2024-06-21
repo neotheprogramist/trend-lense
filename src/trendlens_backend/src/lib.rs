@@ -27,6 +27,9 @@ fn first_timestamp_to_fetch(start: u64, stop: u64, current: u64) -> Option<std::
     Some(current..stop)
 }
 
+
+// TODO: split this function into smaller ones
+// TODO: handle errors, return to caller
 #[ic_cdk::update]
 async fn pull_candles(
     pair: Pair,
@@ -87,4 +90,30 @@ async fn pull_candles(
 ic_cdk::export_candid!();
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_first_timestamp_to_fetch() {
+        let start = 0;
+        let stop = 10;
+        let current = 5;
+
+        assert_eq!(
+            first_timestamp_to_fetch(start, stop, current),
+            Some(5..10)
+        );
+    }
+
+    #[test]
+    fn test_first_timestamp_to_fetch_no_fetch() {
+        let start = 0;
+        let stop = 10;
+        let current = 15;
+
+        assert_eq!(
+            first_timestamp_to_fetch(start, stop, current),
+            None
+        );
+    }
+}

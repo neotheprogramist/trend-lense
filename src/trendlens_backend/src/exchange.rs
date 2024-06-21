@@ -1,7 +1,7 @@
-use std::borrow::Cow;
 use candid::{CandidType, Decode, Encode};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 const MAX_EXCHANGE_SIZE: u32 = 1;
 
@@ -26,7 +26,7 @@ impl Storable for Exchange {
     }
 }
 
-#[derive(Deserialize, CandidType, Serialize, Clone)]
+#[derive(Deserialize, CandidType, Serialize, Clone, PartialEq, Debug)]
 pub struct Candle {
     pub timestamp: u64,
     pub open_price: f64,

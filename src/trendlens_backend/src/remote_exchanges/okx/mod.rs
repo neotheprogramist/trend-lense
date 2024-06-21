@@ -12,7 +12,6 @@ pub struct Okx {
     api_client: ApiClient,
 }
 
-// use default implementation
 impl ChainData for Okx {
     type Item = ExchangeData;
     const KEY: Exchange = Exchange::Okx;
@@ -73,5 +72,29 @@ impl ExternalProvider for Okx {
             .into_iter()
             .map(|concrete_candle| concrete_candle.into())
             .collect())
+    }
+}
+
+#[cfg(test)]
+mod test_okx_helpers {
+    use super::*;
+    use crate::Pair;
+
+    #[test]
+    fn test_okx_interval_string() {
+        assert_eq!(Okx::interval_string(0), "1m");
+        assert_eq!(Okx::interval_string(1), "1m");
+        assert_eq!(Okx::interval_string(2), "3m");
+        assert_eq!(Okx::interval_string(3), "3m");
+        assert_eq!(Okx::interval_string(4), "5m");
+        assert_eq!(Okx::interval_string(5), "5m");
+        assert_eq!(Okx::interval_string(50), "5m");
+        assert_eq!(Okx::interval_string(u32::MAX), "5m");
+    }
+
+    #[test]
+    fn test_okx_index_name() {
+        assert_eq!(Okx::index_name(Pair::BtcUsd), Some("BTC-USD".to_string()));
+        assert_eq!(Okx::index_name(Pair::EthUsd), Some("ETH-USD".to_string()));
     }
 }
