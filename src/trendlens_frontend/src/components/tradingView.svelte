@@ -4,8 +4,10 @@
 	import type { SeriesDataItemTypeMap } from 'lightweight-charts';
 	import { CandlestickSeries, Chart } from 'svelte-lightweight-charts';
 
-	export const candlesData: SeriesDataItemTypeMap['Candlestick'][] = [];
+	export let candlesData: SeriesDataItemTypeMap['Candlestick'][] = [];
 
+
+  $: console.log(candlesData)
 </script>
 
 <Chart width={800} height={600}>
