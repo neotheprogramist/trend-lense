@@ -1,1 +1,13 @@
-service : { greet : (text) -> (text) query }
+type Candle = record {
+  close_price : float64;
+  lowest_price : float64;
+  timestamp : nat64;
+  highest_price : float64;
+  open_price : float64;
+};
+type Exchange = variant { Okx };
+type Pair = variant { BtcUsd; EthUsd };
+service : {
+  __get_candid_interface_tmp_hack : () -> (text) query;
+  fetch_from_api : (Pair, Exchange) -> (vec Candle);
+}
