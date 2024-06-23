@@ -17,7 +17,9 @@
     "@dfinity/auth-client": "^1.4.0",
     "@dfinity/candid": "^1.4",
     "@dfinity/identity": "^1.4",
-    "@dfinity/principal": "^1.4"
+    "@dfinity/principal": "^1.4",
+    "lightweight-charts": "^4.1.6",
+    "svelte-lightweight-charts": "^2.2.0"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",
