@@ -3,22 +3,15 @@ import { connect } from './canisters';
 import type { ActorSubclass, Identity } from '@dfinity/agent';
 import type { _SERVICE } from '../../../declarations/trendlens_backend/trendlens_backend.did';
 
-export const wallet = createWallet();
-
-interface Wallet {
-	connected: true;
-	actor: ActorSubclass<_SERVICE>;
-	identity: Identity;
-}
-
-function createWallet() {
-	const { subscribe, set, update } = writable<{ connected: false } | Wallet>({
+const createWallet = () => {
+	const { subscribe, set, update } = writable<{ connected: false } | IWallet>({
 		connected: false
 	});
 
 	return {
 		subscribe,
 		connect: async () => {
+			console.log('connecting')
 			const { actor, identity } = await connect();
 			set({ connected: true, actor, identity });
 		},
@@ -26,4 +19,14 @@ function createWallet() {
 			set({ connected: false });
 		}
 	};
+};
+
+export const wallet = createWallet();
+
+export interface IWallet {
+	connected: true;
+	actor: ActorSubclass<_SERVICE>;
+	identity: Identity;
 }
+
+
