@@ -1,7 +1,6 @@
 export enum Exchanges {
 	Okx = 'Okx',
-	Coinbase = 'Coinbase',
-  Kraken = 'Kraken'
+	Coinbase = 'Coinbase'
 }
 
 export type ExchangeKey = keyof typeof Exchanges;

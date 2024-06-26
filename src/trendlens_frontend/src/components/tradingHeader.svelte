@@ -1,19 +1,16 @@
 <script lang="ts">
 	import { Exchanges } from '$lib/exchange';
 	import { mockAvailablePairs } from '$lib/mockPairs';
+	import type { Pair } from '$lib/pair';
 	import Search from './search.svelte';
 
-	// TODO: decide whether to do fetch logic here or outside of this component
-
-	// PROPS DEFINITIONS
 	interface TradingHeaderProps {
-		completeSelection: (exchange: Exchanges, pair: string) => void;
+		onSelectionCompleted: (exchange: Exchanges, pair: Pair) => void;
 	}
-	let { completeSelection }: TradingHeaderProps = $props();
-	//
+	let { onSelectionCompleted }: TradingHeaderProps = $props();
 
 	let selectedExchange = $state<Exchanges>(Exchanges.Okx);
-	let selectedPair = $state<string | null>(null);
+	let selectedPair = $state<Pair | null>(null);
 
 	// should be taken from outside of fetched from api here
 	let pairs = $derived.by(() => {
@@ -38,7 +35,7 @@
 		bind:value={selectedPair}
 		onchange={() => {
 			if (selectedPair) {
-				completeSelection(selectedExchange, selectedPair);
+				onSelectionCompleted(selectedExchange, selectedPair);
 			}
 		}}
 	>
