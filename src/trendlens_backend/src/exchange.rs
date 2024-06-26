@@ -6,10 +6,19 @@ use std::borrow::Cow;
 const MAX_EXCHANGE_SIZE: u32 = 21;
 
 #[repr(u8)]
-#[derive(Deserialize, Debug, CandidType, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(Deserialize, CandidType, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Exchange {
     Okx,
     Coinbase,
+}
+
+impl From<Exchange> for u8 {
+    fn from(value: Exchange) -> Self {
+        match value {
+            Exchange::Okx => 0,
+            Exchange::Coinbase => 1,
+        }
+    }
 }
 
 impl Storable for Exchange {

@@ -1,8 +1,13 @@
+use std::future::Future;
+
+use crate::chain_data::ChainData;
 use crate::exchange::Candle;
 use crate::{api_client::ApiClientErrors, Pair};
 use ic_cdk::api::management_canister::http_request::HttpMethod;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+
+pub mod coinbase;
 pub mod okx;
 
 #[derive(Debug, Error)]
@@ -13,6 +18,7 @@ pub enum ExchangeErrors {
     MissingIndex,
 }
 
+#[async_trait::async_trait]
 pub trait ExternalProvider {
     async fn fetch_candles(
         &self,
@@ -36,3 +42,6 @@ pub trait ApiRequest: Serialize {
         serde_qs::to_string(self).unwrap()
     }
 }
+
+pub trait UpdateExchange: ExternalProvider + ChainData {}
+impl<T> UpdateExchange for T where T: ExternalProvider + ChainData {}

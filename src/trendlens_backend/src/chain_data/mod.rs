@@ -2,30 +2,22 @@ use std::{cell::RefCell, collections::BTreeMap};
 
 use crate::{
     exchange::{Candle, Exchange},
+    memory::{Memory, MemoryLocation, MEMORY_MANAGER},
     storable_wrapper::StorableWrapper,
 };
-use ic_stable_structures::{
-    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
-    DefaultMemoryImpl, StableBTreeMap,
-};
+use ic_stable_structures::StableBTreeMap;
 use serde::{Deserialize, Serialize};
 
 mod candles;
 use candles::CandlesStore;
 
-const EXCHANGE_STORE_MEMORY_ID: MemoryId = MemoryId::new(1);
-
 type Timestamp = u64;
-type Memory = VirtualMemory<DefaultMemoryImpl>;
 type ExchangeStore = StableBTreeMap<Exchange, StorableWrapper<ExchangeData>, Memory>;
 
 thread_local! {
-    static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
-    RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-
     pub static EXCHANGE_STORE: RefCell<ExchangeStore> = RefCell::new(
         StableBTreeMap::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(EXCHANGE_STORE_MEMORY_ID)),
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryLocation::Exchanges.memory_id())),
         )
     );
 }
@@ -43,11 +35,23 @@ pub trait TimestampBased {
 }
 
 pub trait ChainData {
-    const KEY: Exchange;
-    type Item: for<'de> Deserialize<'de> + Serialize;
+    fn key(&self) -> Exchange;
 
-    fn init(&self);
-    fn get_mut_chain_data(&self) -> StorableWrapper<Self::Item>;
-    fn get_chain_data(&self) -> StorableWrapper<Self::Item>;
-    fn set_chain_data(&self, data: StorableWrapper<Self::Item>);
+    fn init(&self) {
+        EXCHANGE_STORE.with_borrow_mut(|b| {
+            b.insert(self.key(), StorableWrapper(ExchangeData::default()));
+        });
+    }
+
+    fn get_mut_chain_data(&self) -> StorableWrapper<ExchangeData> {
+        EXCHANGE_STORE.with_borrow_mut(|b| b.get(&self.key()).unwrap())
+    }
+
+    fn get_chain_data(&self) -> StorableWrapper<ExchangeData> {
+        EXCHANGE_STORE.with_borrow(|b| b.get(&self.key()).unwrap())
+    }
+
+    fn set_chain_data(&self, data: StorableWrapper<ExchangeData>) {
+        EXCHANGE_STORE.with_borrow_mut(|b| b.insert(self.key(), data));
+    }
 }

@@ -29,7 +29,7 @@ impl ApiClient {
             },
             HttpHeader {
                 name: "User-Agent".to_string(),
-                value: "trendlens_backend".to_string(),
+                value: "trend_lense_backend".to_string(),
             },
         ]
     }
