@@ -3,12 +3,13 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
-const MAX_EXCHANGE_SIZE: u32 = 15;
+const MAX_EXCHANGE_SIZE: u32 = 21;
 
 #[repr(u8)]
 #[derive(Deserialize, Debug, CandidType, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum Exchange {
     Okx,
+    Coinbase,
 }
 
 impl Storable for Exchange {

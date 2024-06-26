@@ -3,19 +3,30 @@
 	import TradingView from '$components/tradingView.svelte';
 	import { anonymousBackend } from '$lib/canisters';
 	import type { CandlestickData, UTCTimestamp } from 'lightweight-charts';
-	import type { Candle } from '../../../../declarations/trendlens_backend/trendlens_backend.did';
+	import type {
+		Candle,
+		Pair as CandidPair,
+		Exchange as CandidExchange
+	} from '../../../../declarations/trendlens_backend/trendlens_backend.did';
 	import type { SeriesDataItemTypeMap } from 'lightweight-charts';
 	import * as Card from '$components/shad/ui/card/index';
+	import { Exchanges } from '$lib/exchange';
+	import { Pair } from '$lib/pair';
 
-	const timestamp_now = BigInt(Math.floor(Date.now() / 1000));
-	const timestamp_minus_15m = timestamp_now - BigInt(15 * 60);
+	const ONE_MINUTE = 60 * 1000;
+	const ONE_HOUR = 60 * ONE_MINUTE;
 
-	console.log(timestamp_minus_15m, timestamp_now);
-	let candlesFromBackend = $state<Candle[]>([]);
+	let candlesFromBackend = $state<SeriesDataItemTypeMap['Candlestick'][]>([]);
+	let selectedExchange = $state<Exchanges | null>(null);
+	let selectedPair = $state<Pair | null>(null);
 
-	// TODO: sorting should be done on backend
-	let candlesTradingView = $derived.by<SeriesDataItemTypeMap['Candlestick'][]>(() => {
-		return candlesFromBackend
+	let fetchInterval = $state(ONE_MINUTE);
+	let interval = $state<NodeJS.Timeout | null>(null);
+	let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
+	let stopTimestamp = $state<number>(Date.now());
+
+	const transformCandleData = (candles: Candle[]): SeriesDataItemTypeMap['Candlestick'][] => {
+		return candles
 			.map((candle) => {
 				return {
 					close: candle.close_price,
@@ -26,9 +37,66 @@
 				};
 			})
 			.sort((a, b) => a.time - b.time);
-	});
+	};
 
-	$inspect(candlesTradingView);
+	const handlePair = (pair: Pair): CandidPair => {
+		switch (pair) {
+			case Pair.BtcUsd:
+				return { BtcUsd: null };
+			case Pair.EthUsd:
+				return { EthUsd: null };
+		}
+	};
+
+	const handleExchange = (exchange: Exchanges): CandidExchange => {
+		switch (exchange) {
+			case Exchanges.Okx:
+				return { Okx: null };
+			case Exchanges.Coinbase:
+				return { Coinbase: null };
+		}
+	};
+
+	const fetchNewCandles = async () => {
+		stopTimestamp = Date.now();
+
+		console.log('Fetching candles from', lastTimestamp, 'to', stopTimestamp);
+
+		const newCandles = await anonymousBackend.pull_candles(
+			handlePair(selectedPair!),
+			handleExchange(selectedExchange!),
+			BigInt(Math.floor(lastTimestamp / 1000)),
+			BigInt(Math.floor(stopTimestamp / 1000))
+		);
+
+		lastTimestamp =
+			Number(await anonymousBackend.get_last_timestamp(handleExchange(selectedExchange!))) * 1000 +
+			1;
+
+		console.log(lastTimestamp, stopTimestamp);
+
+		const transformedCandles = transformCandleData(newCandles);
+		candlesFromBackend = [...candlesFromBackend, ...transformedCandles];
+
+		// invoke reactivity
+		candlesFromBackend = candlesFromBackend;
+	};
+
+	const fetchCandles = (exchange: Exchanges, pair: Pair): void => {
+		selectedExchange = exchange;
+		selectedPair = pair;
+
+		candlesFromBackend = [];
+
+		if (interval) {
+			clearInterval(interval);
+		}
+
+		fetchNewCandles();
+		interval = setInterval(fetchNewCandles, fetchInterval);
+	};
+
+	$inspect(candlesFromBackend);
 </script>
 
 <div class="flex-1 flex justify-center mt-5">
@@ -46,18 +114,8 @@
 					<Card.Title>Price chart</Card.Title>
 				</Card.Header>
 				<Card.Content>
-					<TradingHeader
-						completeSelection={async (exchange, pair) => {
-							// TODO: replace these types with actual enums from front, map it somehow
-							candlesFromBackend = await anonymousBackend.pull_candles(
-								{ BtcUsd: null },
-								{ Okx: null },
-								timestamp_minus_15m,
-								timestamp_now
-							);
-						}}
-					/>
-					<TradingView candlesData={candlesTradingView} />
+					<TradingHeader onSelectionCompleted={fetchCandles} />
+					<TradingView candlesData={candlesFromBackend} />
 				</Card.Content>
 			</Card.Root>
 		</div>

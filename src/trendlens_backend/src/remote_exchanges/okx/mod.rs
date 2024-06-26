@@ -16,23 +16,23 @@ impl ChainData for Okx {
     type Item = ExchangeData;
     const KEY: Exchange = Exchange::Okx;
 
-    fn init() {
+    fn init(&self) {
         EXCHANGE_STORE.with_borrow_mut(|b| {
             b.insert(Self::KEY, StorableWrapper(ExchangeData::default()));
         });
     }
 
-    fn get_mut_chain_data() -> StorableWrapper<Self::Item> {
+    fn get_mut_chain_data(&self) -> StorableWrapper<Self::Item> {
         EXCHANGE_STORE.with_borrow_mut(|b| b.get(&Self::KEY).unwrap())
     }
 
-    fn get_chain_data() -> StorableWrapper<Self::Item> {
+    fn get_chain_data(&self) -> StorableWrapper<Self::Item> {
         EXCHANGE_STORE.with_borrow(|b| b.get(&Self::KEY).unwrap())
     }
 
-    fn set_chain_data(data: StorableWrapper<Self::Item>) {
+    fn set_chain_data(&self, data: StorableWrapper<Self::Item>) {
         ic_cdk::println!("Setting chain data");
-        
+
         EXCHANGE_STORE.with_borrow_mut(|b| b.insert(Self::KEY, data));
     }
 }
