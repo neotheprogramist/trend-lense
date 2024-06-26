@@ -1,9 +1,11 @@
 <script lang="ts">
-	import '../index.scss';
 	import { anonymousBackend, connect } from '$lib/canisters';
 	// import { Principal } from '@dfinity/principal';
 	import { onMount } from 'svelte';
-	import type { Candle, _SERVICE } from '../../../declarations/trendlens_backend/trendlens_backend.did.d.ts';
+	import type {
+		Candle,
+		_SERVICE
+	} from '../../../declarations/trendlens_backend/trendlens_backend.did.d.ts';
 
 	let candles = $state<Candle[]>([]);
 
@@ -13,7 +15,15 @@
 	});
 
 	const fetchCandles = async () => {
-		candles = await anonymousBackend.fetch_from_api({ BtcUsd: null }, { Okx: null });
+		const timestamp_now = BigInt(Math.floor(Date.now() / 1000));
+		const timestamp_minus_5 = timestamp_now - BigInt(5 * 60);
+
+		candles = await anonymousBackend.pull_candles(
+			{ BtcUsd: null },
+			{ Okx: null },
+			timestamp_minus_5,
+			timestamp_now
+		);
 	};
 </script>
 
