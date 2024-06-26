@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use crate::chain_data::ChainData;
 use crate::exchange::Candle;
 use crate::{api_client::ApiClientErrors, Pair};

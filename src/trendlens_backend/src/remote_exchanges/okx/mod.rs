@@ -1,9 +1,6 @@
-use std::future::Future;
-
 use super::{ExchangeErrors, ExternalProvider};
-use crate::chain_data::{ChainData, ExchangeData, EXCHANGE_STORE};
+use crate::chain_data::ChainData;
 use crate::exchange::{Candle, Exchange};
-use crate::storable_wrapper::StorableWrapper;
 use crate::{api_client::ApiClient, Pair};
 use api::IndexCandleStickRequest;
 pub mod api;
@@ -18,7 +15,6 @@ impl ChainData for Okx {
     fn key(&self) -> Exchange {
         Exchange::Okx
     }
-
 }
 
 impl Okx {
