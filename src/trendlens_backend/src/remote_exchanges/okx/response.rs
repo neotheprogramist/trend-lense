@@ -3,7 +3,7 @@ use serde::{self, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
 #[serde_as]
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct ApiResponse<T> {
     #[serde_as(as = "DisplayFromStr")]
     pub code: u32,
@@ -12,7 +12,7 @@ pub struct ApiResponse<T> {
 }
 
 #[serde_as]
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct CandleStick {
     #[serde_as(as = "DisplayFromStr")]
     #[serde(rename = "ts")]
@@ -40,7 +40,28 @@ impl Into<Candle> for CandleStick {
             highest_price: self.highest_price,
             lowest_price: self.lowest_price,
             open_price: self.open_price,
-            timestamp: self.timestamp,
+            timestamp: self.timestamp / 1000,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_deserialize() {
+        let response = r#"{"code":"0","msg":"success","data":[{"ts":"1620000000000","o":"1.0","h":"1.0","l":"1.0","c":"1.0","confirm":"1"}]}"#;
+        let response: ApiResponse<Vec<CandleStick>> = serde_json::from_str(response).unwrap();
+
+        assert_eq!(response.code, 0);
+        assert_eq!(response.msg, "success");
+        assert_eq!(response.data.len(), 1);
+        assert_eq!(response.data[0].timestamp, 1620000000000);
+        assert_eq!(response.data[0].open_price, 1.0);
+        assert_eq!(response.data[0].highest_price, 1.0);
+        assert_eq!(response.data[0].lowest_price, 1.0);
+        assert_eq!(response.data[0].close_price, 1.0);
+        assert_eq!(response.data[0].confirm, 1);
     }
 }

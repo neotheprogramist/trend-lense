@@ -16,3 +16,14 @@ impl From<Pair> for u32 {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pair_into_u32() {
+        assert_eq!(u32::from(Pair::BtcUsd), 0);
+        assert_eq!(u32::from(Pair::EthUsd), 1);
+    }
+}
