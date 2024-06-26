@@ -19,8 +19,8 @@ fn __get_candid_interface_tmp_hack() -> String {
 }
 
 /// considering that stop > start
-fn first_timestamp_to_fetch(start: u64, stop: u64, current: u64) -> Option<std::ops::Range<u64>> {
-    if start <= current && stop <= current {
+fn get_range_to_fetch(stop: u64, current: u64) -> Option<std::ops::Range<u64>> {
+    if stop <= current {
         return None;
     }
 
@@ -30,7 +30,18 @@ fn first_timestamp_to_fetch(start: u64, stop: u64, current: u64) -> Option<std::
 #[ic_cdk::init]
 fn init() {
     ic_cdk::println!("Initializing TrendLense backend canister");
-    Okx::init();
+    Okx::default().init();
+}
+
+#[ic_cdk::query]
+fn get_last_timestamp(exchange: Exchange) -> u64 {
+    let exchange = match exchange {
+        Exchange::Okx => Okx::default(),
+        Exchange::Coinbase => unimplemented!(),
+    };
+
+    let stored_exchange_data = exchange.get_mut_chain_data();
+    stored_exchange_data.candles.last_timestamp().unwrap_or(0)
 }
 
 // TODO: split this function into smaller ones
@@ -48,9 +59,10 @@ async fn pull_candles(
 
     let exchange = match exchange {
         Exchange::Okx => Okx::default(),
+        Exchange::Coinbase => unimplemented!(),
     };
 
-    let mut stored_exchange_data = Okx::get_mut_chain_data();
+    let mut stored_exchange_data = exchange.get_mut_chain_data();
 
     // first call is where the storing candles starts
     let last_candle_timestamp = stored_exchange_data
@@ -60,8 +72,7 @@ async fn pull_candles(
 
     ic_cdk::println!("Last candle timestamp: {}", last_candle_timestamp);
 
-    let range_to_fetch =
-        first_timestamp_to_fetch(start_timestamp, end_timestamp, last_candle_timestamp);
+    let range_to_fetch = get_range_to_fetch(end_timestamp, last_candle_timestamp);
 
     ic_cdk::println!("Range to fetch: {:?}", range_to_fetch);
 
@@ -79,22 +90,28 @@ async fn pull_candles(
     ic_cdk::println!("Fetched candles: {:?}", fetched_candles.len());
 
     let range_to_get = if range_to_fetch.is_some() {
-        start_timestamp..last_candle_timestamp
+        if start_timestamp <= last_candle_timestamp {
+            Some(start_timestamp..last_candle_timestamp)
+        } else {
+            None
+        }
     } else {
-        start_timestamp..end_timestamp
+        Some(start_timestamp..end_timestamp)
     };
 
     ic_cdk::println!("Range to get: {:?}", range_to_get);
 
-    let stored_candles = stored_exchange_data.candles.get_between(range_to_get);
-
-    ic_cdk::println!("Stored candles: {:?}", stored_candles.len());
+    let stored_candles = if let Some(range) = range_to_get {
+        stored_exchange_data.candles.get_between(range)
+    } else {
+        vec![]
+    };
 
     stored_exchange_data
         .candles
         .insert_many(fetched_candles.clone());
 
-    Okx::set_chain_data(stored_exchange_data);
+    exchange.set_chain_data(stored_exchange_data);
 
     fetched_candles
         .into_iter()
@@ -110,19 +127,17 @@ mod tests {
 
     #[test]
     fn test_first_timestamp_to_fetch() {
-        let start = 0;
         let stop = 10;
         let current = 5;
 
-        assert_eq!(first_timestamp_to_fetch(start, stop, current), Some(5..10));
+        assert_eq!(get_range_to_fetch(stop, current), Some(5..10));
     }
 
     #[test]
     fn test_first_timestamp_to_fetch_no_fetch() {
-        let start = 0;
         let stop = 10;
         let current = 15;
 
-        assert_eq!(first_timestamp_to_fetch(start, stop, current), None);
+        assert_eq!(get_range_to_fetch(stop, current), None);
     }
 }

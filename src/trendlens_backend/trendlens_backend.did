@@ -5,9 +5,10 @@ type Candle = record {
   highest_price : float64;
   open_price : float64;
 };
-type Exchange = variant { Okx };
+type Exchange = variant { Okx; Coinbase };
 type Pair = variant { BtcUsd; EthUsd };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
+  get_last_timestamp : (Exchange) -> (nat64) query;
   pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
 }

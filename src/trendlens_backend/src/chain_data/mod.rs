@@ -46,8 +46,8 @@ pub trait ChainData {
     const KEY: Exchange;
     type Item: for<'de> Deserialize<'de> + Serialize;
 
-    fn init();
-    fn get_mut_chain_data() -> StorableWrapper<Self::Item>;
-    fn get_chain_data() -> StorableWrapper<Self::Item>;
-    fn set_chain_data(data: StorableWrapper<Self::Item>);
+    fn init(&self);
+    fn get_mut_chain_data(&self) -> StorableWrapper<Self::Item>;
+    fn get_chain_data(&self) -> StorableWrapper<Self::Item>;
+    fn set_chain_data(&self, data: StorableWrapper<Self::Item>);
 }
