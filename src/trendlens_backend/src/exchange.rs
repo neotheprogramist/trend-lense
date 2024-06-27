@@ -6,7 +6,9 @@ use std::borrow::Cow;
 const MAX_EXCHANGE_SIZE: u32 = 21;
 
 #[repr(u8)]
-#[derive(Deserialize, CandidType, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[derive(
+    Deserialize, Serialize, CandidType, Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy,
+)]
 pub enum Exchange {
     Okx,
     Coinbase,
