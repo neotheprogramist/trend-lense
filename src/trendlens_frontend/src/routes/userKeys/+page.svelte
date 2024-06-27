@@ -4,10 +4,25 @@
 	import { wallet } from '$lib/wallet.svelte';
 	import { onMount } from 'svelte';
 	import type { ApiData } from '../../../../declarations/trendlens_backend/trendlens_backend.did';
+	import { handleExchange, type Exchanges } from '$lib/exchange';
 
 	let userKeys = $state<ApiData[]>([]);
 
-	const addApiKey = async (apiKey: string, secretKey: string, passphrase: string) => {
+	const saveSecretKey = async (pub: string, sec: string) => {
+		if (!wallet.connected || !wallet.actor) {
+			console.log('Wallet not connected');
+			return;
+		}
+
+		window.localStorage.setItem(pub, sec);
+	};
+
+	const addApiKey = async (
+		exchange: Exchanges,
+		apiKey: string,
+		secretKey: string,
+		passphrase: string
+	) => {
 		if (!wallet.connected || !wallet.actor) {
 			console.log('Wallet not connected');
 			return;
@@ -16,11 +31,15 @@
 		const newApiKey: ApiData = {
 			api_key: apiKey,
 			passphrase: [passphrase],
-			exchange: { Okx: null }
+			exchange: handleExchange(exchange)
 		};
 
-		await wallet.actor.register_api_key(newApiKey);
-		userKeys.push(newApiKey);
+		const done = await wallet.actor.register_api_key(newApiKey);
+
+		if (done) {
+			saveSecretKey(apiKey, secretKey);
+			userKeys.push(newApiKey);
+		}
 	};
 
 	const fetchApiKeys = async () => {
@@ -39,9 +58,6 @@
 			userKeys = [];
 		}
 	});
-
-	$inspect(userKeys);
-	$inspect(wallet.connected);
 </script>
 
 <div class="container mx-auto py-10">
