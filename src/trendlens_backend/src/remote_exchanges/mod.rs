@@ -1,7 +1,9 @@
 use crate::chain_data::ChainData;
-use crate::exchange::Candle;
+use crate::exchange::{Candle, Exchange};
 use crate::{api_client::ApiClientErrors, Pair};
+use candid::Principal;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
+use okx::api::Instrument;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -16,6 +18,7 @@ pub enum ExchangeErrors {
     MissingIndex,
 }
 
+// provider is not descriptive enough, maybe change name or split traits
 #[async_trait::async_trait]
 pub trait ExternalProvider {
     async fn fetch_candles(
@@ -24,6 +27,13 @@ pub trait ExternalProvider {
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors>;
+
+    // // consider
+    // async fn get_account_instruments(&self) -> Result<Vec<Instrument>, ExchangeErrors>;
+}
+
+pub trait RequestStore {
+    fn store_request(&self, exchange: Exchange, identity: &Principal) -> Option<u8>;
 }
 
 pub trait ApiRequest: Serialize {

@@ -6,8 +6,12 @@ use chain_data::TimestampBased;
 use exchange::Candle;
 use exchange::Exchange;
 use remote_exchanges::coinbase::Coinbase;
+use remote_exchanges::okx::api;
+use remote_exchanges::okx::api::GetInstrumentsRequest;
 use remote_exchanges::okx::Okx;
 use remote_exchanges::UpdateExchange;
+use request_store::request::Request;
+use request_store::RequestStore;
 
 mod api_client;
 mod api_store;
@@ -16,6 +20,7 @@ mod exchange;
 mod memory;
 mod pair;
 mod remote_exchanges;
+mod request_store;
 mod storable_wrapper;
 
 #[ic_cdk::query]
@@ -57,6 +62,34 @@ fn register_api_key(register_info: ApiData) -> bool {
 
     true
 }
+
+// this should not have concrete types, can't
+#[ic_cdk::update]
+fn get_instruments(
+    exchange: Exchange,
+    api_key: String,
+    request: GetInstrumentsRequest,
+) -> u8 {
+    let identity = ic_cdk::caller();
+    let exchange: Box<dyn UpdateExchange> = match exchange {
+        Exchange::Okx => Box::new(Okx::default()),
+        Exchange::Coinbase => Box::new(Coinbase::default()),
+    };
+
+    let id = RequestStore::add_request(&identity, api_key, Request::GetInstruments(request));
+
+    id
+}
+
+// #[ic_cdk::update]
+// fn get_balance(exchange: Exchange, api_key: String, some_parameters: Vec<String>) -> Vec<String> {
+//     let exchange = match exchange {
+//         Exchange::Okx => Okx::default(),
+//         Exchange::Coinbase => unimplemented!(),
+//     };
+
+//     exchange.get_instruments()
+// }
 
 #[ic_cdk::query]
 fn get_api_keys() -> Vec<ApiData> {
