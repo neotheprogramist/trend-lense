@@ -1,22 +1,35 @@
 use crate::{
+    exchange::Exchange,
     memory::{Memory, MemoryLocation, MEMORY_MANAGER},
     storable_wrapper::StorableWrapper,
 };
 use candid::Principal;
 use ic_stable_structures::StableBTreeMap;
 use request::Request;
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 
 pub mod request;
 
 const MAX_USER_REQUESTS: usize = 10;
-type AwaitingRequestsStore =
-    StableBTreeMap<Principal, StorableWrapper<(u8, [Request; MAX_USER_REQUESTS])>, Memory>;
+
+#[derive(Deserialize, Serialize, Clone)]
+pub struct ExchangeRequestInfo {
+    pub exchange: Exchange,
+    pub api_key: String,
+    pub request: Request,
+}
+
+type AwaitingRequestsStore = StableBTreeMap<
+    Principal,
+    StorableWrapper<(u8, [ExchangeRequestInfo; MAX_USER_REQUESTS])>,
+    Memory,
+>;
 
 thread_local! {
 pub static API_KEYS: RefCell<AwaitingRequestsStore> = RefCell::new(
     StableBTreeMap::init(
-        MEMORY_MANAGER.with(|m| m.borrow().get(MemoryLocation::ApiKeys.memory_id())),
+        MEMORY_MANAGER.with(|m| m.borrow().get(MemoryLocation::UserRequest.memory_id())),
     )
 );
 }
@@ -26,25 +39,41 @@ pub static API_KEYS: RefCell<AwaitingRequestsStore> = RefCell::new(
 pub struct RequestStore {}
 
 impl RequestStore {
-    pub fn add_request(identity: &Principal, api_key: String, data: Request) -> u8 {
+    pub fn add_request(
+        identity: &Principal,
+        api_key: String,
+        exchange: Exchange,
+        request: Request,
+    ) -> u8 {
+        let exchange_request = ExchangeRequestInfo {
+            api_key,
+            exchange,
+            request,
+        };
+
         API_KEYS.with_borrow_mut(|k| {
+            let mut insert_index = 0;
             if let Some((index, user_keys)) = k.get(&identity).as_deref_mut() {
-                let new_index = (*index as usize + 1) % MAX_USER_REQUESTS as usize;
-                user_keys[new_index] = data;
+                insert_index = (*index as usize + 1) % MAX_USER_REQUESTS as usize;
 
-                new_index as u8
+                user_keys[insert_index] = exchange_request;
             } else {
-                k.insert(
-                    identity.clone(),
-                    StorableWrapper((0, [(); MAX_USER_REQUESTS].map(|_| Request::default()))),
-                );
+                let mut array = [(); MAX_USER_REQUESTS].map(|_| ExchangeRequestInfo {
+                    api_key: String::new(),
+                    exchange: Exchange::Coinbase,
+                    request: Request::Empty,
+                });
 
-                0u8
-            }
+                array[insert_index] = exchange_request;
+
+                k.insert(identity.clone(), StorableWrapper((0, array)));
+            };
+
+            insert_index as u8
         })
     }
 
-    pub fn get_request(identity: &Principal, index: usize) -> Option<Request> {
-        API_KEYS.with_borrow(|k| k.get(&identity)?.1.get(index).cloned())
+    pub fn get_request(identity: &Principal, index: u8) -> Option<ExchangeRequestInfo> {
+        API_KEYS.with_borrow(|k| k.get(&identity)?.1.get(index as usize).cloned())
     }
 }

@@ -121,6 +121,7 @@ impl ApiRequest for GetInstrumentsRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/account/instruments";
     const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = false;
 
     type Response = Vec<Instrument>;
 }
@@ -145,6 +146,7 @@ impl ApiRequest for IndexCandleStickRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/market/index-candles";
     const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = true;
 
     type Response = Vec<CandleStick>;
 }

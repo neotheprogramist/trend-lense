@@ -1,14 +1,21 @@
+use core::time;
+use std::time::Duration;
+
 use crate::pair::Pair;
 use api_store::ApiData;
 use api_store::ApiStore;
 use chain_data::ChainData;
 use chain_data::TimestampBased;
+use chrono::DateTime;
+use chrono::NaiveDateTime;
+use chrono::Utc;
 use exchange::Candle;
 use exchange::Exchange;
 use remote_exchanges::coinbase::Coinbase;
 use remote_exchanges::okx::api;
 use remote_exchanges::okx::api::GetInstrumentsRequest;
 use remote_exchanges::okx::Okx;
+use remote_exchanges::okx::OkxAuth;
 use remote_exchanges::UpdateExchange;
 use request_store::request::Request;
 use request_store::RequestStore;
@@ -55,41 +62,43 @@ fn get_last_timestamp(exchange: Exchange) -> u64 {
 }
 
 #[ic_cdk::update]
-fn register_api_key(register_info: ApiData) -> bool {
+fn register_api_key(exchange_api: ApiData) -> bool {
     let principal = ic_cdk::caller();
 
-    ApiStore::register_key(&principal, register_info);
+    ApiStore::register_key(&principal, exchange_api);
 
     true
 }
 
-// this should not have concrete types, can't
 #[ic_cdk::update]
-fn get_instruments(
-    exchange: Exchange,
-    api_key: String,
-    request: GetInstrumentsRequest,
-) -> u8 {
+fn initialize_request(exchange: Exchange, api_key: String, request: Request) -> u8 {
     let identity = ic_cdk::caller();
-    let exchange: Box<dyn UpdateExchange> = match exchange {
-        Exchange::Okx => Box::new(Okx::default()),
+
+    RequestStore::add_request(&identity, api_key, exchange, request)
+}
+
+#[ic_cdk::update]
+fn run_request(index: u8, signature: String, timestamp: u64) {
+    let identity = ic_cdk::caller();
+
+    let request = RequestStore::get_request(&identity, index).unwrap();
+    let api_info = ApiStore::get_by_api(&identity, &request.api_key.as_str()).unwrap();
+
+    let datetime_utc = DateTime::<Utc>::from_timestamp_millis(timestamp as i64).unwrap();
+    let utc_string = datetime_utc.to_rfc3339();
+
+    let exchange: Box<dyn UpdateExchange> = match request.exchange {
+        Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
+            api_key: request.api_key,
+            passphrase: api_info.passphrase.unwrap(),
+            timestamp: utc_string,
+            signature: signature,
+        })),
         Exchange::Coinbase => Box::new(Coinbase::default()),
     };
 
-    let id = RequestStore::add_request(&identity, api_key, Request::GetInstruments(request));
-
-    id
+    
 }
-
-// #[ic_cdk::update]
-// fn get_balance(exchange: Exchange, api_key: String, some_parameters: Vec<String>) -> Vec<String> {
-//     let exchange = match exchange {
-//         Exchange::Okx => Okx::default(),
-//         Exchange::Coinbase => unimplemented!(),
-//     };
-
-//     exchange.get_instruments()
-// }
 
 #[ic_cdk::query]
 fn get_api_keys() -> Vec<ApiData> {

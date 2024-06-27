@@ -14,14 +14,16 @@ thread_local! {
 
 pub enum MemoryLocation {
     Exchanges,
-    ApiKeys,
+    UserKeys,
+    UserRequest,
 }
 
 impl MemoryLocation {
     pub fn memory_id(self) -> MemoryId {
         match self {
             MemoryLocation::Exchanges => constants::EXCHANGE_STORE_MEMORY_ID,
-            MemoryLocation::ApiKeys => constants::API_KEYS_STORE_MEMORY_ID,
+            MemoryLocation::UserKeys => constants::USER_KEYS_STORE_MEMORY_ID,
+            MemoryLocation::UserRequest => constants::USER_REQUESTS_STORE_MEMORY_ID,
         }
     }
 }

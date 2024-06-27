@@ -1,13 +1,46 @@
-use super::{ExchangeErrors, ExternalProvider};
+use super::{Authorizable, ExchangeErrors, OpenData};
+use crate::api_client::ApiClient;
 use crate::chain_data::ChainData;
 use crate::exchange::{Candle, Exchange};
-use crate::{api_client::ApiClient, Pair};
+use crate::Pair;
 use api::IndexCandleStickRequest;
+use ic_cdk::api::management_canister::http_request::HttpHeader;
 pub mod api;
 pub mod response;
 
+pub struct OkxAuth {
+    pub api_key: String,
+    pub passphrase: String,
+    pub signature: String,
+    pub timestamp: String,
+}
+
+impl Authorizable for OkxAuth {
+    fn get_auth_headers(&self) -> Vec<HttpHeader> {
+        vec![
+            HttpHeader {
+                name: "OK-ACCESS-KEY".to_string(),
+                value: self.api_key.clone(),
+            },
+            HttpHeader {
+                name: "OK-ACCESS-SIGN".to_string(),
+                value: self.signature.clone(),
+            },
+            HttpHeader {
+                name: "OK-ACCESS-TIMESTAMP".to_string(),
+                value: self.timestamp.clone(),
+            },
+            HttpHeader {
+                name: "OK-ACCESS-PASSPHRASE".to_string(),
+                value: self.passphrase.clone(),
+            },
+        ]
+    }
+}
+
 #[derive(Default)]
 pub struct Okx {
+    auth: Option<OkxAuth>,
     api_client: ApiClient,
 }
 
@@ -18,6 +51,12 @@ impl ChainData for Okx {
 }
 
 impl Okx {
+    pub fn with_auth(auth: OkxAuth) -> Self {
+        Self {
+            auth: Some(auth),
+            ..Default::default()
+        }
+    }
     /// gets interval string from u32 in minutes
     fn interval_string(interval: u32) -> String {
         match interval {
@@ -38,7 +77,7 @@ impl Okx {
 }
 
 #[async_trait::async_trait]
-impl ExternalProvider for Okx {
+impl OpenData for Okx {
     async fn fetch_candles(
         &self,
         pair: Pair,
@@ -55,7 +94,10 @@ impl ExternalProvider for Okx {
             results_limit: None,
         };
 
-        let candle_response = self.api_client.call(candle_request).await?;
+        let candle_response = self
+            .api_client
+            .call(candle_request, self.auth.as_ref())
+            .await?;
 
         Ok(candle_response
             .into_iter()

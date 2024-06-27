@@ -1,4 +1,4 @@
-use crate::remote_exchanges::{okx::response::ApiResponse, ApiRequest};
+use crate::remote_exchanges::{okx::response::ApiResponse, ApiRequest, Authorizable};
 use candid::Nat;
 use ic_cdk::api::{
     call::RejectionCode,
@@ -48,9 +48,10 @@ impl ApiClient {
             * 13
     }
 
-    pub async fn call<R>(&self, request: R) -> Result<R::Response, ApiClientErrors>
+    pub async fn call<R, A>(&self, request: R, auth: Option<&A>) -> Result<R::Response, ApiClientErrors>
     where
         R: ApiRequest,
+        A: Authorizable,
     {
         let api_url = format!(
             "https://{}/{}{}",
@@ -61,10 +62,17 @@ impl ApiClient {
 
         ic_cdk::println!("{}", api_url);
 
+        let auth_headers = if let Some(a) = auth {
+            a.get_auth_headers()
+        } else {
+            vec![]
+        };
+
+
         let request = CanisterHttpRequestArgument {
             url: api_url,
             method: R::METHOD,
-            headers: self.headers(R::HOST),
+            headers: [auth_headers, self.headers(R::HOST)].concat(),
             body: None,
             ..Default::default()
         };

@@ -1,20 +1,18 @@
-use crate::{api_client::ApiClient, chain_data::ChainData, exchange::Exchange};
+use crate::{api_client::ApiClient, chain_data::ChainData, exchange::{Candle, Exchange}};
 
-use super::ExternalProvider;
+use super::{ApiRequest, OpenData};
 
 #[derive(Default)]
-pub struct Coinbase {
-    api_client: ApiClient,
-}
+pub struct Coinbase;
 
 #[async_trait::async_trait]
-impl ExternalProvider for Coinbase {
+impl OpenData for Coinbase {
     async fn fetch_candles(
         &self,
         pair: crate::pair::Pair,
         range: std::ops::Range<u64>,
         interval: u32,
-    ) -> Result<Vec<crate::exchange::Candle>, super::ExchangeErrors> {
+    ) -> Result<Vec<Candle>, super::ExchangeErrors> {
         Ok(vec![])
     }
 }

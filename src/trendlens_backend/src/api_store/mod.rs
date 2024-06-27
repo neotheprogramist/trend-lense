@@ -13,16 +13,16 @@ type ApiKeysStore = StableBTreeMap<Principal, StorableWrapper<Vec<ApiData>>, Mem
 thread_local! {
   pub static API_KEYS: RefCell<ApiKeysStore> = RefCell::new(
       StableBTreeMap::init(
-          MEMORY_MANAGER.with(|m| m.borrow().get(MemoryLocation::ApiKeys.memory_id())),
+          MEMORY_MANAGER.with(|m| m.borrow().get(MemoryLocation::UserKeys.memory_id())),
       )
   );
 }
 
 #[derive(Serialize, Deserialize, CandidType, Clone, Debug, PartialEq, Eq)]
 pub struct ApiData {
-    exchange: Exchange,
-    api_key: String,
-    passphrase: Option<String>,
+    pub exchange: Exchange,
+    pub api_key: String,
+    pub passphrase: Option<String>,
 }
 
 pub struct ApiStore {}
@@ -40,6 +40,22 @@ impl ApiStore {
 
     pub fn get_all_keys(identity: &Principal) -> Option<Vec<ApiData>> {
         API_KEYS.with_borrow(|k| k.get(&identity).map(|keys| keys.clone()))
+    }
+
+    pub fn get_by_api(identity: &Principal, api_key: &str) -> Option<ApiData> {
+        API_KEYS.with_borrow(|k| {
+            let user_keys = k.get(&identity);
+
+            if let Some(arr) = user_keys {
+                for d in &*arr {
+                    if d.api_key == api_key {
+                        return Some(d.clone());
+                    }
+                }
+            }
+
+            None
+        })
     }
 }
 
