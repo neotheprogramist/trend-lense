@@ -1,21 +1,25 @@
 <script lang="ts">
 	import { Exchanges } from '$lib/exchange';
-	import { mockAvailablePairs } from '$lib/mockPairs';
+	import { exchangePairs } from '$lib/exchangePairs';
 	import type { Pairs } from '$lib/pair';
-	import Search from './search.svelte';
+	import BindableSelect from './bindableSelect.svelte';
 
 	interface TradingHeaderProps {
 		onSelectionCompleted: (exchange: Exchanges, pair: Pairs) => void;
 	}
 	let { onSelectionCompleted }: TradingHeaderProps = $props();
 
-	let selectedExchange = $state<Exchanges>(Exchanges.Okx);
+	let selectedExchange = $state<Exchanges | null>(null);
 	let selectedPair = $state<Pairs | null>(null);
 
 	// should be taken from outside of fetched from api here
 	let pairs = $derived.by(() => {
-		if (selectedExchange in mockAvailablePairs) {
-			return mockAvailablePairs[selectedExchange];
+		if (!selectedExchange) {
+			return [];
+		}
+
+		if (selectedExchange in exchangePairs) {
+			return exchangePairs[selectedExchange];
 		} else {
 			return [];
 		}
@@ -23,28 +27,20 @@
 </script>
 
 <div class="flex h-10 px-6">
-	<select name="exchange" class="rounded-full grid-col-1" bind:value={selectedExchange}>
-		{#each Object.keys(Exchanges) as exchangeName}
-			<option value={exchangeName}>{exchangeName}</option>
-		{/each}
-	</select>
+	<BindableSelect
+		bind:value={selectedExchange}
+		items={Object.keys(Exchanges)}
+		placeholder={'exchange'}
+	/>
 
-	<select
-		name="pair"
-		class="rounded-full grid-col-2"
+	<BindableSelect
 		bind:value={selectedPair}
-		onchange={() => {
-			if (selectedPair) {
+		items={pairs}
+		placeholder={'pair'}
+		onChange={() => {
+			if (selectedExchange && selectedPair) {
 				onSelectionCompleted(selectedExchange, selectedPair);
 			}
 		}}
-	>
-		{#each pairs as pair}
-			<option value={pair}>{pair}</option>
-		{/each}
-	</select>
-
-	<div class="ml-auto flex items-center">
-		<Search />
-	</div>
+	/>
 </div>

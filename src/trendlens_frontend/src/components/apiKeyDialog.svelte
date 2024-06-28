@@ -3,8 +3,9 @@
 	import Button from './shad/ui/button/button.svelte';
 	import { Label } from './shad/ui/label/index';
 	import Input from './shad/ui/input/input.svelte';
-	import * as Select from './shad/ui/select/index';
 	import { Exchanges, type ExchangeKey } from '$lib/exchange';
+	import ExchangeSelect from './bindableSelect.svelte';
+	import BindableSelect from './bindableSelect.svelte';
 
 	interface IProps {
 		onUpload: (exchange: Exchanges, apiKey: string, secretKey: string, passphrase: string) => void;
@@ -15,8 +16,6 @@
 	let secretKey = $state<string>('');
 	let passphrase = $state<string>('');
 	let exchange = $state<Exchanges>(Exchanges.Okx);
-
-	const exchangeKeys = Object.keys(Exchanges).map((e) => e as ExchangeKey);
 
 	function checkInputs(): boolean {
 		if (!exchange) {
@@ -50,28 +49,11 @@
 			<div class="grid grid-cols-4 items-center gap-4">
 				<Label for="api_key">Exchange</Label>
 				<div class="col-span-3 w-100">
-					<Select.Root
-						selected={{ value: exchange }}
-						items={exchangeKeys.map((e) => {
-							return {
-								value: e as ExchangeKey
-							};
-						})}
-						onSelectedChange={(e) => {
-							if (e) {
-								exchange = Exchanges[e.value];
-							}
-						}}
-					>
-						<Select.Trigger class="w-100">
-							<Select.Value placeholder="Exchange" />
-						</Select.Trigger>
-						<Select.Content>
-							{#each exchangeKeys as key}
-								<Select.Item value={key}>{key}</Select.Item>
-							{/each}
-						</Select.Content>
-					</Select.Root>
+					<BindableSelect
+						bind:value={exchange}
+						items={Object.keys(Exchanges)}
+						placeholder={'exchange'}
+					/>
 				</div>
 			</div>
 

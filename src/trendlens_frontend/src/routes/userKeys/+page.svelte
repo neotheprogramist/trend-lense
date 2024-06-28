@@ -5,16 +5,16 @@
 	import { onMount } from 'svelte';
 	import type { ApiData } from '../../../../declarations/trendlens_backend/trendlens_backend.did';
 	import { handleExchange, type Exchanges } from '$lib/exchange';
+	import type { ApiWithSecret } from '$lib/keystore.svelte';
 
 	let userKeys = $state<ApiData[]>([]);
 
-	const saveSecretKey = async (pub: string, sec: string) => {
+	const saveApiData = async (data: ApiData) => {
 		if (!wallet.connected || !wallet.actor) {
 			console.log('Wallet not connected');
 			return;
 		}
-
-		window.localStorage.setItem(pub, sec);
+		window.localStorage.setItem(data.api_key, JSON.stringify(data));
 	};
 
 	const addApiKey = async (
@@ -24,27 +24,30 @@
 		passphrase: string
 	) => {
 		if (!wallet.connected || !wallet.actor) {
-			console.log('Wallet not connected');
 			return;
 		}
 
-		const newApiKey: ApiData = {
+		const apiData: ApiData = {
 			api_key: apiKey,
 			passphrase: [passphrase],
 			exchange: handleExchange(exchange)
 		};
 
-		const done = await wallet.actor.register_api_key(newApiKey);
+		const done = await wallet.actor.register_api_key(apiData);
+
+		const apiDataWithSecret: ApiWithSecret = {
+			...apiData,
+			secret_key: secretKey
+		};
 
 		if (done) {
-			saveSecretKey(apiKey, secretKey);
-			userKeys.push(newApiKey);
+			saveApiData(apiDataWithSecret);
+			userKeys.push(apiData);
 		}
 	};
 
 	const fetchApiKeys = async () => {
 		if (!wallet.connected || !wallet.actor) {
-			console.log('Wallet not connected');
 			return;
 		}
 
