@@ -1,9 +1,10 @@
-use super::{Authorizable, ExchangeErrors, OpenData};
+use super::{Authorizable, AuthorizedData, ExchangeErrors, OpenData};
 use crate::api_client::ApiClient;
 use crate::chain_data::ChainData;
 use crate::exchange::{Candle, Exchange};
+use crate::request_store::request::Response;
 use crate::Pair;
-use api::IndexCandleStickRequest;
+use api::{GetInstrumentsRequest, IndexCandleStickRequest, Instrument};
 use ic_cdk::api::management_canister::http_request::HttpHeader;
 pub mod api;
 pub mod response;
@@ -73,6 +74,21 @@ impl Okx {
             Pair::BtcUsd => Some("BTC-USD".to_string()),
             Pair::EthUsd => Some("ETH-USD".to_string()),
         }
+    }
+}
+
+#[async_trait::async_trait]
+impl AuthorizedData for Okx {
+    async fn get_instruments(
+        &self,
+        req: GetInstrumentsRequest,
+    ) -> Result<Response, ExchangeErrors> {
+        let instrument_response = self
+            .api_client
+            .call(req, self.auth.as_ref())
+            .await?;
+
+        Ok(Response::Instruments(instrument_response))
     }
 }
 

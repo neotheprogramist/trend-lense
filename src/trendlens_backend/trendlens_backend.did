@@ -1,3 +1,7 @@
+type ApiClientErrors = variant {
+  Http : record { status : nat };
+  Reject : record { code : RejectionCode; message : text };
+};
 type ApiData = record {
   api_key : text;
   passphrase : opt text;
@@ -11,11 +15,70 @@ type Candle = record {
   open_price : float64;
 };
 type Exchange = variant { Okx; Coinbase };
+type ExchangeErrors = variant {
+  ApiClientError : ApiClientErrors;
+  MissingIndex;
+};
+type ExchangeRequestInfo = record {
+  api_key : text;
+  request : Request;
+  exchange : Exchange;
+};
+type GetInstrumentsRequest = record {
+  instType : InstrumentType;
+  instId : opt text;
+};
+type Instrument = record {
+  stk : opt text;
+  uly : text;
+  minSz : text;
+  expTime : opt text;
+  tickSz : text;
+  maxLmtSz : text;
+  instFamily : text;
+  listTime : opt text;
+  baseCcy : opt text;
+  maxStopSz : text;
+  maxIcebergSz : text;
+  ctVal : opt text;
+  instType : InstrumentType;
+  maxTwapSz : text;
+  maxLmtAmt : opt text;
+  lever : opt text;
+  maxTriggerSz : text;
+  lotSz : text;
+  ctValCcy : opt text;
+  state : text;
+  ctMult : opt text;
+  ctType : opt text;
+  instId : text;
+  maxMktAmt : opt text;
+  quoteCcy : opt text;
+  maxMktSz : text;
+  optType : opt text;
+  settleCcy : opt text;
+};
+type InstrumentType = variant { Spot; Swap; Futures; Option; Margin };
 type Pair = variant { BtcUsd; EthUsd };
+type RejectionCode = variant {
+  NoError;
+  CanisterError;
+  SysTransient;
+  DestinationInvalid;
+  Unknown;
+  SysFatal;
+  CanisterReject;
+};
+type Request = variant { Empty; Instruments : GetInstrumentsRequest };
+type Response = variant { Instruments : vec Instrument };
+type Result = variant { Ok : Response; Err : ExchangeErrors };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
   get_api_keys : () -> (vec ApiData) query;
   get_last_timestamp : (Exchange) -> (nat64) query;
+  get_request : (nat8) -> (opt ExchangeRequestInfo) query;
+  initialize_request : (ExchangeRequestInfo) -> (nat8);
   pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
   register_api_key : (ApiData) -> (bool);
+  run_request : (nat8, text, nat64) -> (Result);
 }

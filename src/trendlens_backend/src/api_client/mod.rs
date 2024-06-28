@@ -1,12 +1,12 @@
 use crate::remote_exchanges::{okx::response::ApiResponse, ApiRequest, Authorizable};
-use candid::Nat;
+use candid::{CandidType, Nat};
 use ic_cdk::api::{
     call::RejectionCode,
     management_canister::http_request::{http_request, CanisterHttpRequestArgument, HttpHeader},
 };
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, CandidType)]
 pub enum ApiClientErrors {
     #[error("http call failed with status {status}")]
     Http { status: Nat },

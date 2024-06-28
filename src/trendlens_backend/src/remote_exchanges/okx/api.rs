@@ -45,7 +45,7 @@ impl fmt::Display for InstrumentType {
 
 #[serde_as]
 #[skip_serializing_none]
-#[derive(Debug, Clone, Serialize, CandidType, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
 pub struct GetInstrumentsRequest {
     #[serde(rename = "instType")]
     #[serde_as(as = "DisplayFromStr")]
@@ -56,7 +56,7 @@ pub struct GetInstrumentsRequest {
 }
 
 #[serde_as]
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, CandidType)]
 pub struct Instrument {
     #[serde(rename = "instId")]
     pub instrument_id: String,

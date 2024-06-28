@@ -1,12 +1,17 @@
-use crate::remote_exchanges::okx::api::GetInstrumentsRequest;
+use crate::remote_exchanges::okx::api::{GetInstrumentsRequest, Instrument};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 // this should be generic but right now its based on concrete types, easy to replace later
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone, CandidType)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, CandidType)]
 pub enum Request {
     #[default]
     Empty,
-    GetInstruments(GetInstrumentsRequest),
+    Instruments(GetInstrumentsRequest),
+}
+
+#[derive(Debug, Clone,  Deserialize, CandidType)]
+pub enum Response {
+    Instruments(Vec<Instrument>)
 }

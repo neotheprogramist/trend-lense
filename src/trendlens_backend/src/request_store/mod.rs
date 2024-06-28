@@ -3,7 +3,7 @@ use crate::{
     memory::{Memory, MemoryLocation, MEMORY_MANAGER},
     storable_wrapper::StorableWrapper,
 };
-use candid::Principal;
+use candid::{CandidType, Principal};
 use ic_stable_structures::StableBTreeMap;
 use request::Request;
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,7 @@ pub mod request;
 
 const MAX_USER_REQUESTS: usize = 10;
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, CandidType)]
 pub struct ExchangeRequestInfo {
     pub exchange: Exchange,
     pub api_key: String,
@@ -39,24 +39,13 @@ pub static API_KEYS: RefCell<AwaitingRequestsStore> = RefCell::new(
 pub struct RequestStore {}
 
 impl RequestStore {
-    pub fn add_request(
-        identity: &Principal,
-        api_key: String,
-        exchange: Exchange,
-        request: Request,
-    ) -> u8 {
-        let exchange_request = ExchangeRequestInfo {
-            api_key,
-            exchange,
-            request,
-        };
-
+    pub fn add_request(identity: &Principal, request: ExchangeRequestInfo) -> u8 {
         API_KEYS.with_borrow_mut(|k| {
             let mut insert_index = 0;
             if let Some((index, user_keys)) = k.get(&identity).as_deref_mut() {
                 insert_index = (*index as usize + 1) % MAX_USER_REQUESTS as usize;
 
-                user_keys[insert_index] = exchange_request;
+                user_keys[insert_index] = request;
             } else {
                 let mut array = [(); MAX_USER_REQUESTS].map(|_| ExchangeRequestInfo {
                     api_key: String::new(),
@@ -64,7 +53,7 @@ impl RequestStore {
                     request: Request::Empty,
                 });
 
-                array[insert_index] = exchange_request;
+                array[insert_index] = request;
 
                 k.insert(identity.clone(), StorableWrapper((0, array)));
             };

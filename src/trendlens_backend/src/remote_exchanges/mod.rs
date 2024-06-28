@@ -1,16 +1,17 @@
 use crate::chain_data::ChainData;
-use crate::exchange::{Candle, Exchange};
+use crate::exchange::Candle;
+use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
-use candid::Principal;
+use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod};
-use okx::api::Instrument;
+use okx::api::GetInstrumentsRequest;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub mod coinbase;
 pub mod okx;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, CandidType)]
 pub enum ExchangeErrors {
     #[error("api error")]
     ApiClientError(#[from] ApiClientErrors),
@@ -18,8 +19,6 @@ pub enum ExchangeErrors {
     MissingIndex,
 }
 
-
-// provider is not descriptive enough, maybe change name or split traits
 #[async_trait::async_trait]
 pub trait OpenData {
     async fn fetch_candles(
@@ -31,6 +30,14 @@ pub trait OpenData {
 
     // // consider
     // async fn get_account_instruments(&self) -> Result<Vec<Instrument>, ExchangeErrors>;
+}
+
+#[async_trait::async_trait]
+pub trait AuthorizedData {
+    async fn get_instruments(
+        &self,
+        request: GetInstrumentsRequest,
+    ) -> Result<Response, ExchangeErrors>;
 }
 
 pub trait ApiRequest: Serialize {
@@ -53,5 +60,5 @@ pub trait Authorizable {
     fn get_auth_headers(&self) -> Vec<HttpHeader>;
 }
 
-pub trait UpdateExchange: OpenData + ChainData {}
-impl<T> UpdateExchange for T where T: OpenData + ChainData {}
+pub trait UpdateExchange: OpenData + ChainData + AuthorizedData {}
+impl<T> UpdateExchange for T where T: OpenData + ChainData + AuthorizedData {}

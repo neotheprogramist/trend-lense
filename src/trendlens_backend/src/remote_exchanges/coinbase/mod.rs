@@ -1,6 +1,13 @@
-use crate::{api_client::ApiClient, chain_data::ChainData, exchange::{Candle, Exchange}};
+use crate::{
+    chain_data::ChainData,
+    exchange::{Candle, Exchange},
+    request_store::request::Response,
+};
 
-use super::{ApiRequest, OpenData};
+use super::{
+    okx::api::{GetInstrumentsRequest, Instrument},
+    AuthorizedData, ExchangeErrors, OpenData,
+};
 
 #[derive(Default)]
 pub struct Coinbase;
@@ -14,6 +21,16 @@ impl OpenData for Coinbase {
         interval: u32,
     ) -> Result<Vec<Candle>, super::ExchangeErrors> {
         Ok(vec![])
+    }
+}
+
+#[async_trait::async_trait]
+impl AuthorizedData for Coinbase {
+    async fn get_instruments(
+        &self,
+        req: GetInstrumentsRequest,
+    ) -> Result<Response, ExchangeErrors> {
+        Ok(Response::Instruments(vec![]))
     }
 }
 
