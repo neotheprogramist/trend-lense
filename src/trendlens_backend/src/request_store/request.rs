@@ -1,4 +1,4 @@
-use crate::remote_exchanges::okx::api::{GetInstrumentsRequest, Instrument};
+use crate::remote_exchanges::okx::{api::GetInstrumentsRequest, response::Instrument};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -11,7 +11,7 @@ pub enum Request {
     Instruments(GetInstrumentsRequest),
 }
 
-#[derive(Debug, Clone,  Deserialize, CandidType)]
+#[derive(Debug, Clone, Deserialize, CandidType)]
 pub enum Response {
-    Instruments(Vec<Instrument>)
+    Instruments(Vec<Instrument>),
 }

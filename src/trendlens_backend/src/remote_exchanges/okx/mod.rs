@@ -16,11 +16,6 @@ pub struct Okx {
     api_client: ApiClient,
 }
 
-impl ChainData for Okx {
-    fn key(&self) -> Exchange {
-        Exchange::Okx
-    }
-}
 
 impl Okx {
     /// gets interval string from u32 in minutes
@@ -39,6 +34,12 @@ impl Okx {
             Pair::BtcUsd => Some("BTC-USD".to_string()),
             Pair::EthUsd => Some("ETH-USD".to_string()),
         }
+    }
+}
+
+impl ChainData for Okx {
+    fn key(&self) -> Exchange {
+        Exchange::Okx
     }
 }
 

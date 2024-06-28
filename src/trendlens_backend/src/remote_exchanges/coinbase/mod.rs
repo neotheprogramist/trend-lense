@@ -1,6 +1,6 @@
 use crate::{
     chain_data::ChainData,
-    exchange::{Candle, Exchange},
+    exchange::{Candle, Exchange, ExchangeInfo},
     request_store::request::Response,
 };
 
@@ -34,5 +34,11 @@ impl UserData for Coinbase {
 impl ChainData for Coinbase {
     fn key(&self) -> Exchange {
         Exchange::Coinbase
+    }
+}
+
+impl ExchangeInfo for Coinbase {
+    fn get_pairs(&self) -> Vec<crate::pair::Pair> {
+        vec![]
     }
 }

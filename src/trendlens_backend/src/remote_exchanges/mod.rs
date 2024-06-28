@@ -1,5 +1,5 @@
 use crate::chain_data::ChainData;
-use crate::exchange::Candle;
+use crate::exchange::{Candle, ExchangeInfo};
 use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
@@ -10,6 +10,7 @@ use thiserror::Error;
 
 pub mod coinbase;
 pub mod okx;
+
 
 #[derive(Debug, Error, CandidType)]
 pub enum ExchangeErrors {
@@ -57,5 +58,5 @@ pub trait Authorize {
     fn get_auth_headers(&self) -> Vec<HttpHeader>;
 }
 
-pub trait UpdateExchange: OpenData + ChainData + UserData {}
-impl<T> UpdateExchange for T where T: OpenData + ChainData + UserData {}
+pub trait UpdateExchange: OpenData + UserData + ChainData + ExchangeInfo {}
+impl<T> UpdateExchange for T where T: OpenData + UserData + ChainData  + ExchangeInfo{}

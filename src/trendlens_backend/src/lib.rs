@@ -6,6 +6,7 @@ use chain_data::TimestampBased;
 
 use exchange::Candle;
 use exchange::Exchange;
+use exchange::ExchangeImpl;
 use remote_exchanges::coinbase::Coinbase;
 use remote_exchanges::okx::auth::OkxAuth;
 use remote_exchanges::okx::Okx;
@@ -50,15 +51,16 @@ fn init() {
     Okx::default().init();
 }
 
+// TODO: rename or get rid off
 #[ic_cdk::query]
-fn get_last_timestamp(exchange: Exchange) -> u64 {
-    let exchange = match exchange {
-        Exchange::Okx => Okx::default(),
-        Exchange::Coinbase => unimplemented!(),
-    };
+fn get_last_timestamp(exchange: Exchange, pair: Pair) -> Option<u64> {
+    let exchange_impl = ExchangeImpl::new(exchange);
 
-    let stored_exchange_data = exchange.get_mut_chain_data();
-    stored_exchange_data.candles.last_timestamp().unwrap_or(0)
+    exchange_impl
+        .data_mut()
+        .candles
+        .get_pair_candles(&pair)?
+        .last_timestamp()
 }
 
 #[ic_cdk::update]
@@ -94,6 +96,13 @@ fn get_request(index: u8) -> Option<ExchangeRequestInfo> {
     let identity = ic_cdk::caller();
 
     RequestStore::get_request(&identity, index)
+}
+
+#[ic_cdk::query]
+fn get_pairs(exchange: Exchange) -> Vec<Pair> {
+    let exchange_impl = ExchangeImpl::new(exchange);
+
+    exchange_impl.get_pairs()
 }
 
 #[ic_cdk::update]
@@ -150,13 +159,20 @@ async fn pull_candles(
         Exchange::Coinbase => Box::new(Coinbase::default()),
     };
 
-    let mut stored_exchange_data = exchange.get_mut_chain_data();
+    let mut stored_exchange_data = exchange.data_mut();
+
+    // TODO: return error
+    if !exchange.get_pairs().contains(&pair) {
+        return vec![];
+    }
+
+    let pair_candles = stored_exchange_data
+        .candles
+        .get_pair_candles(&pair)
+        .unwrap();
 
     // first call is where the storing candles starts
-    let last_candle_timestamp = stored_exchange_data
-        .candles
-        .last_timestamp()
-        .unwrap_or(start_timestamp);
+    let last_candle_timestamp = pair_candles.last_timestamp().unwrap_or(start_timestamp);
 
     ic_cdk::println!("Last candle timestamp: {}", last_candle_timestamp);
 
@@ -190,16 +206,16 @@ async fn pull_candles(
     ic_cdk::println!("Range to get: {:?}", range_to_get);
 
     let stored_candles = if let Some(range) = range_to_get {
-        stored_exchange_data.candles.get_between(range)
+        pair_candles.get_between(range)
     } else {
         vec![]
     };
 
     stored_exchange_data
         .candles
-        .insert_many(fetched_candles.clone());
+        .insert_many(pair, fetched_candles.clone());
 
-    exchange.set_chain_data(stored_exchange_data);
+    exchange.set_data(stored_exchange_data);
 
     fetched_candles
         .into_iter()

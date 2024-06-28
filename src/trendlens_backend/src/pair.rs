@@ -1,8 +1,8 @@
 use candid::CandidType;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[repr(u32)]
-#[derive(CandidType, Clone, Copy, Deserialize)]
+#[derive(CandidType, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash)]
 pub enum Pair {
     BtcUsd = 0,
     EthUsd,

@@ -75,11 +75,12 @@ type Result = variant { Ok : Response; Err : ExchangeErrors };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
   get_api_keys : () -> (vec ApiData) query;
-  get_last_timestamp : (Exchange) -> (nat64) query;
+  get_last_timestamp : (Exchange, Pair) -> (opt nat64) query;
+  get_pairs : (Exchange) -> (vec Pair) query;
   get_request : (nat8) -> (opt ExchangeRequestInfo) query;
   initialize_request : (ExchangeRequestInfo) -> (nat8);
   pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
   register_api_key : (ApiData) -> ();
   remove_api_key : (text) -> ();
-  run_request : (nat8, text, nat64) -> (Result);
+  run_request : (nat8, text, int64) -> (Result);
 }
