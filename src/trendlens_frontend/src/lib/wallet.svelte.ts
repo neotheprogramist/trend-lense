@@ -1,4 +1,3 @@
-import { writable } from 'svelte/store';
 import { connect } from './canisters';
 import type { ActorSubclass, Identity } from '@dfinity/agent';
 import type { _SERVICE } from '../../../declarations/trendlens_backend/trendlens_backend.did';
