@@ -6,10 +6,9 @@ use crate::{
 use candid::{CandidType, Principal};
 use ic_stable_structures::StableBTreeMap;
 use serde::{Deserialize, Serialize};
-use std::{cell::RefCell, collections::HashMap};
+use std::cell::RefCell;
 
-type ExchangeApiMap = HashMap<u8, Vec<ApiData>>;
-type ApiKeysStore = StableBTreeMap<Principal, StorableWrapper<ExchangeApiMap>, Memory>;
+type ApiKeysStore = StableBTreeMap<Principal, StorableWrapper<Vec<ApiData>>, Memory>;
 
 thread_local! {
   pub static API_KEYS: RefCell<ApiKeysStore> = RefCell::new(
@@ -21,6 +20,7 @@ thread_local! {
 
 #[derive(Serialize, Deserialize, CandidType, Clone, Debug, PartialEq, Eq)]
 pub struct ApiData {
+    exchange: Exchange,
     api_key: String,
     passphrase: Option<String>,
 }
@@ -28,20 +28,18 @@ pub struct ApiData {
 pub struct ApiStore {}
 
 impl ApiStore {
-    pub fn register_key(identity: &Principal, exchange: Exchange, data: ApiData) {
+    pub fn register_key(identity: &Principal, data: ApiData) {
         API_KEYS.with_borrow_mut(|k| {
             if let Some(user_keys) = &mut k.get(&identity) {
-                if let Some(exchange_keys) = user_keys.get_mut(&exchange.into()) {
-                    exchange_keys.push(data);
-                } else {
-                    user_keys.insert(exchange.into(), vec![data]);
-                }
+                user_keys.push(data);
             } else {
-                let mut exchange_keys = HashMap::new();
-                exchange_keys.insert(exchange.into(), vec![data]);
-                k.insert(identity.clone(), StorableWrapper(exchange_keys));
+                k.insert(identity.clone(), StorableWrapper(vec![data]));
             }
         });
+    }
+
+    pub fn get_all_keys(identity: &Principal) -> Option<Vec<ApiData>> {
+        API_KEYS.with_borrow(|k| k.get(&identity).map(|keys| keys.clone()))
     }
 }
 
@@ -54,12 +52,13 @@ mod tests {
         let principal = Principal::from_text("aaaaa-aa").unwrap();
 
         let data = ApiData {
+            exchange: Exchange::Okx,
             api_key: "api_key".to_string(),
             passphrase: Some("passphrase".to_string()),
         };
-        ApiStore::register_key(&principal, Exchange::Okx, data.clone());
+        ApiStore::register_key(&principal, data.clone());
         let keys = API_KEYS.with_borrow(|k| k.get(&principal).unwrap());
         assert_eq!(keys.len(), 1);
-        assert_eq!(keys.get(&Exchange::Okx.into()).unwrap()[0], data);
+        assert_eq!(keys[0], data);
     }
 }

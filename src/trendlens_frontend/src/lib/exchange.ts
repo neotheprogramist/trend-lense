@@ -1,3 +1,5 @@
+import type { Exchange } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+
 export enum Exchanges {
 	Okx = 'Okx',
 	Coinbase = 'Coinbase'
@@ -11,4 +13,15 @@ export type CandleStickData = {
 	close_price: number;
 	lowest_price: number;
 	highest_price: number;
+};
+
+
+
+export const handleExchange = (exchange: Exchanges): Exchange => {
+	switch (exchange) {
+		case Exchanges.Okx:
+			return { Okx: null };
+		case Exchanges.Coinbase:
+			return { Coinbase: null };
+	}
 };

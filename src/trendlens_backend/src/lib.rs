@@ -50,12 +50,19 @@ fn get_last_timestamp(exchange: Exchange) -> u64 {
 }
 
 #[ic_cdk::update]
-fn register_api_key(exchange: Exchange, register_info: ApiData) -> Result<bool, String> {
+fn register_api_key(register_info: ApiData) -> bool {
     let principal = ic_cdk::caller();
 
-    ApiStore::register_key(&principal, exchange, register_info);
+    ApiStore::register_key(&principal, register_info);
 
-    Ok(true)
+    true
+}
+
+#[ic_cdk::query]
+fn get_api_keys() -> Vec<ApiData> {
+    let principal = ic_cdk::caller();
+
+    ApiStore::get_all_keys(&principal).unwrap_or_default()
 }
 
 // TODO: split this function into smaller ones

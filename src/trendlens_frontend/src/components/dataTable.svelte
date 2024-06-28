@@ -1,46 +1,31 @@
 <script lang="ts">
 	import { createTable, Render, Subscribe, createRender } from 'svelte-headless-table';
-	import { readable } from 'svelte/store';
+	import { derived, readable, writable, type Writable } from 'svelte/store';
 	import * as Table from '$components/shad/ui/table/index';
-	import { Exchanges } from '$lib/exchange';
 	import DataTableActions from './dataTableActions.svelte';
+	import type { ApiData } from '../../../declarations/trendlens_backend/trendlens_backend.did';
 
-	type ApiData = {
-		apiKey: string;
-		exchange: Exchanges;
-		status: 'active' | 'revoked';
-	};
+	interface IProps {
+		children: any;
+		data: ApiData[];
+	}
 
-	const data: ApiData[] = [
-		{
-			apiKey: 'm5gr84i9',
-			exchange: Exchanges.Okx,
-			status: 'active'
-		},
-		{
-			apiKey: 'm5gr84i9',
-			exchange: Exchanges.Coinbase,
-			status: 'active'
-		}
-	];
+	let { children, data = $bindable([]) }: IProps = $props();
 
-	const table = createTable(readable(data));
+	const table = createTable(writable(data));
 
 	const columns = table.createColumns([
 		table.column({
-			accessor: 'apiKey',
+			accessor: 'api_key',
 			header: 'Api key'
 		}),
 		table.column({
 			accessor: 'exchange',
+			cell: ({ value }) => Object.keys(value)[0],
 			header: 'Exchange'
 		}),
 		table.column({
-			accessor: 'status',
-			header: 'Status'
-		}),
-		table.column({
-			accessor: ({ apiKey }) => apiKey,
+			accessor: ({ api_key }) => api_key,
 			header: '',
 			cell: ({ value }) => {
 				return createRender(DataTableActions, { id: value });
@@ -48,11 +33,18 @@
 		})
 	]);
 
+	$effect(() => {
+		console.log('running effect')
+		let store = table.data as Writable<ApiData[]>;
+		store.set(data);
+	});
+
 	const { headerRows, pageRows, tableAttrs, tableBodyAttrs } = table.createViewModel(columns);
 </script>
 
 <div class="rounded-md border">
 	<Table.Root {...$tableAttrs}>
+		<Table.Caption class="p-4">{@render children()}</Table.Caption>
 		<Table.Header>
 			{#each $headerRows as headerRow}
 				<Subscribe rowAttrs={headerRow.attrs()}>
