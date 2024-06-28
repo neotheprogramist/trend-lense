@@ -1,3 +1,4 @@
+type ApiData = record { api_key : text; passphrase : opt text };
 type Candle = record {
   close_price : float64;
   lowest_price : float64;
@@ -7,8 +8,10 @@ type Candle = record {
 };
 type Exchange = variant { Okx; Coinbase };
 type Pair = variant { BtcUsd; EthUsd };
+type Result = variant { Ok : bool; Err : text };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
   get_last_timestamp : (Exchange) -> (nat64) query;
   pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
+  register_api_key : (Exchange, ApiData) -> (Result);
 }

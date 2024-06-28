@@ -1,14 +1,19 @@
 use crate::pair::Pair;
+use api_store::ApiData;
+use api_store::ApiStore;
 use chain_data::ChainData;
 use chain_data::TimestampBased;
 use exchange::Candle;
 use exchange::Exchange;
+use remote_exchanges::coinbase::Coinbase;
 use remote_exchanges::okx::Okx;
-use remote_exchanges::ExternalProvider;
+use remote_exchanges::UpdateExchange;
 
 mod api_client;
+mod api_store;
 mod chain_data;
 mod exchange;
+mod memory;
 mod pair;
 mod remote_exchanges;
 mod storable_wrapper;
@@ -44,6 +49,15 @@ fn get_last_timestamp(exchange: Exchange) -> u64 {
     stored_exchange_data.candles.last_timestamp().unwrap_or(0)
 }
 
+#[ic_cdk::update]
+fn register_api_key(exchange: Exchange, register_info: ApiData) -> Result<bool, String> {
+    let principal = ic_cdk::caller();
+
+    ApiStore::register_key(&principal, exchange, register_info);
+
+    Ok(true)
+}
+
 // TODO: split this function into smaller ones
 // TODO: handle errors, return to caller
 #[ic_cdk::update]
@@ -57,9 +71,9 @@ async fn pull_candles(
         return vec![];
     }
 
-    let exchange = match exchange {
-        Exchange::Okx => Okx::default(),
-        Exchange::Coinbase => unimplemented!(),
+    let exchange: Box<dyn UpdateExchange> = match exchange {
+        Exchange::Okx => Box::new(Okx::default()),
+        Exchange::Coinbase => Box::new(Coinbase::default()),
     };
 
     let mut stored_exchange_data = exchange.get_mut_chain_data();

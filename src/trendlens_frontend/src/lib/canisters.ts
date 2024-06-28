@@ -1,11 +1,11 @@
 import { createActor, canisterId } from '../../../declarations/trendlens_backend/index';
 import { AuthClient } from '@dfinity/auth-client';
-import { HttpAgent, type ActorSubclass } from '@dfinity/agent';
 import type { _SERVICE } from '../../../declarations/trendlens_backend/trendlens_backend.did';
+import { canisters } from '../../../../dfx.json';
 
 export const anonymousBackend = createActor(canisterId);
 
-export const connect = async (): Promise<ActorSubclass<_SERVICE>> => {
+export const connect = async () => {
 	let authClient = await AuthClient.create();
 
 	await new Promise((resolve) => {
@@ -13,14 +13,13 @@ export const connect = async (): Promise<ActorSubclass<_SERVICE>> => {
 			identityProvider:
 				process.env.DFX_NETWORK === 'ic'
 					? 'https://identity.ic0.app'
-					: `http://${process.env.IDENTITY_CANISTER_ID}.localhost:4943/`,
+					: `http://${canisters.internet_identity.remote.id.ic}.localhost:4943/`,
 			onSuccess: () => resolve(undefined)
 		});
 	});
+
 	const identity = authClient.getIdentity();
+	const actor = createActor(canisterId, { agentOptions: { identity } });
 
-	console.log(identity.getPrincipal().toText());
-
-	const agent = new HttpAgent({ identity });
-	return createActor(canisterId, { agent });
+	return { actor, identity };
 };

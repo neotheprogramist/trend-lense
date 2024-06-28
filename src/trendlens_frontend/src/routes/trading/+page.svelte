@@ -73,8 +73,6 @@
 			Number(await anonymousBackend.get_last_timestamp(handleExchange(selectedExchange!))) * 1000 +
 			1;
 
-		console.log(lastTimestamp, stopTimestamp);
-
 		const transformedCandles = transformCandleData(newCandles);
 		candlesFromBackend = [...candlesFromBackend, ...transformedCandles];
 

@@ -16,10 +16,10 @@
 		</a>
 
 		<a
-			href="/trading"
+			href="/userKeys"
 			class={cn('text-sm font-medium text-muted-foreground transition-colors hover:text-primary')}
 		>
-			Something else
+			User keys
 		</a>
 	</nav>
 </div>

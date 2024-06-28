@@ -1,7 +1,6 @@
 use super::{ExchangeErrors, ExternalProvider};
-use crate::chain_data::{ChainData, ExchangeData, EXCHANGE_STORE};
+use crate::chain_data::ChainData;
 use crate::exchange::{Candle, Exchange};
-use crate::storable_wrapper::StorableWrapper;
 use crate::{api_client::ApiClient, Pair};
 use api::IndexCandleStickRequest;
 pub mod api;
@@ -13,27 +12,8 @@ pub struct Okx {
 }
 
 impl ChainData for Okx {
-    type Item = ExchangeData;
-    const KEY: Exchange = Exchange::Okx;
-
-    fn init(&self) {
-        EXCHANGE_STORE.with_borrow_mut(|b| {
-            b.insert(Self::KEY, StorableWrapper(ExchangeData::default()));
-        });
-    }
-
-    fn get_mut_chain_data(&self) -> StorableWrapper<Self::Item> {
-        EXCHANGE_STORE.with_borrow_mut(|b| b.get(&Self::KEY).unwrap())
-    }
-
-    fn get_chain_data(&self) -> StorableWrapper<Self::Item> {
-        EXCHANGE_STORE.with_borrow(|b| b.get(&Self::KEY).unwrap())
-    }
-
-    fn set_chain_data(&self, data: StorableWrapper<Self::Item>) {
-        ic_cdk::println!("Setting chain data");
-
-        EXCHANGE_STORE.with_borrow_mut(|b| b.insert(Self::KEY, data));
+    fn key(&self) -> Exchange {
+        Exchange::Okx
     }
 }
 
@@ -57,6 +37,7 @@ impl Okx {
     }
 }
 
+#[async_trait::async_trait]
 impl ExternalProvider for Okx {
     async fn fetch_candles(
         &self,
