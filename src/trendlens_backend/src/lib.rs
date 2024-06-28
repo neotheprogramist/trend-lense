@@ -1,22 +1,24 @@
 use crate::pair::Pair;
 use api_store::ApiData;
 use api_store::ApiStore;
-use candid::types::principal;
 use chain_data::ChainData;
 use chain_data::TimestampBased;
 
 use exchange::Candle;
 use exchange::Exchange;
 use remote_exchanges::coinbase::Coinbase;
-use remote_exchanges::okx::api;
+use remote_exchanges::okx::auth::OkxAuth;
 use remote_exchanges::okx::Okx;
-use remote_exchanges::okx::OkxAuth;
+
 use remote_exchanges::ExchangeErrors;
 use remote_exchanges::UpdateExchange;
+use remote_exchanges::UserData;
 use request_store::request::Request;
 use request_store::request::Response;
 use request_store::ExchangeRequestInfo;
 use request_store::RequestStore;
+use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 
 mod api_client;
 mod api_store;
@@ -66,6 +68,7 @@ fn register_api_key(exchange_api: ApiData) {
     ApiStore::register_key(&principal, exchange_api);
 }
 
+#[ic_cdk::update]
 fn remove_api_key(api_key: String) {
     let principal = ic_cdk::caller();
 
@@ -97,20 +100,25 @@ fn get_request(index: u8) -> Option<ExchangeRequestInfo> {
 async fn run_request(
     index: u8,
     signature: String,
-    timestamp: u64,
+    timestamp: i64,
 ) -> Result<Response, ExchangeErrors> {
     let identity = ic_cdk::caller();
+    let exchange_request = RequestStore::get_request(&identity, index).expect("missing request");
+    let api_info = ApiStore::get_by_api(&identity, &exchange_request.api_key.as_str())
+        .expect("api info not found");
 
-    let exchange_request = RequestStore::get_request(&identity, index).unwrap();
-    let api_info = ApiStore::get_by_api(&identity, &exchange_request.api_key.as_str()).unwrap();
+    let exchange: Box<dyn UserData> = match exchange_request.exchange {
+        Exchange::Okx => {
+            let time = OffsetDateTime::from_unix_timestamp(timestamp).expect("invalid timestamp");
+            let formatted_timestamp = time.format(&Rfc3339).expect("formatting failed");
 
-    let exchange: Box<dyn UpdateExchange> = match exchange_request.exchange {
-        Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
-            api_key: exchange_request.api_key,
-            passphrase: api_info.passphrase.unwrap(),
-            timestamp: "".to_string(),
-            signature,
-        })),
+            Box::new(Okx::with_auth(OkxAuth {
+                api_key: exchange_request.api_key,
+                passphrase: api_info.passphrase.unwrap(),
+                timestamp: formatted_timestamp,
+                signature,
+            }))
+        }
         Exchange::Coinbase => Box::new(Coinbase::default()),
     };
 

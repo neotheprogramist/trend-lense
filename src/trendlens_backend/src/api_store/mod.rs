@@ -6,13 +6,13 @@ use crate::{
 use candid::{CandidType, Principal};
 use ic_stable_structures::StableBTreeMap;
 use serde::{Deserialize, Serialize};
-use std::{cell::RefCell, collections::HashMap, hash::Hash};
+use std::{cell::RefCell, collections::HashMap};
 
 type ApiKey = String;
 type ApiKeysStore = StableBTreeMap<Principal, StorableWrapper<HashMap<ApiKey, ApiData>>, Memory>;
 
 thread_local! {
-  pub static API_KEYS: RefCell<ApiKeysStore> = RefCell::new(
+  static API_KEYS: RefCell<ApiKeysStore> = RefCell::new(
       StableBTreeMap::init(
           MEMORY_MANAGER.with(|m| m.borrow().get(MemoryLocation::UserKeys.memory_id())),
       )
@@ -60,7 +60,7 @@ impl ApiStore {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 
     // #[test]
     // fn test_register_key() {

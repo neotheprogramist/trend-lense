@@ -1,4 +1,4 @@
-use crate::remote_exchanges::{okx::response::ApiResponse, ApiRequest, Authorizable};
+use crate::remote_exchanges::{okx::response::ApiResponse, ApiRequest, Authorize};
 use candid::{CandidType, Nat};
 use ic_cdk::api::{
     call::RejectionCode,
@@ -48,10 +48,14 @@ impl ApiClient {
             * 13
     }
 
-    pub async fn call<R, A>(&self, request: R, auth: Option<&A>) -> Result<R::Response, ApiClientErrors>
+    pub async fn call<R, A>(
+        &self,
+        request: R,
+        auth: Option<&A>,
+    ) -> Result<R::Response, ApiClientErrors>
     where
         R: ApiRequest,
-        A: Authorizable,
+        A: Authorize,
     {
         let api_url = format!(
             "https://{}/{}{}",
@@ -67,7 +71,6 @@ impl ApiClient {
         } else {
             vec![]
         };
-
 
         let request = CanisterHttpRequestArgument {
             url: api_url,
@@ -87,9 +90,9 @@ impl ApiClient {
                     });
                 }
 
-                let body = String::from_utf8(response.body).unwrap();
+                let body = String::from_utf8(response.body).expect("conversion failed");
                 let deserialized_response: ApiResponse<R::Response> =
-                    serde_json::from_str(&body).unwrap();
+                    serde_json::from_str(&body).expect("deserialization failed");
                 // TODO: handle errors and messages
 
                 return Ok(deserialized_response.data);

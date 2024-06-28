@@ -79,6 +79,7 @@ service : () -> {
   get_request : (nat8) -> (opt ExchangeRequestInfo) query;
   initialize_request : (ExchangeRequestInfo) -> (nat8);
   pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
-  register_api_key : (ApiData) -> (bool);
+  register_api_key : (ApiData) -> ();
+  remove_api_key : (text) -> ();
   run_request : (nat8, text, nat64) -> (Result);
 }

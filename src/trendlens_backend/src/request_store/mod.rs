@@ -27,7 +27,7 @@ type AwaitingRequestsStore = StableBTreeMap<
 >;
 
 thread_local! {
-pub static API_KEYS: RefCell<AwaitingRequestsStore> = RefCell::new(
+    static API_KEYS: RefCell<AwaitingRequestsStore> = RefCell::new(
     StableBTreeMap::init(
         MEMORY_MANAGER.with(|m| m.borrow().get(MemoryLocation::UserRequest.memory_id())),
     )

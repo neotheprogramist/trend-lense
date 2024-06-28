@@ -15,7 +15,7 @@ type Timestamp = u64;
 type ExchangeStore = StableBTreeMap<Exchange, StorableWrapper<ExchangeData>, Memory>;
 
 thread_local! {
-    pub static EXCHANGE_STORE: RefCell<ExchangeStore> = RefCell::new(
+    static EXCHANGE_STORE: RefCell<ExchangeStore> = RefCell::new(
         StableBTreeMap::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryLocation::Exchanges.memory_id())),
         )

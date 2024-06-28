@@ -27,13 +27,10 @@ pub trait OpenData {
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors>;
-
-    // // consider
-    // async fn get_account_instruments(&self) -> Result<Vec<Instrument>, ExchangeErrors>;
 }
 
 #[async_trait::async_trait]
-pub trait AuthorizedData {
+pub trait UserData {
     async fn get_instruments(
         &self,
         request: GetInstrumentsRequest,
@@ -56,9 +53,9 @@ pub trait ApiRequest: Serialize {
     }
 }
 
-pub trait Authorizable {
+pub trait Authorize {
     fn get_auth_headers(&self) -> Vec<HttpHeader>;
 }
 
-pub trait UpdateExchange: OpenData + ChainData + AuthorizedData {}
-impl<T> UpdateExchange for T where T: OpenData + ChainData + AuthorizedData {}
+pub trait UpdateExchange: OpenData + ChainData + UserData {}
+impl<T> UpdateExchange for T where T: OpenData + ChainData + UserData {}

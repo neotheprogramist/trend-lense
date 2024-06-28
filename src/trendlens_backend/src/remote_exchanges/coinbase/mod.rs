@@ -4,10 +4,7 @@ use crate::{
     request_store::request::Response,
 };
 
-use super::{
-    okx::api::{GetInstrumentsRequest, Instrument},
-    AuthorizedData, ExchangeErrors, OpenData,
-};
+use super::{okx::api::GetInstrumentsRequest, ExchangeErrors, OpenData, UserData};
 
 #[derive(Default)]
 pub struct Coinbase;
@@ -25,7 +22,7 @@ impl OpenData for Coinbase {
 }
 
 #[async_trait::async_trait]
-impl AuthorizedData for Coinbase {
+impl UserData for Coinbase {
     async fn get_instruments(
         &self,
         req: GetInstrumentsRequest,
