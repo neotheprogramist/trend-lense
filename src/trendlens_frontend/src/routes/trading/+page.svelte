@@ -12,6 +12,7 @@
 	import * as Card from '$components/shad/ui/card/index';
 	import { Exchanges, handleExchange } from '$lib/exchange';
 	import { handlePair, Pairs } from '$lib/pair';
+	import RequestCreator from '$components/requestCreator.svelte';
 
 	const ONE_MINUTE = 60 * 1000;
 	const ONE_HOUR = 60 * ONE_MINUTE;
@@ -21,6 +22,7 @@
 	let interval = $state<number | null>(null);
 	let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
 	let stopTimestamp = $state<number>(Date.now());
+	let selectedExchange = $state<Exchanges | null>(null);
 
 	const transformCandleData = (candles: Candle[]): SeriesDataItemTypeMap['Candlestick'][] => {
 		return candles
@@ -63,6 +65,7 @@
 	};
 
 	const fetchCandles = (exchange: Exchanges, pair: Pairs): void => {
+		selectedExchange = exchange;
 		candlesFromBackend = [];
 
 		if (interval) {
@@ -81,7 +84,7 @@
 		<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
 			<Card.Root class="col-span-3">
 				<Card.Header>
-					<Card.Title>Recent trades</Card.Title>
+					<Card.Title>Recent requests</Card.Title>
 				</Card.Header>
 				<Card.Content>There may be some trades or other statistics</Card.Content>
 			</Card.Root>
@@ -93,6 +96,17 @@
 				<Card.Content>
 					<TradingHeader onSelectionCompleted={fetchCandles} />
 					<TradingView candlesData={candlesFromBackend} />
+				</Card.Content>
+			</Card.Root>
+
+			<Card.Root class="col-span-7">
+				<Card.Header>
+					<Card.Title>Actions</Card.Title>
+				</Card.Header>
+				<Card.Content>
+					<!-- {#if selectedExchange}
+						<RequestCreator exchange={selectedExchange} />
+					{/if} -->
 				</Card.Content>
 			</Card.Root>
 		</div>

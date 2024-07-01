@@ -1,38 +1,45 @@
-import { type ApiData } from '../../../declarations/trendlens_backend/trendlens_backend.did';
+import { type ApiData } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
 export type ApiWithSecret = ApiData & {
-	secret_key: string;
+  secret_key: string;
 };
 
-interface IKeyStore {
-	get keys(): ApiWithSecret[];
-	load(): void;
-}
+class KeyStore {
+  public m_keys = $state<ApiWithSecret[]>([]);
+  public m_focussed = $state<ApiWithSecret | null>(null);
 
-class KeyStore implements IKeyStore {
-	private m_keys = $state<ApiWithSecret[]>([]);
+  constructor() {
+    // Initialization is already handled in property declaration
+  }
 
-	constructor() {}
+  public focus(key: string): void {
+    const found = this.m_keys.find((el) => el.api_key === key);
 
-	get keys() {
-		return this.m_keys;
-	}
+    if (found !== undefined) {
+      this.m_focussed = found;
+    }
+  }
 
-	public load = () => {
-		for (let i = 0; i < window.localStorage.length; i++) {
-			const key = window.localStorage.key(i);
+  public load(): void {
+    this.m_keys = []; // Reset the keys array before loading
 
-			if (key === null) continue;
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
 
-			const item = window.localStorage.getItem(key);
+      if (key === null) continue;
 
-			if (item === null) continue;
+      const item = window.localStorage.getItem(key);
 
-			const decodedItem: ApiWithSecret = JSON.parse(item);
+      if (item === null) continue;
 
-			this.m_keys.push(decodedItem);
-		}
-	};
+      try {
+        const decodedItem: ApiWithSecret = JSON.parse(item);
+        this.m_keys.push(decodedItem);
+      } catch (e) {
+        console.error(`Error parsing localStorage item with key ${key}:`, e);
+      }
+    }
+  }
 }
 
 export const keyStore = new KeyStore();
