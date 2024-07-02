@@ -10,15 +10,15 @@
 	} from '../../../../declarations/trendlens_backend/trendlens_backend.did';
 	import type { SeriesDataItemTypeMap } from 'lightweight-charts';
 	import * as Card from '$components/shad/ui/card/index';
-	import { Exchanges } from '$lib/exchange';
-	import { Pair } from '$lib/pair';
+	import { Exchanges, handleExchange } from '$lib/exchange';
+	import { handlePair, Pairs } from '$lib/pair';
 
 	const ONE_MINUTE = 60 * 1000;
 	const ONE_HOUR = 60 * ONE_MINUTE;
 
 	let candlesFromBackend = $state<SeriesDataItemTypeMap['Candlestick'][]>([]);
 	let selectedExchange = $state<Exchanges | null>(null);
-	let selectedPair = $state<Pair | null>(null);
+	let selectedPair = $state<Pairs | null>(null);
 
 	let fetchInterval = $state(ONE_MINUTE);
 	let interval = $state<NodeJS.Timeout | null>(null);
@@ -39,23 +39,7 @@
 			.sort((a, b) => a.time - b.time);
 	};
 
-	const handlePair = (pair: Pair): CandidPair => {
-		switch (pair) {
-			case Pair.BtcUsd:
-				return { BtcUsd: null };
-			case Pair.EthUsd:
-				return { EthUsd: null };
-		}
-	};
 
-	const handleExchange = (exchange: Exchanges): CandidExchange => {
-		switch (exchange) {
-			case Exchanges.Okx:
-				return { Okx: null };
-			case Exchanges.Coinbase:
-				return { Coinbase: null };
-		}
-	};
 
 	const fetchNewCandles = async () => {
 		stopTimestamp = Date.now();
@@ -80,7 +64,7 @@
 		candlesFromBackend = candlesFromBackend;
 	};
 
-	const fetchCandles = (exchange: Exchanges, pair: Pair): void => {
+	const fetchCandles = (exchange: Exchanges, pair: Pairs): void => {
 		selectedExchange = exchange;
 		selectedPair = pair;
 
