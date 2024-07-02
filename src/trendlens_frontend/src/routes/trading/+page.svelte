@@ -113,7 +113,7 @@
           {#if selectedExchange}
             <RequestCreator exchange={selectedExchange} />
           {:else}
-            choose exchange and pair to view options
+            Choose exchange and pair to view options
           {/if}
         </Card.Content>
       </Card.Root>

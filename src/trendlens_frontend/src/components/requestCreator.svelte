@@ -1,11 +1,6 @@
 <script lang="ts">
   import type { Exchanges } from "$lib/exchange";
-  import { RequestPickState, RequestType } from "$lib/request";
-  import type {
-    Pair,
-    Request as CandidRequest,
-    GetInstrumentsRequest,
-  } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import { Instrument, Instruments, RequestPickState, RequestType, type ExchangeRequest } from "$lib/request";
   import RequestPicker from "./requestPicker.svelte";
   import { page } from "$app/stores";
   import { pushState } from "$app/navigation";
@@ -22,18 +17,16 @@
   let { exchange }: IProps = $props();
 
   let exchangeKey = keyStore.getByExchange(exchange);
-  let request = $state<FormFields<GetInstrumentsRequest | null>>(null);
+  let request = $state<FormFields<ExchangeRequest | null>>(null);
 
-  const getDefaultRequestOfType = (r: RequestType): GetInstrumentsRequest => {
+  const getDefaultRequestOfType = (r: RequestType): ExchangeRequest => {
     switch (r) {
       case RequestType.Empty:
         throw new Error("empty request not allowed");
       case RequestType.Instruments:
         return {
-          instId: [""],
-          instType: {
-            Spot: null,
-          },
+          instrumentId: '',
+          instrumentType: new Instruments(Instrument.Spot)
         };
     }
   };

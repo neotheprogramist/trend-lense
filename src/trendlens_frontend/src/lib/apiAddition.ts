@@ -7,7 +7,6 @@ const ApiStatus = {
   InvalidApiData: "provided data invalid",
 } as const;
 
-type ValueOf<T> = T[keyof T];
-
+export type ValueOf<T> = T[keyof T];
 export const ApiRegisterStatus = { ...BaseStatus, ...ApiStatus } as const;
 export type ApiRegisterStatusType = ValueOf<typeof ApiRegisterStatus>;

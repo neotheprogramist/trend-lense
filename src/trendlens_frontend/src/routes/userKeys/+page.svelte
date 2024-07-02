@@ -21,7 +21,6 @@
   };
 
   const removeApiKey = async (apiKey: string) => {
-		console.log('removing')
     if (!wallet.connected || !wallet.actor) {
       return;
     }

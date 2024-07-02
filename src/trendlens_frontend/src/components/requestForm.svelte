@@ -1,75 +1,76 @@
 <script lang="ts" context="module">
-  export type FormFields<T> = {
+  export type Fields<T> = {
     [K in keyof T]: T[K];
   };
 </script>
 
 <script lang="ts" generics="R">
+  import type { IEnum } from "$lib/request";
+  import BindableSelect from "./bindableSelect.svelte";
+  import Input from "./shad/ui/input/input.svelte";
+
   interface IProps {
-    request: FormFields<R>;
+    request: Fields<R>;
   }
 
   let { request = $bindable() }: IProps = $props();
-
-  let formData = $state<FormFields<R>>({ ...request });
+  let data = $state<Fields<R>>({ ...request });
 
   function handleInputChange(event: Event, key: keyof R) {
     const target = event.target as HTMLInputElement;
-    formData[key] = target.value as any;
-
-    console.log(formData[key]);
+    data[key] = target.value as any;
   }
+
+  function handleSelectChange(key: keyof R, value: string) {
+    data[key] = value as any;
+  }
+
   function handleNestedChange(event: CustomEvent, parentKey: keyof R) {
-    formData[parentKey] = {
-      ...(formData[parentKey] as object),
+    data[parentKey] = {
+      ...(data[parentKey] as object),
       ...event.detail,
     } as any;
-    console.log(formData);
   }
 
-  function isEnum(value: any): boolean {
-    return (
-      typeof value === "object" && Object.values(value).every((v) => v == null)
-    );
+  function isEnum(value: any): value is IEnum {
+    return typeof value == "object" && "isEnum" in value;
   }
 </script>
 
-<form>
-  {#if request}
-    {#each Object.keys(request) as key}
-      <div>
-        <!-- <label>{key}</label> -->
-        {#if typeof request[key as keyof R] === "object" && !isEnum(request[key as keyof R])}
-          <svelte:self
-            request={request[key as keyof R]}
-            on:formChange={(e) => handleNestedChange(e, key as keyof R)}
-          />
-        {:else if isEnum(request[key as keyof R])}
-          <select onchange={(e) => handleInputChange(e, key as keyof R)}>
-            {#each Object.keys(request[key as keyof R] as ArrayLike<any>) as value}
-              <option {value}>{value}</option>
-            {/each}
-          </select>
-        {:else if typeof request[key as keyof R] === "number"}
-          <input
-            type="number"
-            value={formData[key as keyof R] as number}
-            oninput={(e) => handleInputChange(e, key as keyof R)}
-          />
-        {:else if typeof request[key as keyof R] === "string" && key.includes("date")}
-          <input
-            type="date"
-            value={formData[key as keyof R] as string}
-            oninput={(e) => handleInputChange(e, key as keyof R)}
-          />
-        {:else}
-          <input
-            type="text"
-            value={formData[key as keyof R] as string}
-            oninput={(e) => handleInputChange(e, key as keyof R)}
-          />
-        {/if}
-      </div>
-    {/each}
-  {/if}
+{#snippet input(k: keyof R, inputType)}
+  <Input
+    type={inputType}
+    value={data[k]}
+    oninput={(e) => handleInputChange(e, k)}
+  />
+{/snippet}
+
+<form class="space-y-2">
+  {#each Object.keys(request) as key}
+    {@const k = key as keyof R}
+    {@const v = request[k]}
+
+    <div>
+      <label for="">{key}</label>
+      {#if typeof v === "object" && !isEnum(v)}
+        <svelte:self
+          request={v}
+          on:formChange={(e) => handleNestedChange(e, k)}
+        />
+      {:else if isEnum(v)}
+        <BindableSelect
+          items={v.getVariants()}
+          onChange={(v) => handleSelectChange(k, v)}
+          bind:value={v.v}
+          placeholder={v.getName()}
+        />
+      {:else if typeof v === "number"}
+        {@render input(k, "number")}
+      {:else if typeof v === "string" && key.includes("date")}
+        {@render input(k, "date")}
+      {:else}
+        {@render input(k, "text")}
+      {/if}
+    </div>
+  {/each}
 </form>
