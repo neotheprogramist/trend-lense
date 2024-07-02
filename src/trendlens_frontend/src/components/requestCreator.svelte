@@ -9,8 +9,9 @@
   import RequestPicker from "./requestPicker.svelte";
   import { page } from "$app/stores";
   import { pushState } from "$app/navigation";
-  import ApiKeyPicker from "./apiKeyPicker.svelte";
   import RequestForm, { type FormFields } from "./requestForm.svelte";
+  import { keyStore } from "$lib/keystore.svelte";
+  import { onMount } from "svelte";
 
   // right now i pass exchange as prop, but it could be store or context
 
@@ -20,6 +21,7 @@
 
   let { exchange }: IProps = $props();
 
+  let exchangeKey = keyStore.getByExchange(exchange);
   let request = $state<FormFields<GetInstrumentsRequest | null>>(null);
 
   const getDefaultRequestOfType = (r: RequestType): GetInstrumentsRequest => {
@@ -45,20 +47,24 @@
     });
   };
 
-  const handleApiPick = () => {
-    pushState("", {
-      requestPickState: RequestPickState.ApiPicked,
-      request: null,
-    });
-  };
+  onMount(() => {
+    if (exchangeKey) {
+      pushState("", {
+        requestPickState: RequestPickState.ApiRegistered,
+        request: null,
+      });
+    }
 
-  $inspect($page.state.requestPickState);
+    keyStore.load();
+  });
 </script>
 
 {#if $page.state.requestPickState == undefined}
-  <ApiKeyPicker {exchange} onApiKeyPick={handleApiPick} />
-{:else if $page.state.requestPickState === RequestPickState.ApiPicked}
+  {#if !exchangeKey}
+    Your api key was not setup, please set it up in appropriate place
+  {/if}
+{:else if $page.state.requestPickState === RequestPickState.ApiRegistered}
   <RequestPicker onRequestPick={handleRequestPick} />
 {:else if $page.state.requestPickState === RequestPickState.RequestPicked}
-  <RequestForm {request} />
+  <RequestForm bind:request />
 {/if}

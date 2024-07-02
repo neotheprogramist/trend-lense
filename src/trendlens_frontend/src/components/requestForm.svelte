@@ -9,7 +9,7 @@
     request: FormFields<R>;
   }
 
-  let { request }: IProps = $props();
+  let { request = $bindable() }: IProps = $props();
 
   let formData = $state<FormFields<R>>({ ...request });
 

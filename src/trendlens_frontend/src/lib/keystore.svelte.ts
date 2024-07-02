@@ -1,43 +1,74 @@
-import type  { ApiData } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+import type { Exchanges } from "./exchange";
 
-export type ApiWithSecret = ApiData & {
-  secret_key: string;
+export type ApiData = {
+  apiKey: string;
+  passphrase: string;
+  exchange: Exchanges;
 };
+
+export type ApiWithSecret = {
+  secretKey: string;
+} & ApiData;
 
 class KeyStore {
   keys = $state<ApiWithSecret[]>([]);
-  focussed = $state<ApiWithSecret | null>(null);
+  static LOCAL_STORAGE_KEY = "api_keys";
 
-  constructor() {
-    // Initialization is already handled in property declaration
-  }
+  constructor() {}
 
-  public focus(key: string): void {
-    const found = this.keys.find((el) => el.api_key === key);
-
-    if (found !== undefined) {
-      this.focussed = found;
+  private ensureLoaded(): void {
+    if (this.keys.length == 0) {
+      this.load();
     }
   }
 
+  public getByExchange(exchange: Exchanges): ApiWithSecret | null {
+    this.ensureLoaded();
+
+    const found = this.keys.find((el) => el.exchange == exchange);
+
+    if (found === undefined) {
+      return null;
+    } else {
+      return found;
+    }
+  }
+
+  // TODO: add bound denying adding another key for exchange until previous
+  // was removed
+  public add(keyData: ApiWithSecret): void {
+    this.ensureLoaded();
+    this.keys = [...this.keys, keyData];
+    this.save();
+  }
+
+  public remove(key: string): void {
+    this.ensureLoaded();
+    this.keys = this.keys.filter((k) => k.apiKey != key);
+    this.save();
+  }
+
+  public save(): void {
+    window.localStorage.setItem(
+      KeyStore.LOCAL_STORAGE_KEY,
+      JSON.stringify(this.keys),
+    );
+  }
+
   public load(): void {
-    this.keys = []; // Reset the keys array before loading
+    this.keys = [];
 
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i);
+    const encodedKeys = window.localStorage.getItem(KeyStore.LOCAL_STORAGE_KEY);
 
-      if (key === null) continue;
+    if (!encodedKeys) {
+      return;
+    }
 
-      const item = window.localStorage.getItem(key);
-
-      if (item === null) continue;
-
-      try {
-        const decodedItem: ApiWithSecret = JSON.parse(item);
-        this.keys.push(decodedItem);
-      } catch (e) {
-        console.error(`Error parsing localStorage item with key ${key}:`, e);
-      }
+    try {
+      const decodedKeys: ApiWithSecret[] = JSON.parse(encodedKeys);
+      this.keys = decodedKeys;
+    } catch (e) {
+      console.error(`Error decoding keys`);
     }
   }
 }

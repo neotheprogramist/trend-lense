@@ -5,10 +5,11 @@
     Subscribe,
     createRender,
   } from "svelte-headless-table";
-  import { derived, readable, writable, type Writable } from "svelte/store";
+  import {  writable, type Writable } from "svelte/store";
   import * as Table from "$components/shad/ui/table/index";
   import DataTableActions from "./dataTableActions.svelte";
-  import type { ApiData } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+    import type { ApiData } from "$lib/keystore.svelte";
+
 
   interface IProps {
     children: any;
@@ -16,25 +17,24 @@
     removeCallback: (id: string) => void;
   }
 
-  let { children, data = $bindable([]), removeCallback }: IProps = $props();
+  let { children, data, removeCallback }: IProps = $props();
 
   const table = createTable(writable(data));
 
   const columns = table.createColumns([
     table.column({
-      accessor: "api_key",
+      accessor: "apiKey",
       header: "Api key",
     }),
     table.column({
       accessor: "exchange",
-      cell: ({ value }) => Object.keys(value)[0],
       header: "Exchange",
     }),
     table.column({
-      accessor: ({ api_key }) => api_key,
+      accessor: ({ apiKey }) => apiKey,
       header: "",
       cell: ({ value }) => {
-        return createRender(DataTableActions, { id: value, removeCallback});
+        return createRender(DataTableActions, { id: value, removeCallback });
       },
     }),
   ]);

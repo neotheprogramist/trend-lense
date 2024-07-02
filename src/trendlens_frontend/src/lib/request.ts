@@ -4,7 +4,7 @@ export enum RequestType {
 }
 
 export enum RequestPickState {
-  ApiPicked,
+  ApiRegistered,
   RequestPicked,
   RequestFilled,
 }
