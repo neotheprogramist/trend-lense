@@ -10,7 +10,6 @@
   import { page } from "$app/stores";
   import { pushState } from "$app/navigation";
   import ApiKeyPicker from "./apiKeyPicker.svelte";
-  import { Empty } from "@dfinity/candid/lib/cjs/idl";
   import RequestForm, { type FormFields } from "./requestForm.svelte";
 
   // right now i pass exchange as prop, but it could be store or context
@@ -32,7 +31,7 @@
           instId: [""],
           instType: {
             Spot: null,
-          }, 
+          },
         };
     }
   };

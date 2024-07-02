@@ -38,7 +38,7 @@
   {#if request}
     {#each Object.keys(request) as key}
       <div>
-        <label>{key}</label>
+        <!-- <label>{key}</label> -->
         {#if typeof request[key as keyof R] === "object" && !isEnum(request[key as keyof R])}
           <svelte:self
             request={request[key as keyof R]}

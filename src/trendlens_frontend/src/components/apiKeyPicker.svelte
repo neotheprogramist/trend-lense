@@ -1,9 +1,10 @@
 <script lang="ts">
+
   import { Exchanges, handleExchange } from "$lib/exchange";
-  // import { keyStore } from '$lib/keystore.svelte';
-//   import * as Dialog from "$components/shad/ui/dialog/index";
-//   import Button from "./shad/ui/button/button.svelte";
-//   import { type ApiWithSecret } from "$lib/keystore.svelte";
+  import { keyStore } from "$lib/keystore.svelte.ts";
+  //   import * as Dialog from "$components/shad/ui/dialog/index";
+  //   import Button from "./shad/ui/button/button.svelte";
+  //   import { type ApiWithSecret } from "$lib/keystore.svelte";
 
   interface IProps {
     exchange: Exchanges;
@@ -13,20 +14,15 @@
   let { onApiKeyPick, exchange }: IProps = $props();
 
   const pickApiKey = (api_key: string) => {
-    // keyStore.focus(api_key);
+    keyStore.focus(api_key);
     onApiKeyPick();
   };
 
-  // $effect(() => {
-  // 	if (keyStore.keys.length == 0) {
-  // 		keyStore.load();
-  // 	}
-  // });
-
-  const focussed = {
-    exchange: { Okx: null },
-  };
-  const keys = [{ api_key: "123" }, { api_key: "456" }];
+  $effect(() => {
+    if (keyStore.keys.length == 0) {
+      keyStore.load();
+    }
+  });
 </script>
 
 <!-- {#if focussed && focussed.exchange == handleExchange(exchange)}
@@ -48,16 +44,16 @@
     </Dialog.Content>
   </Dialog.Root>
 {:else} -->
-  <ul>
-    <!-- {#each keyStore.m_keys as key}
+<ul>
+  <!-- {#each keyStore.m_keys as key}
 			<li>
 				<button onclick={() => pickApiKey(key.api_key)}>{key.api_key}</button>
 			</li>
 		{/each} -->
-    {#each keys as key}
-      <li>
-        <button onclick={() => pickApiKey(key.api_key)}>{key.api_key}</button>
-      </li>
-    {/each}
-  </ul>
+  {#each keyStore.keys as key}
+    <li>
+      <button onclick={() => pickApiKey(key.api_key)}>{key.api_key}</button>
+    </li>
+  {/each}
+</ul>
 <!-- {/if} -->

@@ -2,12 +2,8 @@
   import TradingHeader from "$components/tradingHeader.svelte";
   import TradingView from "$components/tradingView.svelte";
   import { anonymousBackend } from "$lib/canisters";
-  import type { CandlestickData, UTCTimestamp } from "lightweight-charts";
-  import type {
-    Candle,
-    Pair as CandidPair,
-    Exchange as CandidExchange,
-  } from "../../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type { UTCTimestamp } from "lightweight-charts";
+  import type { Candle } from "../../../../declarations/trendlens_backend/trendlens_backend.did";
   import type { SeriesDataItemTypeMap } from "lightweight-charts";
   import * as Card from "$components/shad/ui/card/index";
   import { Exchanges, handleExchange } from "$lib/exchange";
@@ -51,6 +47,8 @@
       BigInt(Math.floor(lastTimestamp / 1000)),
       BigInt(Math.floor(stopTimestamp / 1000)),
     );
+
+    console.log("new candles", newCandles);
 
     lastTimestamp =
       Number(

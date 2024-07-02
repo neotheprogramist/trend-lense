@@ -1,6 +1,7 @@
 use std::{
     cell::RefCell,
     collections::{BTreeMap, HashMap},
+    hash::Hash,
     ops::{Deref, DerefMut},
 };
 
@@ -45,6 +46,10 @@ impl DerefMut for PairCandles {
 
 impl PairCandles {
     pub fn insert_many(&mut self, pair: Pair, candles: Vec<Candle>) {
+        if !self.pair_initialized(&pair) {
+            self.insert(pair.clone(), CandlesStore::default());
+        }
+
         if let Some(data) = self.get_mut(&pair) {
             for c in candles {
                 data.insert(c.timestamp, c);
@@ -54,6 +59,10 @@ impl PairCandles {
 
     pub fn get_pair_candles(&self, pair: &Pair) -> Option<&CandlesStore> {
         self.get(pair)
+    }
+
+    fn pair_initialized(&mut self, pair: &Pair) -> bool {
+        self.get(pair).is_some()
     }
 }
 

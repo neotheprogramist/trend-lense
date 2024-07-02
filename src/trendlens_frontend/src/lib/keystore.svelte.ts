@@ -1,27 +1,27 @@
-import { type ApiData } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+import type  { ApiData } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
 export type ApiWithSecret = ApiData & {
   secret_key: string;
 };
 
 class KeyStore {
-  public m_keys = $state<ApiWithSecret[]>([]);
-  public m_focussed = $state<ApiWithSecret | null>(null);
+  keys = $state<ApiWithSecret[]>([]);
+  focussed = $state<ApiWithSecret | null>(null);
 
   constructor() {
     // Initialization is already handled in property declaration
   }
 
   public focus(key: string): void {
-    const found = this.m_keys.find((el) => el.api_key === key);
+    const found = this.keys.find((el) => el.api_key === key);
 
     if (found !== undefined) {
-      this.m_focussed = found;
+      this.focussed = found;
     }
   }
 
   public load(): void {
-    this.m_keys = []; // Reset the keys array before loading
+    this.keys = []; // Reset the keys array before loading
 
     for (let i = 0; i < window.localStorage.length; i++) {
       const key = window.localStorage.key(i);
@@ -34,7 +34,7 @@ class KeyStore {
 
       try {
         const decodedItem: ApiWithSecret = JSON.parse(item);
-        this.m_keys.push(decodedItem);
+        this.keys.push(decodedItem);
       } catch (e) {
         console.error(`Error parsing localStorage item with key ${key}:`, e);
       }
