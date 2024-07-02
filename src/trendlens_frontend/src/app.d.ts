@@ -1,6 +1,6 @@
 // See https://kit.svelte.dev/docs/types#app
 
-import type { RequestType } from "$lib/request";
+import type { RequestPickState, RequestType } from "$lib/request";
 
 // for information about these interfaces
 declare global {
@@ -9,6 +9,7 @@ declare global {
 		// interface Locals {}
 		// interface PageData {}
 		interface PageState {
+			requestPickState: RequestPickState | null;
 			requestType: RequestType | null;
 		}
 		// interface Platform {}

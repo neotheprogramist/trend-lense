@@ -1,23 +1,65 @@
 <script lang="ts">
-	import type { Exchanges } from '$lib/exchange';
-	import type { RequestType } from '$lib/request';
-	import type { Pair } from '../../../declarations/trendlens_backend/trendlens_backend.did';
-	import RequestPicker from './requestPicker.svelte';
-	// import { page } from '$app/stores';
-	// import { pushState } from '$app/navigation';
-	import ApiKeyPicker from './apiKeyPicker.svelte';
+  import type { Exchanges } from "$lib/exchange";
+  import { RequestPickState, RequestType } from "$lib/request";
+  import type {
+    Pair,
+    Request as CandidRequest,
+    GetInstrumentsRequest,
+  } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import RequestPicker from "./requestPicker.svelte";
+  import { page } from "$app/stores";
+  import { pushState } from "$app/navigation";
+  import ApiKeyPicker from "./apiKeyPicker.svelte";
+  import { Empty } from "@dfinity/candid/lib/cjs/idl";
+  import RequestForm, { type FormFields } from "./requestForm.svelte";
 
-	// right now i pass exchange as prop, but it could be store or context
+  // right now i pass exchange as prop, but it could be store or context
 
-	interface IProps {
-		exchange: Exchanges;
-	}
+  interface IProps {
+    exchange: Exchanges;
+  }
 
-	let { exchange }: IProps = $props();
+  let { exchange }: IProps = $props();
 
-	const handleRequestPick = (requestType: RequestType) => {
-	};
+  let request = $state<FormFields<GetInstrumentsRequest | null>>(null);
+
+  const getDefaultRequestOfType = (r: RequestType): GetInstrumentsRequest => {
+    switch (r) {
+      case RequestType.Empty:
+        throw new Error("empty request not allowed");
+      case RequestType.Instruments:
+        return {
+          instId: [""],
+          instType: {
+            Spot: null,
+          }, 
+        };
+    }
+  };
+
+  const handleRequestPick = (r: RequestType) => {
+    request = getDefaultRequestOfType(r);
+
+    pushState("", {
+      requestPickState: RequestPickState.RequestPicked,
+      request: r,
+    });
+  };
+
+  const handleApiPick = () => {
+    pushState("", {
+      requestPickState: RequestPickState.ApiPicked,
+      request: null,
+    });
+  };
+
+  $inspect($page.state.requestPickState);
 </script>
 
-<ApiKeyPicker exchange={exchange} onApiKeyPick={() => console.log('3l')} />
-<RequestPicker onRequestPick={handleRequestPick} />
+{#if $page.state.requestPickState == undefined}
+  <ApiKeyPicker {exchange} onApiKeyPick={handleApiPick} />
+{:else if $page.state.requestPickState === RequestPickState.ApiPicked}
+  <RequestPicker onRequestPick={handleRequestPick} />
+{:else if $page.state.requestPickState === RequestPickState.RequestPicked}
+  <RequestForm {request} />
+{/if}
