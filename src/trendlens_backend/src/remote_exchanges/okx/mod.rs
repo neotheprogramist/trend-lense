@@ -4,6 +4,8 @@ use crate::exchange::Exchange;
 use crate::Pair;
 use auth::OkxAuth;
 
+use super::ApiRequest;
+
 pub mod api;
 pub mod auth;
 pub mod open;
@@ -15,7 +17,6 @@ pub struct Okx {
     auth: Option<OkxAuth>,
     api_client: ApiClient,
 }
-
 
 impl Okx {
     /// gets interval string from u32 in minutes
@@ -34,6 +35,12 @@ impl Okx {
             Pair::BtcUsd => Some("BTC-USD".to_string()),
             Pair::EthUsd => Some("ETH-USD".to_string()),
         }
+    }
+
+    pub fn get_signature_data<R: ApiRequest>(&self, request: R) -> String {
+        let api_url = format!("/{}{}", R::URI, format!("?{}", request.to_query_string()));
+
+        format!("{:?}{}{}", R::METHOD, R::BODY, api_url).to_string()
     }
 }
 

@@ -79,6 +79,7 @@ service : () -> {
   get_last_timestamp : (Exchange, Pair) -> (opt nat64) query;
   get_pairs : (Exchange) -> (vec Pair) query;
   get_request : (nat8) -> (opt ExchangeRequestInfo) query;
+  get_request_signature_string : (nat8) -> (text) query;
   get_requests : () -> (vec opt ExchangeRequestInfo) query;
   initialize_request : (ExchangeRequestInfo) -> (nat8);
   pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);

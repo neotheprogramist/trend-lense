@@ -88,6 +88,16 @@ fn get_api_keys() -> Vec<ApiData> {
     ApiStore::get_all_keys(&principal).unwrap_or_default()
 }
 
+#[ic_cdk::query]
+fn get_request_signature_string(index: u8) -> String {
+    let identity = ic_cdk::caller();
+
+    let request_info = RequestStore::get_request(&identity, index).expect("missing request");
+
+    let exchange_impl = ExchangeImpl::new(request_info.exchange);
+    exchange_impl.get_signature_string(request_info.request)
+}
+
 #[ic_cdk::update]
 fn initialize_request(request: ExchangeRequestInfo) -> u8 {
     let identity = ic_cdk::caller();

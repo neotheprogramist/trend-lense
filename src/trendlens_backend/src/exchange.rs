@@ -6,7 +6,11 @@ use std::borrow::Cow;
 use crate::{
     chain_data::{ChainData, ExchangeData},
     pair::Pair,
-    remote_exchanges::{coinbase::Coinbase, okx::Okx},
+    remote_exchanges::{
+        coinbase::Coinbase,
+        okx::{api::GetInstrumentsRequest, Okx},
+    },
+    request_store::request::Request,
     storable_wrapper::StorableWrapper,
 };
 
@@ -72,6 +76,24 @@ impl ExchangeImpl {
         match self {
             ExchangeImpl::Coinbase(_) => vec![],
             ExchangeImpl::Okx(o) => o.get_pairs(),
+        }
+    }
+
+    // right now for testing purposes used single request, but it should be
+    // preconstructed for further use or migrate signature generation to client
+    pub fn get_signature_string(&self, request: Request) -> String {
+        match self {
+            ExchangeImpl::Coinbase(_) => "".to_string(),
+            ExchangeImpl::Okx(o) => match request {
+                Request::Instruments(i) => {
+                    let request = GetInstrumentsRequest {
+                        instrument_id: i.instrument_id,
+                        instrument_type: i.instrument_type,
+                    };
+                    o.get_signature_data(request)
+                }
+                _ => "".to_string(),
+            },
         }
     }
 
