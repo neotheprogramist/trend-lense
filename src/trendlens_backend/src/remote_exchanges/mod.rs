@@ -4,12 +4,13 @@ use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod};
-use okx::api::GetInstrumentsRequest;
+use request::GeneralInstrumentsRequest;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub mod coinbase;
 pub mod okx;
+pub mod request;
 
 
 #[derive(Debug, Error, CandidType)]
@@ -34,7 +35,7 @@ pub trait OpenData {
 pub trait UserData {
     async fn get_instruments(
         &self,
-        request: GetInstrumentsRequest,
+        request: GeneralInstrumentsRequest,
     ) -> Result<Response, ExchangeErrors>;
 }
 
@@ -53,6 +54,7 @@ pub trait ApiRequest: Serialize {
         serde_qs::to_string(self).unwrap()
     }
 }
+
 
 pub trait Authorize {
     fn get_auth_headers(&self) -> Vec<HttpHeader>;

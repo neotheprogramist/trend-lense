@@ -7,27 +7,41 @@
 <script lang="ts" generics="R">
   import type { IEnum } from "$lib/request";
   import BindableSelect from "./bindableSelect.svelte";
+  import Button from "./shad/ui/button/button.svelte";
   import Input from "./shad/ui/input/input.svelte";
 
   interface IProps {
     request: Fields<R>;
+    onSubmit: () => void;
   }
 
-  let { request = $bindable() }: IProps = $props();
-  let data = $state<Fields<R>>({ ...request });
+  let { request = $bindable(), onSubmit }: IProps = $props();
+  let keys = Object.keys(request).filter((k) => k !== "type");
 
   function handleInputChange(event: Event, key: keyof R) {
     const target = event.target as HTMLInputElement;
-    data[key] = target.value as any;
+    request[key] = target.value as any;
   }
 
   function handleSelectChange(key: keyof R, value: string) {
-    data[key] = value as any;
+    const obj = request[key];
+
+    if (isEnum(obj)) {
+      if (obj.getVariants().find((v) => v === value) !== undefined) {
+        obj.v = value;
+      } else {
+        throw new Error(`Invalid value ${value} for enum ${key as string}`);
+      }
+    } else {
+      request[key] = value as any;
+    }
+
+    request = request;
   }
 
   function handleNestedChange(event: CustomEvent, parentKey: keyof R) {
-    data[parentKey] = {
-      ...(data[parentKey] as object),
+    request[parentKey] = {
+      ...(request[parentKey] as object),
       ...event.detail,
     } as any;
   }
@@ -35,18 +49,20 @@
   function isEnum(value: any): value is IEnum {
     return typeof value == "object" && "isEnum" in value;
   }
+
+  $inspect({ request });
 </script>
 
 {#snippet input(k: keyof R, inputType)}
   <Input
     type={inputType}
-    value={data[k]}
+    value={request[k]}
     oninput={(e) => handleInputChange(e, k)}
   />
 {/snippet}
 
 <form class="space-y-2">
-  {#each Object.keys(request) as key}
+  {#each keys as key}
     {@const k = key as keyof R}
     {@const v = request[k]}
 
@@ -73,4 +89,6 @@
       {/if}
     </div>
   {/each}
+
+  <Button type="submit" on:click={onSubmit}>Submit</Button>
 </form>

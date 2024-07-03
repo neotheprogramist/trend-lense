@@ -57,10 +57,18 @@ export const Instrument = {
   Margin: "Margin",
 } as const;
 
+type BaseRequest = {
+  type: RequestType;
+};
+
 export type InstrumentsRequest = {
   instrumentType: Instruments;
   instrumentId: string;
-};
+} & BaseRequest;
+
+export type SomeMockRequest = {
+  id: number;
+} & BaseRequest;
 
 export type InstrumentType = ValueOf<typeof Instrument>;
-export type ExchangeRequest = InstrumentsRequest;
+export type ExchangeRequest = InstrumentsRequest | SomeMockRequest;

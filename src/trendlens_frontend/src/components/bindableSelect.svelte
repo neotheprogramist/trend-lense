@@ -16,9 +16,9 @@
     return { value: e };
   })}
   onSelectedChange={(e) => {
-    if (e) {
+    if (e !== undefined) {
       value = e.value;
-
+      console.log(e.value)
       if (onChange) {
         onChange(e.value);
       }

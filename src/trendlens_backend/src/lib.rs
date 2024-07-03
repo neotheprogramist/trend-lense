@@ -95,11 +95,30 @@ fn initialize_request(request: ExchangeRequestInfo) -> u8 {
     RequestStore::add_request(&identity, request)
 }
 
+#[ic_cdk::update]
+fn delete_request(index: u8) {
+    let identity = ic_cdk::caller();
+
+    RequestStore::delete_request(&identity, index);
+}
+
 #[ic_cdk::query]
 fn get_request(index: u8) -> Option<ExchangeRequestInfo> {
     let identity = ic_cdk::caller();
 
     RequestStore::get_request(&identity, index)
+}
+
+#[ic_cdk::query]
+fn get_requests() -> Vec<Option<ExchangeRequestInfo>> {
+    let identity = ic_cdk::caller();
+
+    let last_index = RequestStore::next_index(&identity);
+
+    (0..last_index)
+        .into_iter()
+        .map(|i| RequestStore::get_request(&identity, i))
+        .collect::<Vec<_>>()
 }
 
 #[ic_cdk::query]

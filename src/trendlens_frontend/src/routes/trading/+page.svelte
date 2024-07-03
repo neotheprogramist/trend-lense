@@ -9,6 +9,7 @@
   import { Exchanges, handleExchange } from "$lib/exchange";
   import { handlePair, Pairs } from "$lib/pair";
   import RequestCreator from "$components/requestCreator.svelte";
+  import RequestList from "$components/requestList.svelte";
 
   const ONE_MINUTE = 60 * 1000;
   const ONE_HOUR = 60 * ONE_MINUTE;
@@ -91,8 +92,9 @@
         <Card.Header>
           <Card.Title>Recent requests</Card.Title>
         </Card.Header>
-        <Card.Content>There may be some trades or other statistics</Card.Content
-        >
+        <Card.Content>
+          <RequestList />
+        </Card.Content>
       </Card.Root>
 
       <Card.Root class="col-span-4">
