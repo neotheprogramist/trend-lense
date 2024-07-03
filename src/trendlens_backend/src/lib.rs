@@ -142,7 +142,7 @@ fn get_pairs(exchange: Exchange) -> Vec<Pair> {
 async fn run_request(
     index: u8,
     signature: String,
-    timestamp: i64,
+    timestamp_utc: String,
 ) -> Result<Response, ExchangeErrors> {
     let identity = ic_cdk::caller();
     let exchange_request = RequestStore::get_request(&identity, index).expect("missing request");
@@ -151,13 +151,10 @@ async fn run_request(
 
     let exchange: Box<dyn UserData> = match exchange_request.exchange {
         Exchange::Okx => {
-            let time = OffsetDateTime::from_unix_timestamp(timestamp).expect("invalid timestamp");
-            let formatted_timestamp = time.format(&Rfc3339).expect("formatting failed");
-
             Box::new(Okx::with_auth(OkxAuth {
                 api_key: exchange_request.api_key,
                 passphrase: api_info.passphrase.unwrap(),
-                timestamp: formatted_timestamp,
+                timestamp: timestamp_utc,
                 signature,
             }))
         }

@@ -85,5 +85,5 @@ service : () -> {
   pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
   register_api_key : (ApiData) -> (bool);
   remove_api_key : (text) -> ();
-  run_request : (nat8, text, int64) -> (Result);
+  run_request : (nat8, text, text) -> (Result);
 }

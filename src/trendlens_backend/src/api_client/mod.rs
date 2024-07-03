@@ -72,6 +72,8 @@ impl ApiClient {
             vec![]
         };
 
+        ic_cdk::println!("{:?}", auth_headers);
+
         let request = CanisterHttpRequestArgument {
             url: api_url,
             method: R::METHOD,
@@ -84,13 +86,16 @@ impl ApiClient {
 
         match http_request(request, required_cycles).await {
             Ok((response,)) => {
+                ic_cdk::println!("{:?}", String::from_utf8(response.body.clone()).expect("conversion failed"));
                 if response.status != Nat::from(200u32) {
                     return Err(ApiClientErrors::Http {
                         status: response.status,
                     });
                 }
 
-                let body = String::from_utf8(response.body).expect("conversion failed");
+              
+
+                let body: String = String::from_utf8(response.body).expect("conversion failed");
                 let deserialized_response: ApiResponse<R::Response> =
                     serde_json::from_str(&body).expect("deserialization failed");
                 // TODO: handle errors and messages
@@ -98,6 +103,9 @@ impl ApiClient {
                 return Ok(deserialized_response.data);
             }
             Err(err) => {
+                ic_cdk::println!("{:?}", err);
+
+
                 return Err(ApiClientErrors::Reject {
                     message: err.1,
                     code: err.0,

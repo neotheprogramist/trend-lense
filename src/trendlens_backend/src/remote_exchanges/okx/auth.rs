@@ -1,6 +1,6 @@
-use ic_cdk::api::management_canister::http_request::HttpHeader;
-use crate::remote_exchanges::Authorize;
 use super::Okx;
+use crate::remote_exchanges::Authorize;
+use ic_cdk::api::management_canister::http_request::HttpHeader;
 
 pub struct OkxAuth {
     pub api_key: String,
@@ -27,6 +27,10 @@ impl Authorize for OkxAuth {
             HttpHeader {
                 name: "OK-ACCESS-PASSPHRASE".to_string(),
                 value: self.passphrase.clone(),
+            },
+            HttpHeader {
+                name: "x-simulated-trading".to_string(),
+                value: "1".to_string(),
             },
         ]
     }

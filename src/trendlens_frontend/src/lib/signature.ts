@@ -14,8 +14,9 @@ export const finishSignature = async (
   secret: string,
   timestamp: string,
 ): Promise<string> => {
+  console.log(timestamp);
   const preHashString = timestamp + signatureData;
-
+  console.log(preHashString);
   const keyData = base64ToArrayBuffer(btoa(secret));
   const cryptoKey = await crypto.subtle.importKey(
     "raw",

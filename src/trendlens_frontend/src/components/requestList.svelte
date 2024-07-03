@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Exchanges } from "$lib/exchange";
+  import { keyStore } from "$lib/keystore.svelte";
   import { finishSignature } from "$lib/signature";
   import { wallet } from "$lib/wallet.svelte";
   import type { ExchangeRequestInfo } from "../../../declarations/trendlens_backend/trendlens_backend.did";
@@ -25,19 +27,23 @@
   const runRequest = async (id: number) => {
     const signatureData = await wallet.actor?.get_request_signature_string(id);
 
+    // get this exchange
+    const key = keyStore.getByExchange(Exchanges.Okx);
     if (!signatureData) {
       throw new Error("No signature found");
       return;
     }
+    
     const now = new Date();
     const timestamp = now.toISOString();
+   
     const signature = await finishSignature(
       signatureData,
-      timestamp,
+      key?.secretKey,
       timestamp,
     );
 
-    const res = await wallet.actor?.run_request(id, signature, BigInt(now.getMilliseconds()));
+    const res = await wallet.actor?.run_request(id, signature, timestamp);
     console.log(res);
   };
 
