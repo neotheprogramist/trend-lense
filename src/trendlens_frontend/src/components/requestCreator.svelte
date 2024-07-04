@@ -3,10 +3,13 @@
   import {
     Instruments,
     InstrumentType,
+    OptionalField,
     OrderSide,
     OrderSideType,
     OrderType,
     OrderTypeType,
+    PositionSide,
+    PositionSideType,
     RequestPickState,
     RequestType,
     TradeMode,
@@ -27,7 +30,7 @@
     Request as BackendRequest,
     InstrumentType as BackendInstrumentType,
   } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-  import type { Field } from "bits-ui/dist/bits/date-picker";
+  import Button from "./shad/ui/button/button.svelte";
 
   // right now i pass exchange as prop, but it could be store or context
 
@@ -46,24 +49,26 @@
       case RequestType.GetInstruments:
         return {
           type: RequestType.GetInstruments,
-          instrumentId: null,
+          instrumentId: new OptionalField<string>(null),
           instrumentType: new Instruments(InstrumentType.Spot),
         } as InstrumentsRequest;
       case RequestType.GetBalance:
         return {
           type: RequestType.GetBalance,
-          currencies: [],
+          currencies: new OptionalField<string>(null),
         } as BalanceRequests;
       case RequestType.PostOrder:
         return {
           type: RequestType.PostOrder,
           instrumentId: "",
           side: new OrderSide(OrderSideType.Buy),
-          marginCurrency: null,
+          marginCurrency: new OptionalField<string>(null),
           size: 1,
-          orderPrice: null,
+          orderPrice: new OptionalField<number>(null),
           orderType: new OrderType(OrderTypeType.Market),
-          positionSide: null,
+          positionSide: new OptionalField<PositionSide>(
+            new PositionSide(PositionSideType.Long),
+          ),
           tradeMode: new TradeMode(TradeModeType.SpotIsolated),
         } as PostOrderRequest;
     }
@@ -109,7 +114,9 @@
 
         return {
           Instruments: {
-            instrument_id: req.instrumentId ? [req.instrumentId] : [],
+            instrument_id: req.instrumentId.value
+              ? [req.instrumentId.value]
+              : [],
             instrument_type: handleInstrumentType(key),
           },
         };
@@ -149,6 +156,8 @@
 
     keyStore.load();
   });
+
+  $inspect({ request }, "REQ");
 </script>
 
 {#if $page.state.requestPickState == undefined}
@@ -159,4 +168,5 @@
   <RequestPicker onRequestPick={handleRequestPick} />
 {:else if $page.state.requestPickState === RequestPickState.RequestPicked}
   <RequestForm bind:request onSubmit={sendRequest} />
+  <Button class="mt-4" type="submit" on:click={sendRequest}>Submit</Button>
 {/if}

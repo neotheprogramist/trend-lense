@@ -2,9 +2,9 @@ import type { ValueOf } from "./apiAddition";
 
 export enum RequestType {
   Empty = "Empty",
-  GetInstruments = "GetInstruments",
-  GetBalance = "GetBalance",
-  PostOrder = "PostOrder",
+  GetInstruments = "Get instruments",
+  GetBalance = "Get balance",
+  PostOrder = "Post order",
 }
 
 export enum RequestPickState {
@@ -189,12 +189,12 @@ export class Instruments implements IEnum {
   }
 }
 
-export const InstrumentType = {
-  Spot: "Spot",
-  Features: "Features",
-  Swap: "Swap",
-  Margin: "Margin",
-} as const;
+export enum InstrumentType {
+  Spot = "Spot",
+  Features = "Features",
+  Swap = "Swap",
+  Margin = "Margin",
+}
 
 type BaseRequest = {
   type: RequestType;
@@ -202,25 +202,36 @@ type BaseRequest = {
 
 export type InstrumentsRequest = {
   instrumentType: Instruments;
-  instrumentId: string | null;
+  instrumentId: OptionalField<string>;
 } & BaseRequest;
 
 export type BalanceRequests = {
-  currencies: Array<string>;
+  currencies: OptionalField<string>;
 } & BaseRequest;
 
+export interface IOptional<T> {
+  value: T | null;
+}
+
+export class OptionalField<T> implements IOptional<T> {
+  public value: T | null;
+
+  constructor(v: T | null) {
+    this.value = v;
+  }
+}
+
 export type PostOrderRequest = {
-  marginCurrency: string | null;
+  marginCurrency: OptionalField<string>;
   size: number;
   instrumentId: string;
-  orderPrice: number | null;
+  orderPrice: OptionalField<number>;
   side: OrderSide;
   tradeMode: TradeMode;
   orderType: OrderType;
-  positionSide: PositionSide | null;
+  positionSide: OptionalField<PositionSide>;
 } & BaseRequest;
 
-export type InstrumentType = ValueOf<typeof InstrumentType>;
 export type ExchangeRequest =
   | InstrumentsRequest
   | BalanceRequests
