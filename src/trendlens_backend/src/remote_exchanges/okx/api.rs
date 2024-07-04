@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use super::response::{CandleStick, Instrument};
+use super::response::{AccountInfo, CandleStick, Instrument};
 use crate::remote_exchanges::ApiRequest;
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
@@ -70,6 +70,23 @@ impl ApiRequest for GetInstrumentsRequest {
     const PUBLIC: bool = false;
 
     type Response = Vec<Instrument>;
+}
+
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+pub struct GetBalanceRequest {
+    #[serde(rename = "ccy")]
+    pub currencies: Option<String>,
+}
+
+impl ApiRequest for GetBalanceRequest {
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "api/v5/account/balance";
+    const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = false;
+
+    type Response = AccountInfo;
 }
 
 #[skip_serializing_none]

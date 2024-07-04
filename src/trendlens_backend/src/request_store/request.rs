@@ -1,4 +1,4 @@
-use crate::remote_exchanges::okx::response::Instrument;
+use crate::remote_exchanges::okx::response::{AccountInfo, Instrument};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -9,6 +9,7 @@ pub enum Request {
     #[default]
     Empty,
     Instruments(crate::remote_exchanges::request::GeneralInstrumentsRequest),
+    Balances(crate::remote_exchanges::request::GeneralBalanceRequest),
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, CandidType)]
@@ -19,4 +20,5 @@ pub struct In {
 #[derive(Debug, Clone, Deserialize, CandidType)]
 pub enum Response {
     Instruments(Vec<Instrument>),
+    Balances(AccountInfo),
 }

@@ -8,3 +8,8 @@ pub struct GeneralInstrumentsRequest {
     pub instrument_type: InstrumentType,
     pub instrument_id: Option<String>,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub struct GeneralBalanceRequest {
+    pub currency: Vec<String>,
+}

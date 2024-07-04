@@ -4,14 +4,13 @@ use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod};
-use request::GeneralInstrumentsRequest;
+use request::{GeneralBalanceRequest, GeneralInstrumentsRequest};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 pub mod coinbase;
 pub mod okx;
 pub mod request;
-
 
 #[derive(Debug, Error, CandidType)]
 pub enum ExchangeErrors {
@@ -37,6 +36,9 @@ pub trait UserData {
         &self,
         request: GeneralInstrumentsRequest,
     ) -> Result<Response, ExchangeErrors>;
+
+    async fn get_balance(&self, request: GeneralBalanceRequest)
+        -> Result<Response, ExchangeErrors>;
 }
 
 pub trait ApiRequest: Serialize {
@@ -56,10 +58,9 @@ pub trait ApiRequest: Serialize {
     }
 }
 
-
 pub trait Authorize {
     fn get_auth_headers(&self) -> Vec<HttpHeader>;
 }
 
 pub trait UpdateExchange: OpenData + UserData + ChainData + ExchangeInfo {}
-impl<T> UpdateExchange for T where T: OpenData + UserData + ChainData  + ExchangeInfo{}
+impl<T> UpdateExchange for T where T: OpenData + UserData + ChainData + ExchangeInfo {}

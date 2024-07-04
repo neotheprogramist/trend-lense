@@ -4,7 +4,7 @@ use crate::{
     request_store::request::Response,
 };
 
-use super::{okx::api::GetInstrumentsRequest, request::GeneralInstrumentsRequest, ExchangeErrors, OpenData, UserData};
+use super::{request::GeneralInstrumentsRequest, ExchangeErrors, OpenData, UserData};
 
 #[derive(Default)]
 pub struct Coinbase;
@@ -13,9 +13,9 @@ pub struct Coinbase;
 impl OpenData for Coinbase {
     async fn fetch_candles(
         &self,
-        pair: crate::pair::Pair,
-        range: std::ops::Range<u64>,
-        interval: u32,
+        _pair: crate::pair::Pair,
+        _range: std::ops::Range<u64>,
+        _interval: u32,
     ) -> Result<Vec<Candle>, super::ExchangeErrors> {
         Ok(vec![])
     }
@@ -25,9 +25,16 @@ impl OpenData for Coinbase {
 impl UserData for Coinbase {
     async fn get_instruments(
         &self,
-        req: GeneralInstrumentsRequest,
+        _req: GeneralInstrumentsRequest,
     ) -> Result<Response, ExchangeErrors> {
         Ok(Response::Instruments(vec![]))
+    }
+
+    async fn get_balance(
+        &self,
+        _request: crate::remote_exchanges::request::GeneralBalanceRequest,
+    ) -> Result<Response, ExchangeErrors> {
+        todo!()
     }
 }
 
