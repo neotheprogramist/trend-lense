@@ -1,100 +1,124 @@
 <script lang="ts">
-	import TradingHeader from '$components/tradingHeader.svelte';
-	import TradingView from '$components/tradingView.svelte';
-	import { anonymousBackend } from '$lib/canisters';
-	import type { CandlestickData, UTCTimestamp } from 'lightweight-charts';
-	import type {
-		Candle,
-		Pair as CandidPair,
-		Exchange as CandidExchange
-	} from '../../../../declarations/trendlens_backend/trendlens_backend.did';
-	import type { SeriesDataItemTypeMap } from 'lightweight-charts';
-	import * as Card from '$components/shad/ui/card/index';
-	import { Exchanges, handleExchange } from '$lib/exchange';
-	import { handlePair, Pairs } from '$lib/pair';
+  import TradingHeader from "$components/tradingHeader.svelte";
+  import TradingView from "$components/tradingView.svelte";
+  import { anonymousBackend } from "$lib/canisters";
+  import type { UTCTimestamp } from "lightweight-charts";
+  import type { Candle } from "../../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type { SeriesDataItemTypeMap } from "lightweight-charts";
+  import * as Card from "$components/shad/ui/card/index";
+  import { Exchanges, handleExchange } from "$lib/exchange";
+  import { handlePair, Pairs } from "$lib/pair";
+  import RequestCreator from "$components/requestCreator.svelte";
+  import RequestList from "$components/requestList.svelte";
 
-	const ONE_MINUTE = 60 * 1000;
-	const ONE_HOUR = 60 * ONE_MINUTE;
+  const ONE_MINUTE = 60 * 1000;
+  const ONE_HOUR = 60 * ONE_MINUTE;
 
-	let candlesFromBackend = $state<SeriesDataItemTypeMap['Candlestick'][]>([]);
-	let fetchInterval = $state(ONE_MINUTE);
-	let interval = $state<number | null>(null);
-	let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
-	let stopTimestamp = $state<number>(Date.now());
+  let candlesFromBackend = $state<SeriesDataItemTypeMap["Candlestick"][]>([]);
+  let fetchInterval = $state(ONE_MINUTE);
+  let interval = $state<number | null>(null);
+  let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
+  let stopTimestamp = $state<number>(Date.now());
+  let selectedExchange = $state<Exchanges | null>(null);
 
-	const transformCandleData = (candles: Candle[]): SeriesDataItemTypeMap['Candlestick'][] => {
-		return candles
-			.map((candle) => {
-				return {
-					close: candle.close_price,
-					high: candle.highest_price,
-					low: candle.lowest_price,
-					open: candle.open_price,
-					time: Number(candle.timestamp) as UTCTimestamp
-				};
-			})
-			.sort((a, b) => a.time - b.time);
-	};
+  const transformCandleData = (
+    candles: Candle[],
+  ): SeriesDataItemTypeMap["Candlestick"][] => {
+    return candles
+      .map((candle) => {
+        return {
+          close: candle.close_price,
+          high: candle.highest_price,
+          low: candle.lowest_price,
+          open: candle.open_price,
+          time: Number(candle.timestamp) as UTCTimestamp,
+        };
+      })
+      .sort((a, b) => a.time - b.time);
+  };
 
-	const fetchNewCandles = async (exchange: Exchanges, pair: Pairs) => {
-		stopTimestamp = Date.now();
+  const fetchNewCandles = async (exchange: Exchanges, pair: Pairs) => {
+    stopTimestamp = Date.now();
 
-		console.log('Fetching candles from', lastTimestamp, 'to', stopTimestamp);
+    console.log("Fetching candles from", lastTimestamp, "to", stopTimestamp);
 
-		const newCandles = await anonymousBackend.pull_candles(
-			handlePair(pair),
-			handleExchange(exchange),
-			BigInt(Math.floor(lastTimestamp / 1000)),
-			BigInt(Math.floor(stopTimestamp / 1000))
-		);
+    const newCandles = await anonymousBackend.pull_candles(
+      handlePair(pair),
+      handleExchange(exchange),
+      BigInt(Math.floor(lastTimestamp / 1000)),
+      BigInt(Math.floor(stopTimestamp / 1000)),
+    );
 
-		lastTimestamp =
-			Number(
-				await anonymousBackend.get_last_timestamp(handleExchange(exchange), handlePair(pair))
-			) *
-				1000 +
-			1;
+    console.log("new candles", newCandles);
 
-		const transformedCandles = transformCandleData(newCandles);
-		candlesFromBackend = [...candlesFromBackend, ...transformedCandles];
+    lastTimestamp =
+      Number(
+        await anonymousBackend.get_last_timestamp(
+          handleExchange(exchange),
+          handlePair(pair),
+        ),
+      ) *
+        1000 +
+      1;
 
-		// invoke reactivity
-		candlesFromBackend = candlesFromBackend;
-	};
+    const transformedCandles = transformCandleData(newCandles);
+    candlesFromBackend = [...candlesFromBackend, ...transformedCandles];
 
-	const fetchCandles = (exchange: Exchanges, pair: Pairs): void => {
-		candlesFromBackend = [];
+    // invoke reactivity
+    candlesFromBackend = candlesFromBackend;
+  };
 
-		if (interval) {
-			clearInterval(interval);
-		}
+  const fetchCandles = (exchange: Exchanges, pair: Pairs): void => {
+    selectedExchange = exchange;
+    candlesFromBackend = [];
 
-		fetchNewCandles(exchange, pair);
-		interval = setInterval(fetchNewCandles, fetchInterval);
-	};
+    if (interval) {
+      clearInterval(interval);
+    }
 
-	$inspect(candlesFromBackend);
+    fetchNewCandles(exchange, pair);
+    interval = setInterval(fetchNewCandles, fetchInterval);
+  };
+
+  $inspect(candlesFromBackend);
+
+  $inspect(selectedExchange);
 </script>
 
 <div class="flex-1 flex justify-center mt-5">
-	<div class="flex-col md:flex">
-		<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
-			<Card.Root class="col-span-3">
-				<Card.Header>
-					<Card.Title>Recent trades</Card.Title>
-				</Card.Header>
-				<Card.Content>There may be some trades or other statistics</Card.Content>
-			</Card.Root>
+  <div class="flex-col md:flex">
+    <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
+      <Card.Root class="col-span-3">
+        <Card.Header>
+          <Card.Title>Recent requests</Card.Title>
+        </Card.Header>
+        <Card.Content>
+          <RequestList />
+        </Card.Content>
+      </Card.Root>
 
-			<Card.Root class="col-span-4">
-				<Card.Header>
-					<Card.Title>Price chart</Card.Title>
-				</Card.Header>
-				<Card.Content>
-					<TradingHeader onSelectionCompleted={fetchCandles} />
-					<TradingView candlesData={candlesFromBackend} />
-				</Card.Content>
-			</Card.Root>
-		</div>
-	</div>
+      <Card.Root class="col-span-4">
+        <Card.Header>
+          <Card.Title>Price chart</Card.Title>
+        </Card.Header>
+        <Card.Content>
+          <TradingHeader onSelectionCompleted={fetchCandles} />
+          <TradingView candlesData={candlesFromBackend} />
+        </Card.Content>
+      </Card.Root>
+
+      <Card.Root class="col-span-7">
+        <Card.Header>
+          <Card.Title>Actions</Card.Title>
+        </Card.Header>
+        <Card.Content>
+          {#if selectedExchange}
+            <RequestCreator exchange={selectedExchange} />
+          {:else}
+            Choose exchange and pair to view options
+          {/if}
+        </Card.Content>
+      </Card.Root>
+    </div>
+  </div>
 </div>

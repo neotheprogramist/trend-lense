@@ -7,7 +7,7 @@ use ic_cdk::api::management_canister::http_request::HttpMethod;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, DisplayFromStr};
 
-#[derive(Debug, Clone, CandidType)]
+#[derive(Debug, Clone, CandidType, Deserialize, Serialize)]
 pub enum InstrumentType {
     Spot,
     Futures,
@@ -45,6 +45,14 @@ impl fmt::Display for InstrumentType {
 
 #[serde_as]
 #[skip_serializing_none]
+#[derive(Debug, Clone, CandidType, Deserialize)]
+pub struct InstrumentsRequest {
+    pub instrument_type: InstrumentType,
+    pub instrument_id: Option<String>,
+}
+
+#[serde_as]
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
 pub struct GetInstrumentsRequest {
     #[serde(rename = "instType")]
@@ -54,7 +62,6 @@ pub struct GetInstrumentsRequest {
     pub instrument_id: Option<String>,
     // for now skipped conditional fields
 }
-
 
 impl ApiRequest for GetInstrumentsRequest {
     const METHOD: HttpMethod = HttpMethod::GET;

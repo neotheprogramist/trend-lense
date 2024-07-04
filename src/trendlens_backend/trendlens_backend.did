@@ -24,9 +24,9 @@ type ExchangeRequestInfo = record {
   request : Request;
   exchange : Exchange;
 };
-type GetInstrumentsRequest = record {
-  instType : InstrumentType;
-  instId : opt text;
+type GeneralInstrumentsRequest = record {
+  instrument_id : opt text;
+  instrument_type : InstrumentType;
 };
 type Instrument = record {
   stk : opt text;
@@ -69,18 +69,20 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type Request = variant { Empty; Instruments : GetInstrumentsRequest };
+type Request = variant { Empty; Instruments : GeneralInstrumentsRequest };
 type Response = variant { Instruments : vec Instrument };
 type Result = variant { Ok : Response; Err : ExchangeErrors };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
+  delete_request : (nat8) -> ();
   get_api_keys : () -> (vec ApiData) query;
   get_last_timestamp : (Exchange, Pair) -> (opt nat64) query;
   get_pairs : (Exchange) -> (vec Pair) query;
   get_request : (nat8) -> (opt ExchangeRequestInfo) query;
+  get_requests : () -> (vec opt ExchangeRequestInfo) query;
   initialize_request : (ExchangeRequestInfo) -> (nat8);
   pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
-  register_api_key : (ApiData) -> ();
+  register_api_key : (ApiData) -> (bool);
   remove_api_key : (text) -> ();
   run_request : (nat8, text, int64) -> (Result);
 }

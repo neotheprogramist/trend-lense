@@ -56,7 +56,7 @@ pub trait ExchangeInfo {
 
 impl ExchangeInfo for Okx {
     fn get_pairs(&self) -> Vec<Pair> {
-        vec![]
+        vec![Pair::BtcUsd]
     }
 }
 

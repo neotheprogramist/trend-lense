@@ -15,8 +15,6 @@ export type CandleStickData = {
 	highest_price: number;
 };
 
-
-
 export const handleExchange = (exchange: Exchanges): Exchange => {
 	switch (exchange) {
 		case Exchanges.Okx:

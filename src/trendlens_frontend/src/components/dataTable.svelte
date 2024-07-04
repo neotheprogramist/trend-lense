@@ -1,79 +1,86 @@
 <script lang="ts">
-	import { createTable, Render, Subscribe, createRender } from 'svelte-headless-table';
-	import { derived, readable, writable, type Writable } from 'svelte/store';
-	import * as Table from '$components/shad/ui/table/index';
-	import DataTableActions from './dataTableActions.svelte';
-	import type { ApiData } from '../../../declarations/trendlens_backend/trendlens_backend.did';
+  import {
+    createTable,
+    Render,
+    Subscribe,
+    createRender,
+  } from "svelte-headless-table";
+  import {  writable, type Writable } from "svelte/store";
+  import * as Table from "$components/shad/ui/table/index";
+  import DataTableActions from "./dataTableActions.svelte";
+    import type { ApiData } from "$lib/keystore.svelte";
 
-	interface IProps {
-		children: any;
-		data: ApiData[];
-	}
 
-	let { children, data = $bindable([]) }: IProps = $props();
+  interface IProps {
+    children: any;
+    data: ApiData[];
+    removeCallback: (id: string) => void;
+  }
 
-	const table = createTable(writable(data));
+  let { children, data, removeCallback }: IProps = $props();
 
-	const columns = table.createColumns([
-		table.column({
-			accessor: 'api_key',
-			header: 'Api key'
-		}),
-		table.column({
-			accessor: 'exchange',
-			cell: ({ value }) => Object.keys(value)[0],
-			header: 'Exchange'
-		}),
-		table.column({
-			accessor: ({ api_key }) => api_key,
-			header: '',
-			cell: ({ value }) => {
-				return createRender(DataTableActions, { id: value });
-			}
-		})
-	]);
+  const table = createTable(writable(data));
 
-	$effect(() => {
-		console.log('running effect')
-		let store = table.data as Writable<ApiData[]>;
-		store.set(data);
-	});
+  const columns = table.createColumns([
+    table.column({
+      accessor: "apiKey",
+      header: "Api key",
+    }),
+    table.column({
+      accessor: "exchange",
+      header: "Exchange",
+    }),
+    table.column({
+      accessor: ({ apiKey }) => apiKey,
+      header: "",
+      cell: ({ value }) => {
+        return createRender(DataTableActions, { id: value, removeCallback });
+      },
+    }),
+  ]);
 
-	const { headerRows, pageRows, tableAttrs, tableBodyAttrs } = table.createViewModel(columns);
+  $effect(() => {
+    console.log("running effect");
+    let store = table.data as Writable<ApiData[]>;
+    store.set(data);
+  });
+
+  const { headerRows, pageRows, tableAttrs, tableBodyAttrs } =
+    table.createViewModel(columns);
 </script>
 
 <div class="rounded-md border">
-	<Table.Root {...$tableAttrs}>
-		<Table.Caption class="p-4">{@render children()}</Table.Caption>
-		<Table.Header>
-			{#each $headerRows as headerRow}
-				<Subscribe rowAttrs={headerRow.attrs()}>
-					<Table.Row>
-						{#each headerRow.cells as cell (cell.id)}
-							<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()}>
-								<Table.Head {...attrs}>
-									<Render of={cell.render()} />
-								</Table.Head>
-							</Subscribe>
-						{/each}
-					</Table.Row>
-				</Subscribe>
-			{/each}
-		</Table.Header>
-		<Table.Body {...$tableBodyAttrs}>
-			{#each $pageRows as row (row.id)}
-				<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-					<Table.Row {...rowAttrs}>
-						{#each row.cells as cell (cell.id)}
-							<Subscribe attrs={cell.attrs()} let:attrs>
-								<Table.Cell {...attrs}>
-									<Render of={cell.render()} />
-								</Table.Cell>
-							</Subscribe>
-						{/each}
-					</Table.Row>
-				</Subscribe>
-			{/each}
-		</Table.Body>
-	</Table.Root>
+  <Table.Root {...$tableAttrs}>
+    <Table.Caption class="p-4">{@render children()}</Table.Caption>
+    <Table.Header>
+      {#each $headerRows as headerRow}
+        <Subscribe rowAttrs={headerRow.attrs()}>
+          <Table.Row>
+            {#each headerRow.cells as cell (cell.id)}
+              <Subscribe attrs={cell.attrs()} let:attrs props={cell.props()}>
+                <Table.Head {...attrs}>
+                  <Render of={cell.render()} />
+                </Table.Head>
+              </Subscribe>
+            {/each}
+          </Table.Row>
+        </Subscribe>
+      {/each}
+    </Table.Header>
+    <Table.Body {...$tableBodyAttrs}>
+      {#each $pageRows as row (row.id)}
+        <Subscribe rowAttrs={row.attrs()} let:rowAttrs>
+          <Table.Row {...rowAttrs}>
+            {#each row.cells as cell (cell.id)}
+              <Subscribe attrs={cell.attrs()} let:attrs>
+                <Table.Cell {...attrs}>
+                  <Render of={cell.render()} />
+                </Table.Cell>
+              </Subscribe>
+            {/each}
+          </Table.Row>
+        </Subscribe>
+      {/each}
+    </Table.Body>
+  </Table.Root>
 </div>

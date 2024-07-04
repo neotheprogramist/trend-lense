@@ -64,10 +64,14 @@ fn get_last_timestamp(exchange: Exchange, pair: Pair) -> Option<u64> {
 }
 
 #[ic_cdk::update]
-fn register_api_key(exchange_api: ApiData) {
+fn register_api_key(exchange_api: ApiData) -> bool {
     let principal = ic_cdk::caller();
 
     ApiStore::register_key(&principal, exchange_api);
+
+    // There should be test if key is a valid key
+
+    true
 }
 
 #[ic_cdk::update]
@@ -91,11 +95,30 @@ fn initialize_request(request: ExchangeRequestInfo) -> u8 {
     RequestStore::add_request(&identity, request)
 }
 
+#[ic_cdk::update]
+fn delete_request(index: u8) {
+    let identity = ic_cdk::caller();
+
+    RequestStore::delete_request(&identity, index);
+}
+
 #[ic_cdk::query]
 fn get_request(index: u8) -> Option<ExchangeRequestInfo> {
     let identity = ic_cdk::caller();
 
     RequestStore::get_request(&identity, index)
+}
+
+#[ic_cdk::query]
+fn get_requests() -> Vec<Option<ExchangeRequestInfo>> {
+    let identity = ic_cdk::caller();
+
+    let last_index = RequestStore::next_index(&identity);
+
+    (0..last_index)
+        .into_iter()
+        .map(|i| RequestStore::get_request(&identity, i))
+        .collect::<Vec<_>>()
 }
 
 #[ic_cdk::query]
@@ -166,13 +189,13 @@ async fn pull_candles(
         return vec![];
     }
 
-    let pair_candles = stored_exchange_data
-        .candles
-        .get_pair_candles(&pair)
-        .unwrap();
+    let pair_candles = stored_exchange_data.candles.get_pair_candles(&pair);
 
-    // first call is where the storing candles starts
-    let last_candle_timestamp = pair_candles.last_timestamp().unwrap_or(start_timestamp);
+    let last_candle_timestamp = if let Some(candles) = pair_candles {
+        candles.last_timestamp().unwrap_or(start_timestamp)
+    } else {
+        start_timestamp
+    };
 
     ic_cdk::println!("Last candle timestamp: {}", last_candle_timestamp);
 
@@ -206,7 +229,11 @@ async fn pull_candles(
     ic_cdk::println!("Range to get: {:?}", range_to_get);
 
     let stored_candles = if let Some(range) = range_to_get {
-        pair_candles.get_between(range)
+        if let Some(c) = pair_candles {
+            c.get_between(range)
+        } else {
+            vec![]
+        }
     } else {
         vec![]
     };
