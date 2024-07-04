@@ -1,8 +1,13 @@
-use std::{cell::RefCell, collections::BTreeMap};
+use std::{
+    cell::RefCell,
+    collections::{BTreeMap, HashMap},
+    ops::{Deref, DerefMut},
+};
 
 use crate::{
     exchange::{Candle, Exchange},
     memory::{Memory, MemoryLocation, MEMORY_MANAGER},
+    pair::Pair,
     storable_wrapper::StorableWrapper,
 };
 use ic_stable_structures::StableBTreeMap;
@@ -15,7 +20,7 @@ type Timestamp = u64;
 type ExchangeStore = StableBTreeMap<Exchange, StorableWrapper<ExchangeData>, Memory>;
 
 thread_local! {
-    pub static EXCHANGE_STORE: RefCell<ExchangeStore> = RefCell::new(
+    static EXCHANGE_STORE: RefCell<ExchangeStore> = RefCell::new(
         StableBTreeMap::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryLocation::Exchanges.memory_id())),
         )
@@ -23,8 +28,38 @@ thread_local! {
 }
 
 #[derive(Deserialize, Serialize, Default)]
+pub struct PairCandles(HashMap<Pair, CandlesStore>);
+
+impl Deref for PairCandles {
+    type Target = HashMap<Pair, CandlesStore>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for PairCandles {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl PairCandles {
+    pub fn insert_many(&mut self, pair: Pair, candles: Vec<Candle>) {
+        if let Some(data) = self.get_mut(&pair) {
+            for c in candles {
+                data.insert(c.timestamp, c);
+            }
+        }
+    }
+
+    pub fn get_pair_candles(&self, pair: &Pair) -> Option<&CandlesStore> {
+        self.get(pair)
+    }
+}
+
+#[derive(Deserialize, Serialize, Default)]
 pub struct ExchangeData {
-    pub candles: CandlesStore,
+    pub candles: PairCandles,
 }
 
 pub trait TimestampBased {
@@ -43,15 +78,11 @@ pub trait ChainData {
         });
     }
 
-    fn get_mut_chain_data(&self) -> StorableWrapper<ExchangeData> {
+    fn data_mut(&self) -> StorableWrapper<ExchangeData> {
         EXCHANGE_STORE.with_borrow_mut(|b| b.get(&self.key()).unwrap())
     }
 
-    fn get_chain_data(&self) -> StorableWrapper<ExchangeData> {
-        EXCHANGE_STORE.with_borrow(|b| b.get(&self.key()).unwrap())
-    }
-
-    fn set_chain_data(&self, data: StorableWrapper<ExchangeData>) {
+    fn set_data(&self, data: StorableWrapper<ExchangeData>) {
         EXCHANGE_STORE.with_borrow_mut(|b| b.insert(self.key(), data));
     }
 }

@@ -1,21 +1,21 @@
-use super::{ExchangeErrors, ExternalProvider};
+use crate::api_client::ApiClient;
 use crate::chain_data::ChainData;
-use crate::exchange::{Candle, Exchange};
-use crate::{api_client::ApiClient, Pair};
-use api::IndexCandleStickRequest;
+use crate::exchange::Exchange;
+use crate::Pair;
+use auth::OkxAuth;
+
 pub mod api;
+pub mod auth;
+pub mod open;
 pub mod response;
+pub mod user;
 
 #[derive(Default)]
 pub struct Okx {
+    auth: Option<OkxAuth>,
     api_client: ApiClient,
 }
 
-impl ChainData for Okx {
-    fn key(&self) -> Exchange {
-        Exchange::Okx
-    }
-}
 
 impl Okx {
     /// gets interval string from u32 in minutes
@@ -37,30 +37,9 @@ impl Okx {
     }
 }
 
-#[async_trait::async_trait]
-impl ExternalProvider for Okx {
-    async fn fetch_candles(
-        &self,
-        pair: Pair,
-        range: std::ops::Range<u64>,
-        interval: u32,
-    ) -> Result<Vec<Candle>, ExchangeErrors> {
-        let index_name = Okx::index_name(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
-
-        let candle_request = IndexCandleStickRequest {
-            after_timestamp: None,
-            before_timestamp: Some(range.start * 1000),
-            bar_size: Some(Okx::interval_string(interval)),
-            index_name,
-            results_limit: None,
-        };
-
-        let candle_response = self.api_client.call(candle_request).await?;
-
-        Ok(candle_response
-            .into_iter()
-            .map(|concrete_candle| concrete_candle.into())
-            .collect())
+impl ChainData for Okx {
+    fn key(&self) -> Exchange {
+        Exchange::Okx
     }
 }
 

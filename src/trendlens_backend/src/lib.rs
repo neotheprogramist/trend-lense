@@ -3,11 +3,23 @@ use api_store::ApiData;
 use api_store::ApiStore;
 use chain_data::ChainData;
 use chain_data::TimestampBased;
+
 use exchange::Candle;
 use exchange::Exchange;
+use exchange::ExchangeImpl;
 use remote_exchanges::coinbase::Coinbase;
+use remote_exchanges::okx::auth::OkxAuth;
 use remote_exchanges::okx::Okx;
+
+use remote_exchanges::ExchangeErrors;
 use remote_exchanges::UpdateExchange;
+use remote_exchanges::UserData;
+use request_store::request::Request;
+use request_store::request::Response;
+use request_store::ExchangeRequestInfo;
+use request_store::RequestStore;
+use time::format_description::well_known::Rfc3339;
+use time::OffsetDateTime;
 
 mod api_client;
 mod api_store;
@@ -16,6 +28,7 @@ mod exchange;
 mod memory;
 mod pair;
 mod remote_exchanges;
+mod request_store;
 mod storable_wrapper;
 
 #[ic_cdk::query]
@@ -38,24 +51,30 @@ fn init() {
     Okx::default().init();
 }
 
+// TODO: rename or get rid off
 #[ic_cdk::query]
-fn get_last_timestamp(exchange: Exchange) -> u64 {
-    let exchange = match exchange {
-        Exchange::Okx => Okx::default(),
-        Exchange::Coinbase => unimplemented!(),
-    };
+fn get_last_timestamp(exchange: Exchange, pair: Pair) -> Option<u64> {
+    let exchange_impl = ExchangeImpl::new(exchange);
 
-    let stored_exchange_data = exchange.get_mut_chain_data();
-    stored_exchange_data.candles.last_timestamp().unwrap_or(0)
+    exchange_impl
+        .data_mut()
+        .candles
+        .get_pair_candles(&pair)?
+        .last_timestamp()
 }
 
 #[ic_cdk::update]
-fn register_api_key(register_info: ApiData) -> bool {
+fn register_api_key(exchange_api: ApiData) {
     let principal = ic_cdk::caller();
 
-    ApiStore::register_key(&principal, register_info);
+    ApiStore::register_key(&principal, exchange_api);
+}
 
-    true
+#[ic_cdk::update]
+fn remove_api_key(api_key: String) {
+    let principal = ic_cdk::caller();
+
+    ApiStore::remove_key(&principal, &api_key)
 }
 
 #[ic_cdk::query]
@@ -63,6 +82,63 @@ fn get_api_keys() -> Vec<ApiData> {
     let principal = ic_cdk::caller();
 
     ApiStore::get_all_keys(&principal).unwrap_or_default()
+}
+
+#[ic_cdk::update]
+fn initialize_request(request: ExchangeRequestInfo) -> u8 {
+    let identity = ic_cdk::caller();
+
+    RequestStore::add_request(&identity, request)
+}
+
+#[ic_cdk::query]
+fn get_request(index: u8) -> Option<ExchangeRequestInfo> {
+    let identity = ic_cdk::caller();
+
+    RequestStore::get_request(&identity, index)
+}
+
+#[ic_cdk::query]
+fn get_pairs(exchange: Exchange) -> Vec<Pair> {
+    let exchange_impl = ExchangeImpl::new(exchange);
+
+    exchange_impl.get_pairs()
+}
+
+#[ic_cdk::update]
+async fn run_request(
+    index: u8,
+    signature: String,
+    timestamp: i64,
+) -> Result<Response, ExchangeErrors> {
+    let identity = ic_cdk::caller();
+    let exchange_request = RequestStore::get_request(&identity, index).expect("missing request");
+    let api_info = ApiStore::get_by_api(&identity, &exchange_request.api_key.as_str())
+        .expect("api info not found");
+
+    let exchange: Box<dyn UserData> = match exchange_request.exchange {
+        Exchange::Okx => {
+            let time = OffsetDateTime::from_unix_timestamp(timestamp).expect("invalid timestamp");
+            let formatted_timestamp = time.format(&Rfc3339).expect("formatting failed");
+
+            Box::new(Okx::with_auth(OkxAuth {
+                api_key: exchange_request.api_key,
+                passphrase: api_info.passphrase.unwrap(),
+                timestamp: formatted_timestamp,
+                signature,
+            }))
+        }
+        Exchange::Coinbase => Box::new(Coinbase::default()),
+    };
+
+    let response = match exchange_request.request {
+        Request::Empty => {
+            panic!()
+        }
+        Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
+    };
+
+    Ok(response)
 }
 
 // TODO: split this function into smaller ones
@@ -83,13 +159,20 @@ async fn pull_candles(
         Exchange::Coinbase => Box::new(Coinbase::default()),
     };
 
-    let mut stored_exchange_data = exchange.get_mut_chain_data();
+    let mut stored_exchange_data = exchange.data_mut();
+
+    // TODO: return error
+    if !exchange.get_pairs().contains(&pair) {
+        return vec![];
+    }
+
+    let pair_candles = stored_exchange_data
+        .candles
+        .get_pair_candles(&pair)
+        .unwrap();
 
     // first call is where the storing candles starts
-    let last_candle_timestamp = stored_exchange_data
-        .candles
-        .last_timestamp()
-        .unwrap_or(start_timestamp);
+    let last_candle_timestamp = pair_candles.last_timestamp().unwrap_or(start_timestamp);
 
     ic_cdk::println!("Last candle timestamp: {}", last_candle_timestamp);
 
@@ -123,16 +206,16 @@ async fn pull_candles(
     ic_cdk::println!("Range to get: {:?}", range_to_get);
 
     let stored_candles = if let Some(range) = range_to_get {
-        stored_exchange_data.candles.get_between(range)
+        pair_candles.get_between(range)
     } else {
         vec![]
     };
 
     stored_exchange_data
         .candles
-        .insert_many(fetched_candles.clone());
+        .insert_many(pair, fetched_candles.clone());
 
-    exchange.set_chain_data(stored_exchange_data);
+    exchange.set_data(stored_exchange_data);
 
     fetched_candles
         .into_iter()

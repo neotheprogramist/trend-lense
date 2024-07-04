@@ -1,6 +1,9 @@
 use crate::exchange::Candle;
+use candid::CandidType;
 use serde::{self, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
+
+use super::api::InstrumentType;
 
 #[serde_as]
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -43,6 +46,68 @@ impl Into<Candle> for CandleStick {
             timestamp: self.timestamp / 1000,
         }
     }
+}
+
+#[serde_as]
+#[derive(Deserialize, Debug, Clone, CandidType)]
+pub struct Instrument {
+    #[serde(rename = "instId")]
+    pub instrument_id: String,
+    #[serde(rename = "instType")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub instrument_type: InstrumentType,
+    #[serde(rename = "uly")]
+    pub underlying: String,
+    #[serde(rename = "instFamily")]
+    pub instrument_family: String,
+    #[serde(rename = "baseCcy")]
+    base_currency: Option<String>,
+    #[serde(rename = "quoteCcy")]
+    quote_currency: Option<String>,
+    #[serde(rename = "settleCcy")]
+    settlement_currency: Option<String>,
+    #[serde(rename = "ctVal")]
+    contract_value: Option<String>,
+    #[serde(rename = "ctMult")]
+    contract_multiplier: Option<String>,
+    #[serde(rename = "ctValCcy")]
+    contract_value_currency: Option<String>,
+    #[serde(rename = "optType")]
+    option_type: Option<String>,
+    #[serde(rename = "stk")]
+    strike_price: Option<String>,
+    #[serde(rename = "listTime")]
+    listing_time: Option<String>,
+    #[serde(rename = "expTime")]
+    expiry_time: Option<String>,
+    #[serde(rename = "lever")]
+    leverage: Option<String>,
+    #[serde(rename = "tickSz")]
+    tick_size: String,
+    #[serde(rename = "lotSz")]
+    lot_size: String,
+    #[serde(rename = "minSz")]
+    minimum_order_size: String,
+    #[serde(rename = "ctType")]
+    contract_type: Option<String>,
+    #[serde(rename = "state")]
+    state: String,
+    #[serde(rename = "maxLmtSz")]
+    max_limit_size: String,
+    #[serde(rename = "maxMktSz")]
+    max_market_size: String,
+    #[serde(rename = "maxLmtAmt")]
+    max_limit_amount: Option<String>,
+    #[serde(rename = "maxMktAmt")]
+    max_market_amount: Option<String>,
+    #[serde(rename = "maxTwapSz")]
+    max_twap_size: String,
+    #[serde(rename = "maxIcebergSz")]
+    max_iceberg_size: String,
+    #[serde(rename = "maxTriggerSz")]
+    max_trigger_size: String,
+    #[serde(rename = "maxStopSz")]
+    max_stop_size: String,
 }
 
 #[cfg(test)]

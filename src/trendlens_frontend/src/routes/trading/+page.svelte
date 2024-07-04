@@ -17,11 +17,8 @@
 	const ONE_HOUR = 60 * ONE_MINUTE;
 
 	let candlesFromBackend = $state<SeriesDataItemTypeMap['Candlestick'][]>([]);
-	let selectedExchange = $state<Exchanges | null>(null);
-	let selectedPair = $state<Pairs | null>(null);
-
 	let fetchInterval = $state(ONE_MINUTE);
-	let interval = $state<NodeJS.Timeout | null>(null);
+	let interval = $state<number | null>(null);
 	let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
 	let stopTimestamp = $state<number>(Date.now());
 
@@ -39,22 +36,23 @@
 			.sort((a, b) => a.time - b.time);
 	};
 
-
-
-	const fetchNewCandles = async () => {
+	const fetchNewCandles = async (exchange: Exchanges, pair: Pairs) => {
 		stopTimestamp = Date.now();
 
 		console.log('Fetching candles from', lastTimestamp, 'to', stopTimestamp);
 
 		const newCandles = await anonymousBackend.pull_candles(
-			handlePair(selectedPair!),
-			handleExchange(selectedExchange!),
+			handlePair(pair),
+			handleExchange(exchange),
 			BigInt(Math.floor(lastTimestamp / 1000)),
 			BigInt(Math.floor(stopTimestamp / 1000))
 		);
 
 		lastTimestamp =
-			Number(await anonymousBackend.get_last_timestamp(handleExchange(selectedExchange!))) * 1000 +
+			Number(
+				await anonymousBackend.get_last_timestamp(handleExchange(exchange), handlePair(pair))
+			) *
+				1000 +
 			1;
 
 		const transformedCandles = transformCandleData(newCandles);
@@ -65,16 +63,13 @@
 	};
 
 	const fetchCandles = (exchange: Exchanges, pair: Pairs): void => {
-		selectedExchange = exchange;
-		selectedPair = pair;
-
 		candlesFromBackend = [];
 
 		if (interval) {
 			clearInterval(interval);
 		}
 
-		fetchNewCandles();
+		fetchNewCandles(exchange, pair);
 		interval = setInterval(fetchNewCandles, fetchInterval);
 	};
 

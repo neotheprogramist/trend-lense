@@ -1,12 +1,12 @@
-use crate::remote_exchanges::{okx::response::ApiResponse, ApiRequest};
-use candid::Nat;
+use crate::remote_exchanges::{okx::response::ApiResponse, ApiRequest, Authorize};
+use candid::{CandidType, Nat};
 use ic_cdk::api::{
     call::RejectionCode,
     management_canister::http_request::{http_request, CanisterHttpRequestArgument, HttpHeader},
 };
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, CandidType)]
 pub enum ApiClientErrors {
     #[error("http call failed with status {status}")]
     Http { status: Nat },
@@ -48,9 +48,14 @@ impl ApiClient {
             * 13
     }
 
-    pub async fn call<R>(&self, request: R) -> Result<R::Response, ApiClientErrors>
+    pub async fn call<R, A>(
+        &self,
+        request: R,
+        auth: Option<&A>,
+    ) -> Result<R::Response, ApiClientErrors>
     where
         R: ApiRequest,
+        A: Authorize,
     {
         let api_url = format!(
             "https://{}/{}{}",
@@ -61,10 +66,16 @@ impl ApiClient {
 
         ic_cdk::println!("{}", api_url);
 
+        let auth_headers = if let Some(a) = auth {
+            a.get_auth_headers()
+        } else {
+            vec![]
+        };
+
         let request = CanisterHttpRequestArgument {
             url: api_url,
             method: R::METHOD,
-            headers: self.headers(R::HOST),
+            headers: [auth_headers, self.headers(R::HOST)].concat(),
             body: None,
             ..Default::default()
         };
@@ -79,9 +90,9 @@ impl ApiClient {
                     });
                 }
 
-                let body = String::from_utf8(response.body).unwrap();
+                let body = String::from_utf8(response.body).expect("conversion failed");
                 let deserialized_response: ApiResponse<R::Response> =
-                    serde_json::from_str(&body).unwrap();
+                    serde_json::from_str(&body).expect("deserialization failed");
                 // TODO: handle errors and messages
 
                 return Ok(deserialized_response.data);
