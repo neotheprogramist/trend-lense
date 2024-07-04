@@ -163,6 +163,7 @@ async fn run_request(
         }
         Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
         Request::Balances(balance) => exchange.get_balance(balance).await?,
+        Request::PostOrder(order) => exchange.post_order(order).await?,
     };
 
     Ok(response)

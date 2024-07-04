@@ -1,10 +1,10 @@
 use super::{
-    api::{GetBalanceRequest, GetInstrumentsRequest},
+    api::{GetBalanceRequest, GetInstrumentsRequest, PlaceOrderBody},
     Okx,
 };
 use crate::{
     remote_exchanges::{
-        request::{GeneralBalanceRequest, GeneralInstrumentsRequest},
+        request::{GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest},
         ExchangeErrors, UserData,
     },
     request_store::request::Response,
@@ -46,5 +46,26 @@ impl UserData for Okx {
             .await?;
 
         Ok(Response::Balances(balances_response))
+    }
+
+    async fn post_order(
+        &self,
+        request: GeneralPostOrderRequest,
+    ) -> Result<Response, ExchangeErrors> {
+        let exchange_request = PlaceOrderBody {
+            side: Self::side_string(request.side),
+            instrument_id: request.instrument_id,
+            order_type: Self::order_type_string(request.order_type),
+            size: request.size.to_string(),
+            trade_mode: Self::trade_mode_string(request.trade_mode),
+            ..Default::default()
+        };
+
+        let order_response = self
+            .api_client
+            .call(exchange_request, self.auth.as_ref())
+            .await?;
+
+        Ok(Response::Order(order_response))
     }
 }

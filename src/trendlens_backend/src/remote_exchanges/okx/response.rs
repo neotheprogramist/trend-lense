@@ -49,6 +49,29 @@ impl Into<Candle> for CandleStick {
 }
 
 #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+pub struct PlaceOrderDetails {
+    #[serde(rename = "ordId")]
+    pub order_id: String,
+    #[serde(rename = "clOrdId")]
+    pub client_order_id: String,
+    #[serde(rename = "tag")]
+    pub tag: String,
+    #[serde(rename = "sCode")]
+    pub status_code: String,
+    #[serde(rename = "sMsg")]
+    pub status_message: String,
+}
+
+#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+pub struct PlaceOrderResponse {
+    pub code: String,
+    pub msg: String,
+    pub data: Vec<PlaceOrderDetails>,
+    pub in_time: String,
+    pub out_time: String,
+}
+
+#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
 pub struct AccountInfo {
     #[serde(rename = "uTime")]
     update_time: String,

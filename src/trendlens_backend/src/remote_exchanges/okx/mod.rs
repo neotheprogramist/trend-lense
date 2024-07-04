@@ -4,6 +4,7 @@ use crate::exchange::Exchange;
 use crate::Pair;
 use auth::OkxAuth;
 
+use super::request::{OrderSide, OrderType, TradeMode};
 use super::ApiRequest;
 
 pub mod api;
@@ -25,6 +26,35 @@ impl Okx {
             0..=1 => "1m",
             2..=3 => "3m",
             4..=u32::MAX => "5m",
+        }
+        .to_string()
+    }
+
+    fn side_string(side: OrderSide) -> String {
+        match side {
+            OrderSide::Buy => "buy",
+            OrderSide::Sell => "sell",
+        }
+        .to_string()
+    }
+
+    fn order_type_string(order_type: OrderType) -> String {
+        match order_type {
+            OrderType::Limit => "limit",
+            OrderType::Market => "market",
+            OrderType::PostOnly => "post_only",
+            OrderType::Fok => "fok",
+            OrderType::Ioc => "ioc",
+        }
+        .to_string()
+    }
+
+    fn trade_mode_string(trade_mode: TradeMode) -> String {
+        match trade_mode {
+            TradeMode::Cross => "cross",
+            TradeMode::Isolated => "isolated",
+            TradeMode::Cash => "cash",
+            TradeMode::SpotIsolated => "spot_isolated",
         }
         .to_string()
     }

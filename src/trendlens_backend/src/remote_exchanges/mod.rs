@@ -4,7 +4,7 @@ use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod};
-use request::{GeneralBalanceRequest, GeneralInstrumentsRequest};
+use request::{GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -39,6 +39,11 @@ pub trait UserData {
 
     async fn get_balance(&self, request: GeneralBalanceRequest)
         -> Result<Response, ExchangeErrors>;
+
+    async fn post_order(
+        &self,
+        request: GeneralPostOrderRequest,
+    ) -> Result<Response, ExchangeErrors>;
 }
 
 pub trait ApiRequest: Serialize {

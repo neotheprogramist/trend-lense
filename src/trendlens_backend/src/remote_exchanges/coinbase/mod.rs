@@ -36,6 +36,13 @@ impl UserData for Coinbase {
     ) -> Result<Response, ExchangeErrors> {
         todo!()
     }
+
+    async fn post_order(
+        &self,
+        _request: crate::remote_exchanges::request::GeneralPostOrderRequest,
+    ) -> Result<Response, ExchangeErrors> {
+        todo!()
+    }
 }
 
 impl ChainData for Coinbase {
