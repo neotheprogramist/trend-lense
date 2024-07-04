@@ -1,3 +1,17 @@
+type AccountInfo = record {
+  imr : text;
+  mmr : text;
+  upl : text;
+  adjEq : text;
+  borrowFroz : text;
+  totalEq : text;
+  ordFroz : text;
+  mgnRatio : text;
+  uTime : text;
+  details : vec AssetDetail;
+  isoEq : text;
+  notionalUsd : text;
+};
 type ApiClientErrors = variant {
   Http : record { status : nat };
   Reject : record { code : RejectionCode; message : text };
@@ -6,6 +20,40 @@ type ApiData = record {
   api_key : text;
   passphrase : opt text;
   exchange : Exchange;
+};
+type AssetDetail = record {
+  eq : text;
+  ccy : text;
+  imr : text;
+  mmr : text;
+  upl : text;
+  spotIsoBal : text;
+  clSpotInUseAmt : text;
+  stgyEq : text;
+  availEq : text;
+  ordFrozen : text;
+  borrowFroz : text;
+  isoLiab : text;
+  interest : text;
+  uplLiab : text;
+  maxSpotInUseAmt : text;
+  fixedBal : text;
+  liab : text;
+  twap : text;
+  cashBal : text;
+  availBal : text;
+  eqUsd : text;
+  crossLiab : text;
+  isoUpl : text;
+  rewardBal : text;
+  spotInUseAmt : text;
+  mgnRatio : text;
+  uTime : text;
+  notionalLever : text;
+  isoEq : text;
+  frozenBal : text;
+  maxLoan : text;
+  disEq : text;
 };
 type Candle = record {
   close_price : float64;
@@ -24,9 +72,20 @@ type ExchangeRequestInfo = record {
   request : Request;
   exchange : Exchange;
 };
+type GeneralBalanceRequest = record { currency : vec text };
 type GeneralInstrumentsRequest = record {
   instrument_id : opt text;
   instrument_type : InstrumentType;
+};
+type GeneralPostOrderRequest = record {
+  margin_currency : opt text;
+  side : OrderSide;
+  size : float64;
+  trade_mode : TradeMode;
+  order_type : OrderType;
+  instrument_id : text;
+  order_price : opt float64;
+  position_side : opt PositionSide;
 };
 type Instrument = record {
   stk : opt text;
@@ -59,7 +118,24 @@ type Instrument = record {
   settleCcy : opt text;
 };
 type InstrumentType = variant { Spot; Swap; Futures; Option; Margin };
+type OrderSide = variant { Buy; Sell };
+type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
 type Pair = variant { BtcUsd; EthUsd };
+type PlaceOrderDetails = record {
+  tag : text;
+  clOrdId : text;
+  ordId : text;
+  sMsg : text;
+  sCode : text;
+};
+type PlaceOrderResponse = record {
+  msg : text;
+  in_time : text;
+  out_time : text;
+  code : text;
+  data : vec PlaceOrderDetails;
+};
+type PositionSide = variant { Short; Long };
 type RejectionCode = variant {
   NoError;
   CanisterError;
@@ -69,9 +145,19 @@ type RejectionCode = variant {
   SysFatal;
   CanisterReject;
 };
-type Request = variant { Empty; Instruments : GeneralInstrumentsRequest };
-type Response = variant { Instruments : vec Instrument };
+type Request = variant {
+  Empty;
+  Instruments : GeneralInstrumentsRequest;
+  PostOrder : GeneralPostOrderRequest;
+  Balances : GeneralBalanceRequest;
+};
+type Response = variant {
+  Instruments : vec Instrument;
+  Order : PlaceOrderResponse;
+  Balances : AccountInfo;
+};
 type Result = variant { Ok : Response; Err : ExchangeErrors };
+type TradeMode = variant { Cash; SpotIsolated; Isolated; Cross };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
   delete_request : (nat8) -> ();

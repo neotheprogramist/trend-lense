@@ -47,6 +47,8 @@
   }
 
   function isEnum(value: any): value is IEnum {
+    if (!value) return false;
+    
     return typeof value == "object" && "isEnum" in value;
   }
 
@@ -65,6 +67,7 @@
   {#each keys as key}
     {@const k = key as keyof R}
     {@const v = request[k]}
+    {@debug k, v}
 
     <div>
       <label for="">{key}</label>
