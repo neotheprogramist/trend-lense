@@ -11,10 +11,9 @@
 
   interface IProps {
     request: Fields<R>;
-    onSubmit: () => void;
   }
 
-  let { request = $bindable(), onSubmit }: IProps = $props();
+  let { request = $bindable() }: IProps = $props();
 
   const keys = Object.keys(request).filter((k) => k !== "type");
 

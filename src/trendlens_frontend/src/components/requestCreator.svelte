@@ -28,9 +28,9 @@
   import { wallet } from "$lib/wallet.svelte";
   import type {
     Request as BackendRequest,
-    InstrumentType as BackendInstrumentType,
   } from "../../../declarations/trendlens_backend/trendlens_backend.did";
   import Button from "./shad/ui/button/button.svelte";
+    import { handleInstrumentType } from "$lib/instrumentType";
 
   // right now i pass exchange as prop, but it could be store or context
 
@@ -79,47 +79,36 @@
 
     pushState("", {
       requestPickState: RequestPickState.RequestPicked,
-      request: r,
+      requestType: r,
     });
   };
 
-  const handleInstrumentType = (
-    instrument: keyof typeof InstrumentType,
-  ): BackendInstrumentType => {
-    switch (instrument) {
-      case "Features":
-        return {
-          Futures: null,
-        };
-      case "Margin":
-        return {
-          Margin: null,
-        };
-      case "Spot":
-        return {
-          Spot: null,
-        };
-      case "Swap":
-        return {
-          Swap: null,
-        };
-    }
-  };
-
+ 
   const handleRequest = (r: ExchangeRequest): BackendRequest => {
     switch (r.type) {
       case RequestType.GetInstruments:
-        const req = r as InstrumentsRequest;
-        const key = req.instrumentType.v as keyof typeof InstrumentType;
+        let req = r as InstrumentsRequest;
 
         return {
           Instruments: {
             instrument_id: req.instrumentId.value
               ? [req.instrumentId.value]
               : [],
-            instrument_type: handleInstrumentType(key),
+            instrument_type: handleInstrumentType(req.instrumentType.v),
           },
         };
+      case RequestType.Empty:
+        throw new Error('unsupported');
+      case RequestType.GetBalance:
+        let b_req = r as BalanceRequests;
+
+        return {
+          Balances: {
+            currency: [b_req.currencies.value ?? '']
+          }
+        }
+        
+      case RequestType.PostOrder:
     }
 
     return {
@@ -128,6 +117,7 @@
   };
 
   const sendRequest = async () => {
+    console.log(request)
     if (!request) {
       throw new Error("No request");
     }
@@ -144,13 +134,14 @@
       api_key: key.apiKey,
       exchange: handleExchange(exchange),
     });
+    console.log()
   };
 
   onMount(() => {
     if (exchangeKey) {
       pushState("", {
         requestPickState: RequestPickState.ApiRegistered,
-        request: null,
+        requestType: null,
       });
     }
 
@@ -167,6 +158,6 @@
 {:else if $page.state.requestPickState === RequestPickState.ApiRegistered}
   <RequestPicker onRequestPick={handleRequestPick} />
 {:else if $page.state.requestPickState === RequestPickState.RequestPicked}
-  <RequestForm bind:request onSubmit={sendRequest} />
-  <Button class="mt-4" type="submit" on:click={sendRequest}>Submit</Button>
+  <RequestForm bind:request />
+  <Button class="mt-4" on:click={sendRequest}>Submit</Button>
 {/if}

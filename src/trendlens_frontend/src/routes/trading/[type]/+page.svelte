@@ -3,13 +3,25 @@
   import TradingView from "$components/tradingView.svelte";
   import { anonymousBackend } from "$lib/canisters";
   import type { UTCTimestamp } from "lightweight-charts";
-  import type { Candle } from "../../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type { Candle } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
   import type { SeriesDataItemTypeMap } from "lightweight-charts";
   import * as Card from "$components/shad/ui/card/index";
   import { Exchanges, handleExchange } from "$lib/exchange";
   import { handlePair, Pairs } from "$lib/pair";
   import RequestCreator from "$components/requestCreator.svelte";
   import RequestList from "$components/requestList.svelte";
+  import type { PageData } from "./$types";
+  import { onMount } from "svelte";
+  import DataTable from "$components/dataTable.svelte";
+  import type { InstrumentType } from "$lib/request";
+  import { wallet } from "$lib/wallet.svelte";
+  import InstrumentsLoader from "$components/instrumentsLoader.svelte";
+
+  interface IProps {
+    data: PageData;
+  }
+
+  let { data }: IProps = $props();
 
   const ONE_MINUTE = 60 * 1000;
   const ONE_HOUR = 60 * ONE_MINUTE;
@@ -19,7 +31,7 @@
   let interval = $state<number | null>(null);
   let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
   let stopTimestamp = $state<number>(Date.now());
-  let selectedExchange = $state<Exchanges | null>(null);
+  let selectedExchange = $state<Exchanges>(data.exchange);
 
   const transformCandleData = (
     candles: Candle[],
@@ -68,57 +80,64 @@
     candlesFromBackend = candlesFromBackend;
   };
 
-  const fetchCandles = (exchange: Exchanges, pair: Pairs): void => {
-    selectedExchange = exchange;
+  const fetchCandles = (pair: Pairs): void => {
     candlesFromBackend = [];
 
     if (interval) {
       clearInterval(interval);
     }
 
-    fetchNewCandles(exchange, pair);
+    fetchNewCandles(selectedExchange, pair);
     interval = setInterval(fetchNewCandles, fetchInterval);
   };
+  console.log("e");
 
-  $inspect(candlesFromBackend);
-
-  $inspect(selectedExchange);
+  $inspect(data);
 </script>
 
-<div class="flex-1 flex justify-center mt-5">
-  <div class="flex-col md:flex">
-    <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
-      <Card.Root class="col-span-3">
-        <Card.Header>
-          <Card.Title>Recent requests</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <RequestList />
-        </Card.Content>
-      </Card.Root>
+<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
+  <Card.Root class="col-span-3">
+    <Card.Header>
+      <Card.Title>Instruments</Card.Title>
+    </Card.Header>
+    <Card.Content>
+      {#if wallet.connected && wallet.actor}
+        <InstrumentsLoader
+          instrumentType={data.instrumentType}
+          onInstrumentsArrived={(exchange, instruments) =>
+            console.log(exchange, instruments)}
+        />
+      {:else}
+        wallet not connected
+      {/if}
 
-      <Card.Root class="col-span-4">
-        <Card.Header>
-          <Card.Title>Price chart</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          <TradingHeader onSelectionCompleted={fetchCandles} />
-          <TradingView candlesData={candlesFromBackend} />
-        </Card.Content>
-      </Card.Root>
+      <!-- <RequestList /> -->
+    </Card.Content>
+  </Card.Root>
 
-      <Card.Root class="col-span-7">
-        <Card.Header>
-          <Card.Title>Actions</Card.Title>
-        </Card.Header>
-        <Card.Content>
-          {#if selectedExchange}
-            <RequestCreator exchange={selectedExchange} />
-          {:else}
-            Choose exchange and pair to view options
-          {/if}
-        </Card.Content>
-      </Card.Root>
-    </div>
-  </div>
+  <Card.Root class="col-span-4">
+    <Card.Header>
+      <Card.Title>Price chart</Card.Title>
+    </Card.Header>
+    <Card.Content>
+      <TradingHeader
+        onSelectionCompleted={fetchCandles}
+        bind:selectedExchange
+      />
+      <TradingView candlesData={candlesFromBackend} />
+    </Card.Content>
+  </Card.Root>
+
+  <Card.Root class="col-span-7">
+    <Card.Header>
+      <Card.Title>Actions</Card.Title>
+    </Card.Header>
+    <Card.Content>
+      <!-- {#if selectedExchange}
+        <RequestCreator exchange={selectedExchange} />
+      {:else}
+        Choose exchange and pair to view options
+      {/if} -->
+    </Card.Content>
+  </Card.Root>
 </div>
