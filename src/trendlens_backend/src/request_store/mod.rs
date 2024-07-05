@@ -13,7 +13,7 @@ pub mod request;
 
 const MAX_USER_REQUESTS: usize = 10;
 
-#[derive(Deserialize, Serialize, Clone, CandidType)]
+#[derive(Debug, Deserialize, Serialize, Clone, CandidType)]
 pub struct ExchangeRequestInfo {
     pub exchange: Exchange,
     pub api_key: String,

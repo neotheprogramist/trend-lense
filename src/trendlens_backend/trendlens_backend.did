@@ -161,7 +161,6 @@ type TradeMode = variant { Cash; SpotIsolated; Isolated; Cross };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
   delete_request : (nat8) -> ();
-  get_api_keys : () -> (vec ApiData) query;
   get_last_timestamp : (Exchange, Pair) -> (opt nat64) query;
   get_pairs : (Exchange) -> (vec Pair) query;
   get_request : (nat8) -> (opt ExchangeRequestInfo) query;
@@ -170,6 +169,6 @@ service : () -> {
   initialize_request : (ExchangeRequestInfo) -> (nat8);
   pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
   register_api_key : (ApiData) -> (bool);
-  remove_api_key : (text) -> ();
+  remove_api_key : (text) -> (opt ApiData);
   run_request : (nat8, text, text) -> (Result);
 }

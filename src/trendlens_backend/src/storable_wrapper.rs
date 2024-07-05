@@ -52,7 +52,7 @@ mod tests {
     struct Test {
         a: u32,
         b: String,
-        c: u64
+        c: u64,
     }
 
     #[test]
@@ -60,7 +60,7 @@ mod tests {
         let test_struct = Test {
             a: 42,
             b: "owner".to_string(),
-            c: 1234567890
+            c: 1234567890,
         };
         let storable_wrapper = StorableWrapper(test_struct.clone());
         let bytes = storable_wrapper.to_bytes();

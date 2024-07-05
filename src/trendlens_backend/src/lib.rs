@@ -73,17 +73,10 @@ fn register_api_key(exchange_api: ApiData) -> bool {
 }
 
 #[ic_cdk::update]
-fn remove_api_key(api_key: String) {
+fn remove_api_key(api_key: String) -> Option<ApiData> {
     let principal = ic_cdk::caller();
 
     ApiStore::remove_key(&principal, &api_key)
-}
-
-#[ic_cdk::query]
-fn get_api_keys() -> Vec<ApiData> {
-    let principal = ic_cdk::caller();
-
-    ApiStore::get_all_keys(&principal).unwrap_or_default()
 }
 
 #[ic_cdk::query]
@@ -144,8 +137,11 @@ async fn run_request(
 ) -> Result<Response, ExchangeErrors> {
     let identity = ic_cdk::caller();
     let exchange_request = RequestStore::get_request(&identity, index).expect("missing request");
-    let api_info = ApiStore::get_by_api(&identity, &exchange_request.api_key.as_str())
-        .expect("api info not found");
+
+    ic_cdk::println!("{:?}", exchange_request);
+
+    let api_info =
+        ApiStore::get_by_api(&identity, &exchange_request.api_key).expect("api info not found");
 
     let exchange: Box<dyn UserData> = match exchange_request.exchange {
         Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
