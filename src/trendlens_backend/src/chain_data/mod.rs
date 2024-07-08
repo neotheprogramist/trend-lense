@@ -17,7 +17,7 @@ mod candles;
 use candles::CandlesStore;
 
 type Timestamp = u64;
-type ExchangeStore = StableBTreeMap<Exchange, StorableWrapper<ExchangeData>, Memory>;
+type ExchangeStore = StableBTreeMap<(Exchange, Pair), StorableWrapper<ExchangeData>, Memory>;
 
 thread_local! {
     static EXCHANGE_STORE: RefCell<ExchangeStore> = RefCell::new(
@@ -28,46 +28,8 @@ thread_local! {
 }
 
 #[derive(Deserialize, Serialize, Default)]
-pub struct PairCandles(HashMap<Pair, CandlesStore>);
-
-impl Deref for PairCandles {
-    type Target = HashMap<Pair, CandlesStore>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl DerefMut for PairCandles {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl PairCandles {
-    pub fn insert_many(&mut self, pair: Pair, candles: Vec<Candle>) {
-        if !self.pair_initialized(&pair) {
-            self.insert(pair.clone(), CandlesStore::default());
-        }
-
-        if let Some(data) = self.get_mut(&pair) {
-            for c in candles {
-                data.insert(c.timestamp, c);
-            }
-        }
-    }
-
-    pub fn get_pair_candles(&self, pair: &Pair) -> Option<&CandlesStore> {
-        self.get(pair)
-    }
-
-    fn pair_initialized(&mut self, pair: &Pair) -> bool {
-        self.get(pair).is_some()
-    }
-}
-
-#[derive(Deserialize, Serialize, Default)]
 pub struct ExchangeData {
-    pub candles: PairCandles,
+    pub candles: CandlesStore,
 }
 
 pub trait TimestampBased {
@@ -80,17 +42,11 @@ pub trait TimestampBased {
 pub trait ChainData {
     fn key(&self) -> Exchange;
 
-    fn init(&self) {
-        EXCHANGE_STORE.with_borrow_mut(|b| {
-            b.insert(self.key(), StorableWrapper(ExchangeData::default()));
-        });
+    fn get_data(&self, pair: Pair) -> Option<StorableWrapper<ExchangeData>> {
+        EXCHANGE_STORE.with_borrow(|b| b.get(&(self.key(), pair)))
     }
 
-    fn data_mut(&self) -> StorableWrapper<ExchangeData> {
-        EXCHANGE_STORE.with_borrow_mut(|b| b.get(&self.key()).unwrap())
-    }
-
-    fn set_data(&self, data: StorableWrapper<ExchangeData>) {
-        EXCHANGE_STORE.with_borrow_mut(|b| b.insert(self.key(), data));
+    fn set_data(&self, pair: Pair, data: StorableWrapper<ExchangeData>) {
+        EXCHANGE_STORE.with_borrow_mut(|b| b.insert((self.key(), pair), data));
     }
 }

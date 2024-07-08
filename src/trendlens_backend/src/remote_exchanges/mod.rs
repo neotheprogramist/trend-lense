@@ -1,5 +1,4 @@
-use crate::chain_data::ChainData;
-use crate::exchange::{Candle, ExchangeInfo};
+use crate::exchange::Candle;
 use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
@@ -18,6 +17,10 @@ pub enum ExchangeErrors {
     ApiClientError(#[from] ApiClientErrors),
     #[error("this exchange has no such index")]
     MissingIndex,
+    #[error("this exchange has no such pair")]
+    MissingPair,
+    #[error("provided timestamps are invalid")]
+    InvalidTimestamps,
 }
 
 #[async_trait::async_trait]
@@ -66,6 +69,3 @@ pub trait ApiRequest: Serialize {
 pub trait Authorize {
     fn get_auth_headers(&self) -> Vec<HttpHeader>;
 }
-
-pub trait UpdateExchange: OpenData + UserData + ChainData + ExchangeInfo {}
-impl<T> UpdateExchange for T where T: OpenData + UserData + ChainData + ExchangeInfo {}

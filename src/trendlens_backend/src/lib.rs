@@ -1,23 +1,16 @@
 use crate::pair::Pair;
-use api_store::ApiData;
-use api_store::ApiStore;
-use chain_data::ChainData;
+use api_store::{ApiData, ApiStore};
 use chain_data::TimestampBased;
-
-use exchange::Candle;
-use exchange::Exchange;
-use exchange::ExchangeImpl;
-use remote_exchanges::coinbase::Coinbase;
-use remote_exchanges::okx::auth::OkxAuth;
-use remote_exchanges::okx::Okx;
-
-use remote_exchanges::ExchangeErrors;
-use remote_exchanges::UpdateExchange;
-use remote_exchanges::UserData;
-use request_store::request::Request;
-use request_store::request::Response;
-use request_store::ExchangeRequestInfo;
-use request_store::RequestStore;
+use exchange::{Candle, Exchange, ExchangeImpl};
+use remote_exchanges::{
+    coinbase::Coinbase,
+    okx::{auth::OkxAuth, Okx},
+    ExchangeErrors, UserData,
+};
+use request_store::{
+    request::{Request, Response},
+    ExchangeRequestInfo, RequestStore,
+};
 
 mod api_client;
 mod api_store;
@@ -43,22 +36,12 @@ fn get_range_to_fetch(stop: u64, current: u64) -> Option<std::ops::Range<u64>> {
     Some(current..stop)
 }
 
-#[ic_cdk::init]
-fn init() {
-    ic_cdk::println!("Initializing TrendLense backend canister");
-    Okx::default().init();
-}
-
 // TODO: rename or get rid off
 #[ic_cdk::query]
 fn get_last_timestamp(exchange: Exchange, pair: Pair) -> Option<u64> {
     let exchange_impl = ExchangeImpl::new(exchange);
 
-    exchange_impl
-        .data_mut()
-        .candles
-        .get_pair_candles(&pair)?
-        .last_timestamp()
+    exchange_impl.get_data(pair)?.candles.last_timestamp()
 }
 
 #[ic_cdk::update]
@@ -173,43 +156,26 @@ async fn pull_candles(
     exchange: Exchange,
     start_timestamp: u64,
     end_timestamp: u64,
-) -> Vec<Candle> {
+) -> Result<Vec<Candle>, ExchangeErrors> {
     if start_timestamp >= end_timestamp {
-        return vec![];
+        return Err(ExchangeErrors::InvalidTimestamps);
     }
 
-    let exchange: Box<dyn UpdateExchange> = match exchange {
-        Exchange::Okx => Box::new(Okx::default()),
-        Exchange::Coinbase => Box::new(Coinbase::default()),
-    };
+    let exchange = ExchangeImpl::new(exchange);
+    let mut exchange_data = exchange.get_data(pair).ok_or(ExchangeErrors::MissingPair)?;
 
-    let mut stored_exchange_data = exchange.data_mut();
-
-    // TODO: return error
-    if !exchange.get_pairs().contains(&pair) {
-        return vec![];
-    }
-
-    let pair_candles = stored_exchange_data.candles.get_pair_candles(&pair);
-
-    let last_candle_timestamp = if let Some(candles) = pair_candles {
-        candles.last_timestamp().unwrap_or(start_timestamp)
-    } else {
-        start_timestamp
-    };
-
+    let last_candle_timestamp = exchange_data
+        .candles
+        .last_timestamp()
+        .unwrap_or(start_timestamp);
     ic_cdk::println!("Last candle timestamp: {}", last_candle_timestamp);
 
     let range_to_fetch = get_range_to_fetch(end_timestamp, last_candle_timestamp);
-
     ic_cdk::println!("Range to fetch: {:?}", range_to_fetch);
 
-    // TODO: handle errors, return to caller
+    // !!!! hardcoded interval
     let fetched_candles = match range_to_fetch {
-        Some(ref range) => exchange
-            .fetch_candles(pair, range.clone(), 1)
-            .await
-            .unwrap_or_default(),
+        Some(ref range) => exchange.fetch_candles(pair, range.clone(), 1).await?,
         None => {
             vec![]
         }
@@ -217,38 +183,27 @@ async fn pull_candles(
 
     ic_cdk::println!("Fetched candles: {:?}", fetched_candles.len());
 
-    let range_to_get = if range_to_fetch.is_some() {
-        if start_timestamp <= last_candle_timestamp {
+    let range_to_get = match range_to_fetch {
+        Some(_) if start_timestamp <= last_candle_timestamp => {
             Some(start_timestamp..last_candle_timestamp)
-        } else {
-            None
         }
-    } else {
-        Some(start_timestamp..end_timestamp)
+        Some(_) => None,
+        None => Some(start_timestamp..end_timestamp),
     };
 
     ic_cdk::println!("Range to get: {:?}", range_to_get);
 
-    let stored_candles = if let Some(range) = range_to_get {
-        if let Some(c) = pair_candles {
-            c.get_between(range)
-        } else {
-            vec![]
-        }
-    } else {
-        vec![]
-    };
+    let stored_candles = range_to_get
+        .and_then(|range| Some(exchange_data.candles.get_between(range)))
+        .unwrap_or_default();
 
-    stored_exchange_data
-        .candles
-        .insert_many(pair, fetched_candles.clone());
+    exchange_data.candles.insert_many(fetched_candles.clone());
+    exchange.set_data(pair, exchange_data);
 
-    exchange.set_data(stored_exchange_data);
-
-    fetched_candles
+    Ok(fetched_candles
         .into_iter()
         .chain(stored_candles.into_iter())
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>())
 }
 
 ic_cdk::export_candid!();

@@ -38,7 +38,7 @@ thread_local! {
 
 // consider making users and then implementing it as trait not using struct but directly
 // use getters to extract useful information from contract state
-pub struct RequestStore {}
+pub struct RequestStore;
 
 impl RequestStore {
     pub fn add_request(identity: &Principal, request: ExchangeRequestInfo) -> u8 {
