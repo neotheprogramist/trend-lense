@@ -16,6 +16,7 @@
   import type { InstrumentType } from "$lib/request";
   import { wallet } from "$lib/wallet.svelte";
   import InstrumentsLoader from "$components/instrumentsLoader.svelte";
+  import { extractOkValue } from "$lib/result";
 
   interface IProps {
     data: PageData;
@@ -54,30 +55,36 @@
 
     console.log("Fetching candles from", lastTimestamp, "to", stopTimestamp);
 
-    const newCandles = await anonymousBackend.pull_candles(
-      handlePair(pair),
-      handleExchange(exchange),
-      BigInt(Math.floor(lastTimestamp / 1000)),
-      BigInt(Math.floor(stopTimestamp / 1000)),
-    );
-
-    console.log("new candles", newCandles);
-
-    lastTimestamp =
-      Number(
-        await anonymousBackend.get_last_timestamp(
-          handleExchange(exchange),
+    try {
+      const newCandles = extractOkValue(
+        await anonymousBackend.pull_candles(
           handlePair(pair),
+          handleExchange(exchange),
+          BigInt(Math.floor(lastTimestamp / 1000)),
+          BigInt(Math.floor(stopTimestamp / 1000)),
         ),
-      ) *
-        1000 +
-      1;
+      );
 
-    const transformedCandles = transformCandleData(newCandles);
-    candlesFromBackend = [...candlesFromBackend, ...transformedCandles];
+      console.log("new candles", newCandles);
 
-    // invoke reactivity
-    candlesFromBackend = candlesFromBackend;
+      lastTimestamp =
+        Number(
+          await anonymousBackend.get_last_timestamp(
+            handleExchange(exchange),
+            handlePair(pair),
+          ),
+        ) *
+          1000 +
+        1;
+
+      const transformedCandles = transformCandleData(newCandles);
+      candlesFromBackend = [...candlesFromBackend, ...transformedCandles];
+
+      // invoke reactivity
+      candlesFromBackend = candlesFromBackend;
+    } catch (err) {
+      console.error("Error fetching candles", err);
+    }
   };
 
   const fetchCandles = (pair: Pairs): void => {

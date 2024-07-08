@@ -3,11 +3,11 @@
   import { keyStore } from "$lib/keystore.svelte";
   import { finishSignature } from "$lib/signature";
   import { wallet } from "$lib/wallet.svelte";
-  import type { ExchangeRequestInfo } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type { Instruction } from "../../../declarations/trendlens_backend/trendlens_backend.did";
   import Button from "./shad/ui/button/button.svelte";
 
   // TODO: replace it with some real structure
-  let requests = $state<([ExchangeRequestInfo] | [])[]>([]);
+  let requests = $state<(Instruction[][] | [])[]>([]);
 
   const fetchRequests = async () => {
     const fetchedRequests = await wallet.actor?.get_requests();
@@ -20,17 +20,17 @@
 
   // TODO: replace those numbers with something more meaningful
   const deleteRequest = async (id: number) => {
-    await wallet.actor?.delete_request(id);
+    await wallet.actor?.delete_transaction(id);
     requests = requests.filter((_, r_id) => r_id !== id);
   };
 
   const runRequest = async (id: number) => {
-    const signatureData = await wallet.actor?.get_request_signature_string(id);
+    const signatureData = await wallet.actor?.get_signature_string(id);
 
     // get this exchange
     const key = keyStore.getByExchange(Exchanges.Okx);
 
-    if(!key) {
+    if (!key) {
       throw new Error("No key found");
       return;
     }
@@ -39,10 +39,10 @@
       throw new Error("No signature found");
       return;
     }
-    
+
     const now = new Date();
     const timestamp = now.toISOString();
-   
+
     const signature = await finishSignature(
       signatureData,
       key.secretKey,

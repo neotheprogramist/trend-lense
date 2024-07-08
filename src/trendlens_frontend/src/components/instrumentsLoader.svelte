@@ -4,13 +4,14 @@
   import { keyStore } from "$lib/keystore.svelte";
   import type { InstrumentType } from "$lib/request";
   import { isInstrumentsResponse } from "$lib/response";
-  import { isOk } from "$lib/result";
+  import { extractOkValue } from "$lib/result";
   import { finishSignature } from "$lib/signature";
   import { wallet } from "$lib/wallet.svelte";
   // import { Toaster } from "$components/shad/ui/sonner/index";
   // import { toast } from "svelte-sonner";
   import type { Instrument } from "../../../declarations/trendlens_backend/trendlens_backend.did";
   import { onMount } from "svelte";
+  import BindableSelect from "./bindableSelect.svelte";
 
   interface IProps {
     instrumentType: InstrumentType;
@@ -22,6 +23,8 @@
 
   let { instrumentType, onInstrumentsArrived }: IProps = $props();
   const userExchanges = keyStore.exchanges();
+  let instrumentsNames = $state<string[]>([]);
+  let currentInstrument = $state<string>("");
 
   const loadInstruments = async (
     instrumentType: InstrumentType,
@@ -37,7 +40,7 @@
       throw new Error("api key not exist in local storage");
     }
 
-    const requestNumber = await wallet.actor.initialize_request({
+    const requestNumber = await wallet.actor.add_instruction({
       api_key: key.apiKey,
       exchange: handleExchange(exchange),
       request: {
@@ -49,7 +52,7 @@
     });
 
     const requestSignatureData =
-      await wallet.actor.get_request_signature_string(requestNumber);
+      await wallet.actor.get_signature_string(requestNumber);
 
     const isoTimestamp = new Date().toISOString();
 
@@ -65,16 +68,17 @@
       isoTimestamp,
     );
 
-    if (isOk(result)) {
-      const response = result.Ok;
+    try {
+      const response = extractOkValue(result);
 
       if (isInstrumentsResponse(response)) {
         return response.Instruments;
       } else {
         throw new Error("Response returned not type of instruments");
       }
-    } else {
-      throw new Error("Instruments request failed with:" + result.Err);
+    } catch (err) {
+      console.error(err);
+      return [];
     }
   };
 
@@ -83,6 +87,8 @@
     instruments: Instrument[],
   ) => {
     console.log(`${exchange} fetch success`);
+
+    instrumentsNames = [...instrumentsNames, ...instruments.map((i) => i.instId)];
     // toast.success(`${exchange} fetch success`);
     onInstrumentsArrived(exchange, instruments);
   };
@@ -104,9 +110,13 @@
   };
 
   onMount(async () => {
-    console.log("rrrr");
     await fetchAllInstruments();
   });
 </script>
 
-<!-- <Toaster /> -->
+<BindableSelect
+  bind:value={currentInstrument}
+  items={instrumentsNames}
+  placeholder="instruments"
+  onChange={(v) => console.log(v)}
+/>

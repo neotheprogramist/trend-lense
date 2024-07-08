@@ -129,7 +129,7 @@
       throw new Error("No key for exchange");
     }
 
-    const number = await wallet.actor?.initialize_request({
+    const number = await wallet.actor?.add_instruction({
       request: requestTransformed,
       api_key: key.apiKey,
       exchange: handleExchange(exchange),
