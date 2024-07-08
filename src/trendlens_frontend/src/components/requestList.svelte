@@ -29,6 +29,12 @@
 
     // get this exchange
     const key = keyStore.getByExchange(Exchanges.Okx);
+
+    if(!key) {
+      throw new Error("No key found");
+      return;
+    }
+
     if (!signatureData) {
       throw new Error("No signature found");
       return;
@@ -39,7 +45,7 @@
    
     const signature = await finishSignature(
       signatureData,
-      key?.secretKey,
+      key.secretKey,
       timestamp,
     );
 

@@ -1,7 +1,6 @@
 use std::{
     cell::RefCell,
     collections::{BTreeMap, HashMap},
-    hash::Hash,
     ops::{Deref, DerefMut},
 };
 

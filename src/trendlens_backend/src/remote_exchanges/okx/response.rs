@@ -48,6 +48,124 @@ impl Into<Candle> for CandleStick {
     }
 }
 
+#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+pub struct PlaceOrderDetails {
+    #[serde(rename = "ordId")]
+    pub order_id: String,
+    #[serde(rename = "clOrdId")]
+    pub client_order_id: String,
+    #[serde(rename = "tag")]
+    pub tag: String,
+    #[serde(rename = "sCode")]
+    pub status_code: String,
+    #[serde(rename = "sMsg")]
+    pub status_message: String,
+}
+
+#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+pub struct PlaceOrderResponse {
+    pub code: String,
+    pub msg: String,
+    pub data: Vec<PlaceOrderDetails>,
+    pub in_time: String,
+    pub out_time: String,
+}
+
+#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+pub struct AccountInfo {
+    #[serde(rename = "uTime")]
+    update_time: String,
+    #[serde(rename = "totalEq")]
+    total_equity: String,
+    #[serde(rename = "isoEq")]
+    isolated_margin_equity: String,
+    #[serde(rename = "adjEq")]
+    adjusted_equity: String,
+    #[serde(rename = "ordFroz")]
+    cross_margin_frozen: String,
+    #[serde(rename = "imr")]
+    initial_margin_requirement: String,
+    #[serde(rename = "mmr")]
+    maintenance_margin_requirement: String,
+    #[serde(rename = "borrowFroz")]
+    potential_borrowing_imr: String,
+    #[serde(rename = "mgnRatio")]
+    margin_ratio: String,
+    #[serde(rename = "notionalUsd")]
+    notional_value_usd: String,
+    #[serde(rename = "upl")]
+    unrealized_profit_loss: String,
+    details: Vec<AssetDetail>,
+}
+
+#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+pub struct AssetDetail {
+    #[serde(rename = "ccy")]
+    currency: String,
+    #[serde(rename = "eq")]
+    equity: String,
+    #[serde(rename = "cashBal")]
+    cash_balance: String,
+    #[serde(rename = "uTime")]
+    update_time: String,
+    #[serde(rename = "isoEq")]
+    isolated_margin_equity: String,
+    #[serde(rename = "availEq")]
+    available_equity: String,
+    #[serde(rename = "disEq")]
+    discount_equity: String,
+    #[serde(rename = "fixedBal")]
+    fixed_balance: String,
+    #[serde(rename = "availBal")]
+    available_balance: String,
+    #[serde(rename = "frozenBal")]
+    frozen_balance: String,
+    #[serde(rename = "ordFrozen")]
+    margin_frozen: String,
+    #[serde(rename = "liab")]
+    liabilities: String,
+    #[serde(rename = "upl")]
+    unrealized_profit_loss: String,
+    #[serde(rename = "uplLiab")]
+    upl_liabilities: String,
+    #[serde(rename = "crossLiab")]
+    cross_liabilities: String,
+    #[serde(rename = "rewardBal")]
+    reward_balance: String,
+    #[serde(rename = "isoLiab")]
+    isolated_liabilities: String,
+    #[serde(rename = "mgnRatio")]
+    margin_ratio: String,
+    #[serde(rename = "interest")]
+    accrued_interest: String,
+    #[serde(rename = "twap")]
+    twap: String,
+    #[serde(rename = "maxLoan")]
+    max_loan: String,
+    #[serde(rename = "eqUsd")]
+    equity_usd: String,
+    #[serde(rename = "borrowFroz")]
+    potential_borrowing_imr: String,
+    #[serde(rename = "notionalLever")]
+    leverage: String,
+    #[serde(rename = "stgyEq")]
+    strategy_equity: String,
+    #[serde(rename = "isoUpl")]
+    isolated_unrealized_profit_loss: String,
+    #[serde(rename = "spotInUseAmt")]
+    spot_in_use_amount: String,
+    #[serde(rename = "clSpotInUseAmt")]
+    user_defined_spot_risk_offset_amount: String,
+    #[serde(rename = "maxSpotInUseAmt")]
+    max_spot_risk_offset_amount: String,
+    #[serde(rename = "spotIsoBal")]
+    spot_isolated_balance: String,
+    #[serde(rename = "imr")]
+    initial_margin_requirement: String,
+    #[serde(rename = "mmr")]
+    maintenance_margin_requirement: String,
+}
+
 #[serde_as]
 #[derive(Deserialize, Debug, Clone, CandidType)]
 pub struct Instrument {

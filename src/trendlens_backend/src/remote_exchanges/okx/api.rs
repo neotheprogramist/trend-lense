@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use super::response::{CandleStick, Instrument};
+use super::response::{AccountInfo, CandleStick, Instrument, PlaceOrderResponse};
 use crate::remote_exchanges::ApiRequest;
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
@@ -71,6 +71,58 @@ impl ApiRequest for GetInstrumentsRequest {
 
     type Response = Vec<Instrument>;
 }
+
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+pub struct GetBalanceRequest {
+    #[serde(rename = "ccy")]
+    pub currencies: Option<String>,
+}
+
+impl ApiRequest for GetBalanceRequest {
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "api/v5/account/balance";
+    const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = false;
+
+    type Response = AccountInfo;
+}
+
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType, Default)]
+pub struct PlaceOrderBody {
+    #[serde(rename = "instId")]
+    pub instrument_id: String,
+    #[serde(rename = "tdMode")]
+    pub trade_mode: String,
+    #[serde(rename = "ccy")]
+    pub margin_currency: Option<String>,
+    #[serde(rename = "clOrdId")]
+    pub client_order_id: Option<String>,
+    #[serde(rename = "tag")]
+    pub order_tag: Option<String>,
+    pub side: String,
+    #[serde(rename = "posSide")]
+    pub position_side: Option<String>,
+    #[serde(rename = "ordType")]
+    pub order_type: String,
+    #[serde(rename = "sz")]
+    pub size: String,
+    #[serde(rename = "px")]
+    pub order_price: Option<String>,
+}
+
+impl ApiRequest for PlaceOrderBody {
+    const METHOD: HttpMethod = HttpMethod::POST;
+    const URI: &'static str = "api/v5/trade/order";
+    const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = false;
+
+    type Response = PlaceOrderResponse;
+}
+
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]

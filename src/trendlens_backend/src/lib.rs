@@ -18,8 +18,6 @@ use request_store::request::Request;
 use request_store::request::Response;
 use request_store::ExchangeRequestInfo;
 use request_store::RequestStore;
-use time::format_description::well_known::Rfc3339;
-use time::OffsetDateTime;
 
 mod api_client;
 mod api_store;
@@ -150,14 +148,12 @@ async fn run_request(
         .expect("api info not found");
 
     let exchange: Box<dyn UserData> = match exchange_request.exchange {
-        Exchange::Okx => {
-            Box::new(Okx::with_auth(OkxAuth {
-                api_key: exchange_request.api_key,
-                passphrase: api_info.passphrase.unwrap(),
-                timestamp: timestamp_utc,
-                signature,
-            }))
-        }
+        Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
+            api_key: exchange_request.api_key,
+            passphrase: api_info.passphrase.unwrap(),
+            timestamp: timestamp_utc,
+            signature,
+        })),
         Exchange::Coinbase => Box::new(Coinbase::default()),
     };
 
@@ -166,6 +162,8 @@ async fn run_request(
             panic!()
         }
         Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
+        Request::Balances(balance) => exchange.get_balance(balance).await?,
+        Request::PostOrder(order) => exchange.post_order(order).await?,
     };
 
     Ok(response)

@@ -38,17 +38,17 @@ impl TimestampBased for CandlesStore {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 
-    fn create_candle(timestamp: u64) -> Candle {
-        Candle {
-            timestamp,
-            open_price: 1.0,
-            close_price: 1.0,
-            highest_price: 1.0,
-            lowest_price: 1.0,
-        }
-    }
+    // fn create_candle(timestamp: u64) -> Candle {
+    //     Candle {
+    //         timestamp,
+    //         open_price: 1.0,
+    //         close_price: 1.0,
+    //         highest_price: 1.0,
+    //         lowest_price: 1.0,
+    //     }
+    // }
 
     // #[test]
     // fn test_candles_store() {
