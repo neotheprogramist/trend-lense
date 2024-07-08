@@ -9,7 +9,10 @@
   import { wallet } from "$lib/wallet.svelte";
   // import { Toaster } from "$components/shad/ui/sonner/index";
   // import { toast } from "svelte-sonner";
-  import type { Instrument } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type {
+    Instrument,
+    Pair,
+  } from "../../../declarations/trendlens_backend/trendlens_backend.did";
   import { onMount } from "svelte";
   import BindableSelect from "./bindableSelect.svelte";
 
@@ -23,8 +26,8 @@
 
   let { instrumentType, onInstrumentsArrived }: IProps = $props();
   const userExchanges = keyStore.exchanges();
-  let instrumentsNames = $state<string[]>([]);
-  let currentInstrument = $state<string>("");
+  let instrumentsNames = $state<Pair[]>([]);
+  let currentInstrument = $state<Pair>();
 
   const loadInstruments = async (
     instrumentType: InstrumentType,
@@ -88,15 +91,16 @@
   ) => {
     console.log(`${exchange} fetch success`);
 
-    instrumentsNames = [...instrumentsNames, ...instruments.map((i) => i.instId)];
-    // toast.success(`${exchange} fetch success`);
+    instrumentsNames = [
+      ...instrumentsNames,
+      ...instruments.map((i) => i.instrument_id),
+    ];
+
     onInstrumentsArrived(exchange, instruments);
   };
 
   const fetchAllInstruments = async () => {
-    console.log("running requests");
     const promises = userExchanges.map(async (e) => {
-      console.log("running one");
       const instruments = await loadInstruments(instrumentType, e);
 
       handleInstruments(e, instruments);
@@ -112,6 +116,8 @@
   onMount(async () => {
     await fetchAllInstruments();
   });
+
+  $inspect(instrumentsNames);
 </script>
 
 <BindableSelect

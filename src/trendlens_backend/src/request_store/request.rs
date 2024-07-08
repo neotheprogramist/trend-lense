@@ -1,6 +1,7 @@
 use crate::remote_exchanges::{
-    okx::response::{AccountInfo, Instrument, PlaceOrderResponse},
+    okx::response::{AccountInfo, PlaceOrderResponse},
     request,
+    response::Instrument,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};

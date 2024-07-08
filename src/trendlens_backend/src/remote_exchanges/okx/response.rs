@@ -1,5 +1,8 @@
-use crate::exchange::Candle;
+use std::str::FromStr;
+
+use crate::{exchange::Candle, pair::Pair, remote_exchanges::ExchangeErrors};
 use candid::CandidType;
+use regex::Regex;
 use serde::{self, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
@@ -166,11 +169,33 @@ pub struct AssetDetail {
     maintenance_margin_requirement: String,
 }
 
+impl FromStr for Pair {
+    type Err = ExchangeErrors;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let patterns = [
+            (Regex::new(r"(?i)btc[-_]?usd").unwrap(), Pair::BtcUsd),
+            (Regex::new(r"(?i)eth[-_ ]?usd").unwrap(), Pair::EthUsd),
+        ];
+
+        for (re, variant) in &patterns {
+            if re.is_match(s) {
+                return Ok(variant.clone());
+            }
+        }
+
+        return Ok(Self::Unknown);
+        // in the future
+        // Err(ExchangeErrors::NotHandledPair)
+    }
+}
+
 #[serde_as]
 #[derive(Deserialize, Debug, Clone, CandidType)]
 pub struct Instrument {
     #[serde(rename = "instId")]
-    pub instrument_id: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub instrument_id: Pair,
     #[serde(rename = "instType")]
     #[serde_as(as = "DisplayFromStr")]
     pub instrument_type: InstrumentType,

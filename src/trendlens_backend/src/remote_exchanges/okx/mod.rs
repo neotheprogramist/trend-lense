@@ -62,6 +62,7 @@ impl Okx {
     /// gets index name from global pair enum
     fn index_name(pair: Pair) -> Option<String> {
         match pair {
+            Pair::Unknown => Some("Unknown".to_string()),
             Pair::BtcUsd => Some("BTC-USD".to_string()),
             Pair::EthUsd => Some("ETH-USD".to_string()),
         }

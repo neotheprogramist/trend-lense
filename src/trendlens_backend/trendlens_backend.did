@@ -65,6 +65,7 @@ type Candle = record {
 type Exchange = variant { Okx; Coinbase };
 type ExchangeErrors = variant {
   ApiClientError : ApiClientErrors;
+  NotHandledPair;
   InvalidTimestamps;
   MissingIndex;
   MissingPair;
@@ -90,39 +91,13 @@ type Instruction = record {
   exchange : Exchange;
 };
 type Instrument = record {
-  stk : opt text;
-  uly : text;
-  minSz : text;
-  expTime : opt text;
-  tickSz : text;
-  maxLmtSz : text;
-  instFamily : text;
-  listTime : opt text;
-  baseCcy : opt text;
-  maxStopSz : text;
-  maxIcebergSz : text;
-  ctVal : opt text;
-  instType : InstrumentType;
-  maxTwapSz : text;
-  maxLmtAmt : opt text;
-  lever : opt text;
-  maxTriggerSz : text;
-  lotSz : text;
-  ctValCcy : opt text;
-  state : text;
-  ctMult : opt text;
-  ctType : opt text;
-  instId : text;
-  maxMktAmt : opt text;
-  quoteCcy : opt text;
-  maxMktSz : text;
-  optType : opt text;
-  settleCcy : opt text;
+  instrument_id : Pair;
+  instrument_type : InstrumentType;
 };
 type InstrumentType = variant { Spot; Swap; Futures; Option; Margin };
 type OrderSide = variant { Buy; Sell };
 type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
-type Pair = variant { BtcUsd; EthUsd };
+type Pair = variant { BtcUsd; EthUsd; Unknown };
 type PlaceOrderDetails = record {
   tag : text;
   clOrdId : text;

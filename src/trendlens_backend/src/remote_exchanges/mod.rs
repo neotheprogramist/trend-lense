@@ -9,6 +9,7 @@ use thiserror::Error;
 
 pub mod coinbase;
 pub mod okx;
+pub mod response;
 pub mod request;
 
 #[derive(Debug, Error, CandidType)]
@@ -21,6 +22,8 @@ pub enum ExchangeErrors {
     MissingPair,
     #[error("provided timestamps are invalid")]
     InvalidTimestamps,
+    #[error("pair is not defined in enum")]
+    NotHandledPair
 }
 
 #[async_trait::async_trait]

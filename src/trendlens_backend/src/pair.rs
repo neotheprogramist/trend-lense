@@ -1,20 +1,24 @@
-use std::borrow::Cow;
 use candid::{CandidType, Decode, Encode};
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 #[repr(u32)]
-#[derive(CandidType, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(
+    CandidType, Clone, Copy, Deserialize, Serialize, PartialEq, Eq, Hash, PartialOrd, Ord, Debug,
+)]
 pub enum Pair {
-    BtcUsd = 0,
+    Unknown = 0,
+    BtcUsd = 1,
     EthUsd,
 }
 
 impl From<Pair> for u32 {
     fn from(value: Pair) -> Self {
         match value {
-            Pair::BtcUsd => 0,
-            Pair::EthUsd => 1,
+            Pair::Unknown => 0,
+            Pair::BtcUsd => 1,
+            Pair::EthUsd => 2,
         }
     }
 }
