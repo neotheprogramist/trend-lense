@@ -9,7 +9,7 @@ use remote_exchanges::{
 };
 use request_store::{
     request::{Request, Response},
-    ExchangeRequestInfo, RequestStore,
+    Instruction, Transaction, TransactionStore,
 };
 
 mod api_client;
@@ -63,46 +63,42 @@ fn remove_api_key(api_key: String) -> Option<ApiData> {
 }
 
 #[ic_cdk::query]
-fn get_request_signature_string(index: u8) -> String {
+fn get_signature_string(index: u32) -> String {
     let identity = ic_cdk::caller();
 
-    let request_info = RequestStore::get_request(&identity, index).expect("missing request");
+    let tx = TransactionStore::get_transaction(&identity, index).expect("missing tx");
+    let ix = tx.get_instruction(0).expect("missing instruction");
 
-    let exchange_impl = ExchangeImpl::new(request_info.exchange);
-    exchange_impl.get_signature_string(request_info.request)
+    let exchange_impl = ExchangeImpl::new(ix.exchange);
+    exchange_impl.get_signature_string(ix.request)
 }
 
 #[ic_cdk::update]
-fn initialize_request(request: ExchangeRequestInfo) -> u8 {
+fn add_instruction(instruction: Instruction) -> u32 {
     let identity = ic_cdk::caller();
 
-    RequestStore::add_request(&identity, request)
+    TransactionStore::add_transaction(&identity, vec![instruction])
 }
 
 #[ic_cdk::update]
-fn delete_request(index: u8) {
+fn delete_transaction(index: u32) {
     let identity = ic_cdk::caller();
 
-    RequestStore::delete_request(&identity, index);
+    TransactionStore::delete_transaction(&identity, index);
 }
 
 #[ic_cdk::query]
-fn get_request(index: u8) -> Option<ExchangeRequestInfo> {
+fn get_transaction(index: u32) -> Option<Transaction> {
     let identity = ic_cdk::caller();
 
-    RequestStore::get_request(&identity, index)
+    TransactionStore::get_transaction(&identity, index)
 }
 
 #[ic_cdk::query]
-fn get_requests() -> Vec<Option<ExchangeRequestInfo>> {
+fn get_requests() -> Option<Vec<Transaction>> {
     let identity = ic_cdk::caller();
 
-    let last_index = RequestStore::next_index(&identity);
-
-    (0..last_index)
-        .into_iter()
-        .map(|i| RequestStore::get_request(&identity, i))
-        .collect::<Vec<_>>()
+    TransactionStore::get_transactions(&identity)
 }
 
 #[ic_cdk::query]
@@ -114,21 +110,21 @@ fn get_pairs(exchange: Exchange) -> Vec<Pair> {
 
 #[ic_cdk::update]
 async fn run_request(
-    index: u8,
+    index: u32,
     signature: String,
     timestamp_utc: String,
 ) -> Result<Response, ExchangeErrors> {
     let identity = ic_cdk::caller();
-    let exchange_request = RequestStore::get_request(&identity, index).expect("missing request");
+    let tx = TransactionStore::get_transaction(&identity, index).expect("missing transaction");
+    let ix = tx.get_instruction(0).expect("missing instruction");
 
-    ic_cdk::println!("{:?}", exchange_request);
+    ic_cdk::println!("{:?}", tx);
 
-    let api_info =
-        ApiStore::get_by_api(&identity, &exchange_request.api_key).expect("api info not found");
+    let api_info = ApiStore::get_by_api(&identity, &ix.api_key).expect("api info not found");
 
-    let exchange: Box<dyn UserData> = match exchange_request.exchange {
+    let exchange: Box<dyn UserData> = match ix.exchange {
         Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
-            api_key: exchange_request.api_key,
+            api_key: ix.api_key,
             passphrase: api_info.passphrase.unwrap(),
             timestamp: timestamp_utc,
             signature,
@@ -136,7 +132,7 @@ async fn run_request(
         Exchange::Coinbase => Box::new(Coinbase::default()),
     };
 
-    let response = match exchange_request.request {
+    let response = match ix.request {
         Request::Empty => {
             panic!()
         }

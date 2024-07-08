@@ -5,7 +5,9 @@ pub enum MemoryLocation {
     Exchanges,
     UserKeys,
     ApiKeys,
-    UserRequest,
+    Instructions,
+    Transactions,
+    UserTransactions
 }
 
 impl MemoryLocation {
@@ -13,8 +15,10 @@ impl MemoryLocation {
         match self {
             MemoryLocation::Exchanges => constants::EXCHANGE_TABLE_MEMORY_ID,
             MemoryLocation::UserKeys => constants::USER_KEYS_TABLE_MEMORY_ID,
-            MemoryLocation::UserRequest => constants::USER_REQUESTS_TABLE_MEMORY_ID,
             MemoryLocation::ApiKeys => constants::API_KEYS_TABLE_MEMORY_ID,
+            MemoryLocation::Instructions => constants::INSTRUCTIONS_TABLE_MEMORY_ID,
+            MemoryLocation::Transactions => constants::TRANSACTIONS_TABLE_MEMORY_ID,
+            MemoryLocation::UserTransactions => constants::USER_TRANSACTIONS_TABLE_MEMORY_ID,
         }
     }
 }

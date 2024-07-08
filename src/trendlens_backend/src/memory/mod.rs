@@ -3,6 +3,7 @@ use ic_stable_structures::{
     DefaultMemoryImpl,
 };
 use std::cell::RefCell;
+pub use location::*;
 
 mod constants;
 mod location;
@@ -13,4 +14,4 @@ thread_local! {
 }
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
-pub use location::*;
+

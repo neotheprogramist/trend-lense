@@ -1,8 +1,4 @@
-use std::{
-    cell::RefCell,
-    collections::{BTreeMap, HashMap},
-    ops::{Deref, DerefMut},
-};
+use std::{cell::RefCell, collections::BTreeMap};
 
 use crate::{
     exchange::{Candle, Exchange},
