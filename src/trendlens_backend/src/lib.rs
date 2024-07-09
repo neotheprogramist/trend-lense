@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::pair::Pair;
 use api_store::{ApiData, ApiStore};
-use chain_data::TimestampBased;
+use chain_data::{ExchangeData, TimestampBased};
 use exchange::{Candle, Exchange, ExchangeImpl};
 use instruments::save_instruments;
 use remote_exchanges::{
@@ -14,6 +14,7 @@ use request_store::{
     request::{Request, Response},
     Instruction, Transaction, TransactionStore,
 };
+use storable_wrapper::StorableWrapper;
 
 mod api_client;
 mod api_store;
@@ -162,6 +163,20 @@ async fn run_request(
     Ok(response)
 }
 
+// #[ic_cdk::init]
+// fn init() {
+//     let btc_usd_pair: Pair = Pair::from_str("btc-usd").expect("invalid pair");
+//     let exchange = ExchangeImpl::new(Exchange::Okx);
+//     exchange.set_data(btc_usd_pair, StorableWrapper(ExchangeData::default()));
+// }
+
+#[ic_cdk::update]
+fn initialize_pair(pair: String, exchange: Exchange) {
+    let pair: Pair = Pair::from_str(&pair).expect("invalid pair");
+    let exchange = ExchangeImpl::new(exchange);
+    exchange.set_data(pair.clone(), StorableWrapper(ExchangeData::default()));
+}
+
 // TODO: split this function into smaller ones
 // TODO: handle errors, return to caller
 #[ic_cdk::update]
@@ -174,7 +189,7 @@ async fn pull_candles(
     if start_timestamp >= end_timestamp {
         return Err(ExchangeErrors::InvalidTimestamps);
     }
-    
+
     let pair = Pair::from_str(&pair).expect("invalid pair");
     let exchange = ExchangeImpl::new(exchange);
     let mut exchange_data = exchange

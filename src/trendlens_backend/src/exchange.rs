@@ -1,4 +1,4 @@
-use candid::{CandidType, Decode, Encode};
+use candid::CandidType;
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -102,7 +102,7 @@ impl ExchangeImpl {
 
     pub fn get_pairs(&self, instrument_type: InstrumentType) -> Vec<Pair> {
         match self {
-            ExchangeImpl::Coinbase(_) => unimplemented!(),
+            ExchangeImpl::Coinbase(_) => vec![],
             ExchangeImpl::Okx(o) => o.get_pairs(instrument_type),
         }
     }
@@ -149,7 +149,7 @@ impl ExchangeImpl {
         };
 
         match self {
-            ExchangeImpl::Coinbase(_) => unimplemented!("Coinbase does not support this operation"),
+            ExchangeImpl::Coinbase(_) => Ok(vec![]),
             ExchangeImpl::Okx(o) => o.get_public_instruments(get_instruments_request).await,
         }
     }

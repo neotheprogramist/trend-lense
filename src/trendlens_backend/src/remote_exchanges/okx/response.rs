@@ -1,6 +1,10 @@
 use std::str::FromStr;
 
-use crate::{exchange::Candle, pair::Pair, remote_exchanges::{response::Instrument, ExchangeErrors}};
+use crate::{
+    exchange::Candle,
+    pair::Pair,
+    remote_exchanges::{response::Instrument, ExchangeErrors},
+};
 use candid::CandidType;
 use serde::{self, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -188,8 +192,8 @@ impl FromStr for Pair {
         }
 
         Ok(Pair {
-            base: splitted[0].to_uppercase(),
-            quote: splitted[1].to_uppercase(),
+            base: splitted[0].to_string(),
+            quote: splitted[1].to_string(),
         })
     }
 }

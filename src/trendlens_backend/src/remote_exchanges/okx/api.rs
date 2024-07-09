@@ -2,7 +2,7 @@ use std::{borrow::Cow, fmt, mem::size_of, str::FromStr};
 
 use super::response::{AccountInfo, CandleStick, ConcreteInstrument, PlaceOrderResponse};
 use crate::remote_exchanges::ApiRequest;
-use candid::{CandidType, Decode, Encode};
+use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};

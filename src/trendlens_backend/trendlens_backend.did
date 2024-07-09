@@ -146,6 +146,7 @@ service : {
   get_requests : () -> (opt vec vec Instruction) query;
   get_signature_string : (nat32) -> (text) query;
   get_transaction : (nat32) -> (opt vec Instruction) query;
+  initialize_pair : (text, Exchange) -> ();
   pull_candles : (text, Exchange, nat64, nat64) -> (Result);
   refresh_instruments : (Exchange, InstrumentType) -> (Result_1);
   register_api_key : (ApiData) -> (bool);
