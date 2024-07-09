@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt, str::FromStr};
+use std::{borrow::Cow, fmt, mem::size_of, str::FromStr};
 
 use super::response::{AccountInfo, CandleStick, ConcreteInstrument, PlaceOrderResponse};
 use crate::remote_exchanges::ApiRequest;
@@ -8,9 +8,12 @@ use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, DisplayFromStr};
 
-#[derive(Debug, Clone, CandidType, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u8)]
+#[derive(
+    Debug, Clone, Copy, CandidType, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord,
+)]
 pub enum InstrumentType {
-    Spot,
+    Spot = 0,
     Futures,
     Swap,
     Option,
@@ -19,16 +22,25 @@ pub enum InstrumentType {
 
 impl Storable for InstrumentType {
     const BOUND: Bound = Bound::Bounded {
-        max_size: std::mem::size_of::<InstrumentType>() as u32,
-        is_fixed_size: false,
+        max_size: size_of::<InstrumentType>() as u32,
+        is_fixed_size: true,
     };
 
     fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
+        let byte = bytes.as_ref()[0];
+        match byte {
+            0 => InstrumentType::Spot,
+            1 => InstrumentType::Futures,
+            2 => InstrumentType::Swap,
+            3 => InstrumentType::Option,
+            4 => InstrumentType::Margin,
+            _ => panic!("Invalid byte for InstrumentType"),
+        }
     }
 
     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
+        let byte = *self as u8;
+        Cow::Owned(vec![byte])
     }
 }
 
@@ -159,7 +171,6 @@ impl ApiRequest for PlaceOrderBody {
 
     type Response = PlaceOrderResponse;
 }
-
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]

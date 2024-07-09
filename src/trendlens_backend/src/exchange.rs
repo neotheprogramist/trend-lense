@@ -32,9 +32,16 @@ pub enum Exchange {
 
 impl From<Exchange> for u8 {
     fn from(value: Exchange) -> Self {
+        value as u8
+    }
+}
+
+impl From<u8> for Exchange {
+    fn from(value: u8) -> Self {
         match value {
-            Exchange::Okx => 0,
-            Exchange::Coinbase => 1,
+            0 => Exchange::Okx,
+            1 => Exchange::Coinbase,
+            _ => panic!("Invalid exchange type"),
         }
     }
 }
@@ -42,15 +49,16 @@ impl From<Exchange> for u8 {
 impl Storable for Exchange {
     const BOUND: Bound = Bound::Bounded {
         max_size: std::mem::size_of::<Exchange>() as u32,
-        is_fixed_size: false,
+        is_fixed_size: true,
     };
 
     fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
+        bytes.as_ref()[0].into()
     }
 
     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
+        ic_cdk::println!("{:?}", *self as u8);
+        Cow::Owned(vec![(*self).into()])
     }
 }
 

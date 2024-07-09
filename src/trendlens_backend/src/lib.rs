@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::pair::Pair;
 use api_store::{ApiData, ApiStore};
 use chain_data::TimestampBased;
@@ -40,8 +42,10 @@ fn get_range_to_fetch(stop: u64, current: u64) -> Option<std::ops::Range<u64>> {
 
 // TODO: rename or get rid off
 #[ic_cdk::query]
-fn get_last_timestamp(exchange: Exchange, pair: Pair) -> Option<u64> {
+fn get_last_timestamp(exchange: Exchange, pair: String) -> Option<u64> {
     let exchange_impl = ExchangeImpl::new(exchange);
+
+    let pair = Pair::from_str(&pair).expect("invalid pair");
 
     exchange_impl.get_data(pair)?.candles.last_timestamp()
 }
@@ -108,6 +112,7 @@ async fn refresh_instruments(
     exchange: Exchange,
     instrument_type: InstrumentType,
 ) -> Result<bool, ExchangeErrors> {
+    ic_cdk::println!("{:?}", exchange as u8);
     let exchange_impl = ExchangeImpl::new(exchange);
     let instruments = exchange_impl.refresh_instruments(&instrument_type).await?;
     save_instruments(exchange, instrument_type, instruments);
@@ -161,7 +166,7 @@ async fn run_request(
 // TODO: handle errors, return to caller
 #[ic_cdk::update]
 async fn pull_candles(
-    pair: Pair,
+    pair: String,
     exchange: Exchange,
     start_timestamp: u64,
     end_timestamp: u64,
@@ -169,7 +174,8 @@ async fn pull_candles(
     if start_timestamp >= end_timestamp {
         return Err(ExchangeErrors::InvalidTimestamps);
     }
-
+    
+    let pair = Pair::from_str(&pair).expect("invalid pair");
     let exchange = ExchangeImpl::new(exchange);
     let mut exchange_data = exchange
         .get_data(pair.clone())

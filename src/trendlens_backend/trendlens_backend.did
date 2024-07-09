@@ -65,14 +65,14 @@ type Candle = record {
 type Exchange = variant { Okx; Coinbase };
 type ExchangeErrors = variant {
   ApiClientError : ApiClientErrors;
-  NotHandledPair;
   InvalidTimestamps;
   MissingIndex;
   MissingPair;
+  UnsupportedPairFormat;
 };
 type GeneralBalanceRequest = record { currency : vec text };
 type GeneralInstrumentsRequest = record {
-  instrument_id : opt text;
+  instrument_id : opt Pair;
   instrument_type : InstrumentType;
 };
 type GeneralPostOrderRequest = record {
@@ -97,7 +97,7 @@ type Instrument = record {
 type InstrumentType = variant { Spot; Swap; Futures; Option; Margin };
 type OrderSide = variant { Buy; Sell };
 type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
-type Pair = variant { BtcUsd; EthUsd; Unknown };
+type Pair = record { base : text; quote : text };
 type PlaceOrderDetails = record {
   tag : text;
   clOrdId : text;
@@ -134,19 +134,21 @@ type Response = variant {
   Balances : AccountInfo;
 };
 type Result = variant { Ok : vec Candle; Err : ExchangeErrors };
-type Result_1 = variant { Ok : Response; Err : ExchangeErrors };
+type Result_1 = variant { Ok : bool; Err : ExchangeErrors };
+type Result_2 = variant { Ok : Response; Err : ExchangeErrors };
 type TradeMode = variant { Cash; SpotIsolated; Isolated; Cross };
 service : {
   __get_candid_interface_tmp_hack : () -> (text) query;
   add_instruction : (Instruction) -> (nat32);
   delete_transaction : (nat32) -> ();
-  get_instruments : (Exchange, TradeMode) -> (vec Pair) query;
-  get_last_timestamp : (Exchange, Pair) -> (opt nat64) query;
+  get_instruments : (Exchange, InstrumentType) -> (vec Pair) query;
+  get_last_timestamp : (Exchange, text) -> (opt nat64) query;
   get_requests : () -> (opt vec vec Instruction) query;
   get_signature_string : (nat32) -> (text) query;
   get_transaction : (nat32) -> (opt vec Instruction) query;
-  pull_candles : (Pair, Exchange, nat64, nat64) -> (Result);
+  pull_candles : (text, Exchange, nat64, nat64) -> (Result);
+  refresh_instruments : (Exchange, InstrumentType) -> (Result_1);
   register_api_key : (ApiData) -> (bool);
   remove_api_key : (text) -> (opt ApiData);
-  run_request : (nat32, text, text) -> (Result_1);
+  run_request : (nat32, text, text) -> (Result_2);
 }
