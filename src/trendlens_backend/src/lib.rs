@@ -163,12 +163,20 @@ async fn run_request(
     Ok(response)
 }
 
-// #[ic_cdk::init]
-// fn init() {
-//     let btc_usd_pair: Pair = Pair::from_str("btc-usd").expect("invalid pair");
-//     let exchange = ExchangeImpl::new(Exchange::Okx);
-//     exchange.set_data(btc_usd_pair, StorableWrapper(ExchangeData::default()));
-// }
+#[ic_cdk::init]
+async fn init() {
+    let btc_usd_pair: Pair = Pair::from_str("btc-usd").expect("invalid pair");
+    let exchange = ExchangeImpl::new(Exchange::Okx);
+    exchange.set_data(btc_usd_pair, StorableWrapper(ExchangeData::default()));
+
+    let btc_eur_pair: Pair = Pair::from_str("btc-eur").expect("invalid pair");
+    exchange.set_data(btc_eur_pair, StorableWrapper(ExchangeData::default()));
+
+    exchange
+        .refresh_instruments(&InstrumentType::Spot)
+        .await
+        .unwrap();
+}
 
 #[ic_cdk::update]
 fn initialize_pair(pair: String, exchange: Exchange) {

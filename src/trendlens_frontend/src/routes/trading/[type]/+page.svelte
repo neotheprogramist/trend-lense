@@ -3,20 +3,21 @@
   import TradingView from "$components/tradingView.svelte";
   import { anonymousBackend } from "$lib/canisters";
   import type { UTCTimestamp } from "lightweight-charts";
-  import type { Candle } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type {
+    Pair,
+    Candle,
+  } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
   import type { SeriesDataItemTypeMap } from "lightweight-charts";
   import * as Card from "$components/shad/ui/card/index";
   import { Exchanges, handleExchange } from "$lib/exchange";
-  import { handlePair, Pairs } from "$lib/pair";
-  import RequestCreator from "$components/requestCreator.svelte";
-  import RequestList from "$components/requestList.svelte";
   import type { PageData } from "./$types";
   import { onMount } from "svelte";
-  import DataTable from "$components/dataTable.svelte";
-  import type { InstrumentType } from "$lib/request";
   import { wallet } from "$lib/wallet.svelte";
-  import InstrumentsLoader from "$components/instrumentsLoader.svelte";
   import { extractOkValue } from "$lib/result";
+  import InstrumentsSelect from "$components/instrumentsSelect.svelte";
+  import { instrumentsStore } from "$lib/instruments.svelte";
+  import * as Tabs from "$components/shad/ui/tabs";
+  import RequestCreator from "$components/requestCreator.svelte";
 
   interface IProps {
     data: PageData;
@@ -32,7 +33,9 @@
   let interval = $state<number | null>(null);
   let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
   let stopTimestamp = $state<number>(Date.now());
+
   let selectedExchange = $state<Exchanges>(data.exchange);
+  let selectedInstrument = $state<string | null>(null);
 
   const transformCandleData = (
     candles: Candle[],
@@ -50,7 +53,7 @@
       .sort((a, b) => a.time - b.time);
   };
 
-  const fetchNewCandles = async (exchange: Exchanges, pair: Pairs) => {
+  const fetchNewCandles = async (exchange: Exchanges, pair: string) => {
     stopTimestamp = Date.now();
 
     console.log("Fetching candles from", lastTimestamp, "to", stopTimestamp);
@@ -58,7 +61,7 @@
     try {
       const newCandles = extractOkValue(
         await anonymousBackend.pull_candles(
-          handlePair(pair),
+          pair,
           handleExchange(exchange),
           BigInt(Math.floor(lastTimestamp / 1000)),
           BigInt(Math.floor(stopTimestamp / 1000)),
@@ -71,7 +74,7 @@
         Number(
           await anonymousBackend.get_last_timestamp(
             handleExchange(exchange),
-            handlePair(pair),
+            pair,
           ),
         ) *
           1000 +
@@ -87,19 +90,20 @@
     }
   };
 
-  const fetchCandles = (pair: Pairs): void => {
+  const fetchCandles = (): void => {
     candlesFromBackend = [];
 
     if (interval) {
       clearInterval(interval);
     }
 
-    fetchNewCandles(selectedExchange, pair);
+    fetchNewCandles(selectedExchange, selectedInstrument!);
     interval = setInterval(fetchNewCandles, fetchInterval);
   };
-  console.log("e");
 
-  $inspect(data);
+  onMount(async () => {
+    await instrumentsStore.filterByType(data.instrumentType);
+  });
 </script>
 
 <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
@@ -108,15 +112,46 @@
       <Card.Title>Instruments</Card.Title>
     </Card.Header>
     <Card.Content>
-      {#if wallet.connected && wallet.actor}
-        <InstrumentsLoader
-          instrumentType={data.instrumentType}
-          onInstrumentsArrived={(exchange, instruments) =>
-            console.log(exchange, instruments)}
-        />
-      {:else}
-        wallet not connected
-      {/if}
+      <Tabs.Root
+        value="open"
+        onValueChange={(v) => {
+          console.log(v);
+        }}
+      >
+        <div class="grid grid-cols-5">
+          <div class="col-span-2">
+            <Tabs.List>
+              <Tabs.Trigger value="open">Open</Tabs.Trigger>
+              <Tabs.Trigger value="account">Account</Tabs.Trigger>
+            </Tabs.List>
+          </div>
+          <div></div>
+          <div class="col-span-2">
+            <InstrumentsSelect
+              instrumentType={data.instrumentType}
+              onInstrumentSelect={(s) => {
+                selectedInstrument = s;
+                fetchCandles();
+              }}
+            />
+          </div>
+        </div>
+        <Tabs.Content value="open">list of open commands</Tabs.Content>
+        <Tabs.Content value="account">
+          {#if wallet.connected && wallet.actor}
+            {#if selectedInstrument}
+              <RequestCreator
+                exchange={selectedExchange}
+                instrumentId={selectedInstrument}
+              />
+            {:else}
+              select instrument
+            {/if}
+          {:else}
+            connect the wallet
+          {/if}
+        </Tabs.Content>
+      </Tabs.Root>
 
       <!-- <RequestList /> -->
     </Card.Content>
@@ -127,10 +162,7 @@
       <Card.Title>Price chart</Card.Title>
     </Card.Header>
     <Card.Content>
-      <TradingHeader
-        onSelectionCompleted={fetchCandles}
-        bind:selectedExchange
-      />
+      <TradingHeader bind:selectedExchange />
       <TradingView candlesData={candlesFromBackend} />
     </Card.Content>
   </Card.Root>

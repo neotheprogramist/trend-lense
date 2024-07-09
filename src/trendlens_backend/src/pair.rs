@@ -1,4 +1,4 @@
-use candid::{CandidType, Decode, Encode};
+use candid::CandidType;
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
@@ -29,7 +29,6 @@ impl Pair {
         buffer
     }
 }
-
 
 impl Storable for Pair {
     const BOUND: Bound = Bound::Bounded {
