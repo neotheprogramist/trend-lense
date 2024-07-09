@@ -1,19 +1,35 @@
-use std::{fmt, str::FromStr};
+use std::{borrow::Cow, fmt, str::FromStr};
 
-use super::response::{AccountInfo, CandleStick, Instrument, PlaceOrderResponse};
+use super::response::{AccountInfo, CandleStick, ConcreteInstrument, PlaceOrderResponse};
 use crate::remote_exchanges::ApiRequest;
-use candid::CandidType;
+use candid::{CandidType, Decode, Encode};
 use ic_cdk::api::management_canister::http_request::HttpMethod;
+use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, DisplayFromStr};
 
-#[derive(Debug, Clone, CandidType, Deserialize, Serialize)]
+#[derive(Debug, Clone, CandidType, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
 pub enum InstrumentType {
     Spot,
     Futures,
     Swap,
     Option,
     Margin,
+}
+
+impl Storable for InstrumentType {
+    const BOUND: Bound = Bound::Bounded {
+        max_size: std::mem::size_of::<InstrumentType>() as u32,
+        is_fixed_size: false,
+    };
+
+    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+
+    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
 }
 
 impl FromStr for InstrumentType {
@@ -69,7 +85,28 @@ impl ApiRequest for GetInstrumentsRequest {
     const HOST: &'static str = "www.okx.com";
     const PUBLIC: bool = false;
 
-    type Response = Vec<Instrument>;
+    type Response = Vec<ConcreteInstrument>;
+}
+
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+pub struct GetInstrumentsRequestPublic {
+    #[serde(rename = "instType")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub instrument_type: InstrumentType,
+    #[serde(rename = "instId")]
+    pub instrument_id: Option<String>,
+    // for now skipped conditional fields
+}
+
+impl ApiRequest for GetInstrumentsRequestPublic {
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "api/v5/public/instruments";
+    const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = true;
+
+    type Response = Vec<ConcreteInstrument>;
 }
 
 #[serde_as]

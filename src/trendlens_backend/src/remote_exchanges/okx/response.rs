@@ -1,8 +1,7 @@
 use std::str::FromStr;
 
-use crate::{exchange::Candle, pair::Pair, remote_exchanges::ExchangeErrors};
+use crate::{exchange::Candle, pair::Pair, remote_exchanges::{response::Instrument, ExchangeErrors}};
 use candid::CandidType;
-use regex::Regex;
 use serde::{self, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
@@ -173,26 +172,68 @@ impl FromStr for Pair {
     type Err = ExchangeErrors;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let patterns = [
-            (Regex::new(r"(?i)btc[-_]?usd").unwrap(), Pair::BtcUsd),
-            (Regex::new(r"(?i)eth[-_ ]?usd").unwrap(), Pair::EthUsd),
-        ];
+        let all_alphanumeric = s.chars().all(char::is_alphanumeric);
 
-        for (re, variant) in &patterns {
-            if re.is_match(s) {
-                return Ok(variant.clone());
-            }
+        // handle it later
+        if all_alphanumeric {
+            return Err(ExchangeErrors::UnsupportedPairFormat);
         }
 
-        return Ok(Self::Unknown);
-        // in the future
-        // Err(ExchangeErrors::NotHandledPair)
+        let splitted = s
+            .split(|pat: char| !pat.is_alphanumeric())
+            .collect::<Vec<_>>();
+
+        if splitted.len() != 2 {
+            return Err(ExchangeErrors::UnsupportedPairFormat);
+        }
+
+        Ok(Pair {
+            base: splitted[0].to_uppercase(),
+            quote: splitted[1].to_uppercase(),
+        })
+    }
+}
+
+#[cfg(test)]
+mod pair_from_str_test {
+    use super::*;
+
+    #[test]
+    fn test_conversion_success() {
+        assert_eq!(
+            Pair::from_str("btc_usd").unwrap(),
+            Pair {
+                base: "BTC".to_string(),
+                quote: "USD".to_string()
+            }
+        );
+        assert_eq!(
+            Pair::from_str("btc.usd").unwrap(),
+            Pair {
+                base: "BTC".to_string(),
+                quote: "USD".to_string()
+            }
+        );
+        assert_eq!(
+            Pair::from_str("btc-usdt").unwrap(),
+            Pair {
+                base: "BTC".to_string(),
+                quote: "USDT".to_string()
+            }
+        );
+        assert_eq!(
+            Pair::from_str("btc.usdt").unwrap(),
+            Pair {
+                base: "BTC".to_string(),
+                quote: "USDT".to_string()
+            }
+        );
     }
 }
 
 #[serde_as]
 #[derive(Deserialize, Debug, Clone, CandidType)]
-pub struct Instrument {
+pub struct ConcreteInstrument {
     #[serde(rename = "instId")]
     #[serde_as(as = "DisplayFromStr")]
     pub instrument_id: Pair,
@@ -251,6 +292,15 @@ pub struct Instrument {
     max_trigger_size: String,
     #[serde(rename = "maxStopSz")]
     max_stop_size: String,
+}
+
+impl Into<Instrument> for ConcreteInstrument {
+    fn into(self) -> Instrument {
+        Instrument {
+            instrument_id: self.instrument_id,
+            instrument_type: self.instrument_type,
+        }
+    }
 }
 
 #[cfg(test)]

@@ -5,11 +5,17 @@ use std::borrow::Cow;
 
 use crate::{
     chain_data::{ChainData, ExchangeData},
+    instruments::get_instruments,
     pair::Pair,
     remote_exchanges::{
         coinbase::Coinbase,
-        okx::{api::GetInstrumentsRequest, Okx},
-        OpenData,
+        okx::{
+            api::{GetInstrumentsRequest, InstrumentType},
+            Okx,
+        },
+        request::GeneralInstrumentsRequest,
+        response::Instrument,
+        ExchangeErrors, OpenData,
     },
     request_store::request::Request,
     storable_wrapper::StorableWrapper,
@@ -53,15 +59,30 @@ pub enum ExchangeImpl {
     Coinbase(Coinbase),
 }
 
-pub trait ExchangeInfo {
-    fn get_pairs(&self) -> Vec<Pair>;
+pub trait ExchangeId {
+    fn exchange_id(&self) -> Exchange;
 }
 
-impl ExchangeInfo for Okx {
-    fn get_pairs(&self) -> Vec<Pair> {
-        vec![Pair::BtcUsd]
+pub trait ExchangeInfo
+where
+    Self: ExchangeId,
+{
+    fn get_pairs(&self, instrument_type: InstrumentType) -> Vec<Pair> {
+        get_instruments(self.exchange_id(), instrument_type)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|r| r.instrument_id)
+            .collect()
     }
 }
+
+impl ExchangeId for Okx {
+    fn exchange_id(&self) -> Exchange {
+        Exchange::Okx
+    }
+}
+
+impl<T> ExchangeInfo for T where T: ExchangeId {}
 
 impl ExchangeImpl {
     pub fn new(exchange_type: Exchange) -> Self {
@@ -71,10 +92,10 @@ impl ExchangeImpl {
         }
     }
 
-    pub fn get_pairs(&self) -> Vec<Pair> {
+    pub fn get_pairs(&self, instrument_type: InstrumentType) -> Vec<Pair> {
         match self {
             ExchangeImpl::Coinbase(_) => unimplemented!(),
-            ExchangeImpl::Okx(o) => o.get_pairs(),
+            ExchangeImpl::Okx(o) => o.get_pairs(instrument_type),
         }
     }
 
@@ -86,7 +107,7 @@ impl ExchangeImpl {
             ExchangeImpl::Okx(o) => match request {
                 Request::Instruments(i) => {
                     let request = GetInstrumentsRequest {
-                        instrument_id: i.instrument_id,
+                        instrument_id: i.instrument_id.and_then(|p| Okx::instrument_id(p)),
                         instrument_type: i.instrument_type,
                     };
                     o.get_signature_data(request)
@@ -107,6 +128,21 @@ impl ExchangeImpl {
         match self {
             ExchangeImpl::Coinbase(c) => c.set_data(pair, data),
             ExchangeImpl::Okx(o) => o.set_data(pair, data),
+        }
+    }
+
+    pub async fn refresh_instruments(
+        &self,
+        instrument_type: &InstrumentType,
+    ) -> Result<Vec<Instrument>, ExchangeErrors> {
+        let get_instruments_request = GeneralInstrumentsRequest {
+            instrument_id: None,
+            instrument_type: instrument_type.clone(),
+        };
+
+        match self {
+            ExchangeImpl::Coinbase(_) => unimplemented!("Coinbase does not support this operation"),
+            ExchangeImpl::Okx(o) => o.get_public_instruments(get_instruments_request).await,
         }
     }
 

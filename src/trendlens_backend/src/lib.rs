@@ -2,9 +2,10 @@ use crate::pair::Pair;
 use api_store::{ApiData, ApiStore};
 use chain_data::TimestampBased;
 use exchange::{Candle, Exchange, ExchangeImpl};
+use instruments::save_instruments;
 use remote_exchanges::{
     coinbase::Coinbase,
-    okx::{auth::OkxAuth, Okx},
+    okx::{api::InstrumentType, auth::OkxAuth, Okx},
     ExchangeErrors, UserData,
 };
 use request_store::{
@@ -16,6 +17,7 @@ mod api_client;
 mod api_store;
 mod chain_data;
 mod exchange;
+mod instruments;
 mod memory;
 mod pair;
 mod remote_exchanges;
@@ -101,11 +103,22 @@ fn get_requests() -> Option<Vec<Transaction>> {
     TransactionStore::get_transactions(&identity)
 }
 
+#[ic_cdk::update]
+async fn refresh_instruments(
+    exchange: Exchange,
+    instrument_type: InstrumentType,
+) -> Result<bool, ExchangeErrors> {
+    let exchange_impl = ExchangeImpl::new(exchange);
+    let instruments = exchange_impl.refresh_instruments(&instrument_type).await?;
+    save_instruments(exchange, instrument_type, instruments);
+    Ok(true)
+}
+
 #[ic_cdk::query]
-fn get_pairs(exchange: Exchange) -> Vec<Pair> {
+fn get_instruments(exchange: Exchange, instrument_type: InstrumentType) -> Vec<Pair> {
     let exchange_impl = ExchangeImpl::new(exchange);
 
-    exchange_impl.get_pairs()
+    exchange_impl.get_pairs(instrument_type)
 }
 
 #[ic_cdk::update]
@@ -158,7 +171,9 @@ async fn pull_candles(
     }
 
     let exchange = ExchangeImpl::new(exchange);
-    let mut exchange_data = exchange.get_data(pair).ok_or(ExchangeErrors::MissingPair)?;
+    let mut exchange_data = exchange
+        .get_data(pair.clone())
+        .ok_or(ExchangeErrors::MissingPair)?;
 
     let last_candle_timestamp = exchange_data
         .candles
@@ -171,7 +186,11 @@ async fn pull_candles(
 
     // !!!! hardcoded interval
     let fetched_candles = match range_to_fetch {
-        Some(ref range) => exchange.fetch_candles(pair, range.clone(), 1).await?,
+        Some(ref range) => {
+            exchange
+                .fetch_candles(pair.clone(), range.clone(), 1)
+                .await?
+        }
         None => {
             vec![]
         }

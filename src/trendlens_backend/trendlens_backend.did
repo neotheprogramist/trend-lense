@@ -140,8 +140,8 @@ service : {
   __get_candid_interface_tmp_hack : () -> (text) query;
   add_instruction : (Instruction) -> (nat32);
   delete_transaction : (nat32) -> ();
+  get_instruments : (Exchange, TradeMode) -> (vec Pair) query;
   get_last_timestamp : (Exchange, Pair) -> (opt nat64) query;
-  get_pairs : (Exchange) -> (vec Pair) query;
   get_requests : () -> (opt vec vec Instruction) query;
   get_signature_string : (nat32) -> (text) query;
   get_transaction : (nat32) -> (opt vec Instruction) query;

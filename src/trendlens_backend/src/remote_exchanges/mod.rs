@@ -1,4 +1,5 @@
 use crate::exchange::Candle;
+use crate::remote_exchanges::response::Instrument;
 use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
@@ -9,8 +10,8 @@ use thiserror::Error;
 
 pub mod coinbase;
 pub mod okx;
-pub mod response;
 pub mod request;
+pub mod response;
 
 #[derive(Debug, Error, CandidType)]
 pub enum ExchangeErrors {
@@ -22,12 +23,17 @@ pub enum ExchangeErrors {
     MissingPair,
     #[error("provided timestamps are invalid")]
     InvalidTimestamps,
-    #[error("pair is not defined in enum")]
-    NotHandledPair
+    #[error("pair format given is not supported")]
+    UnsupportedPairFormat,
 }
 
 #[async_trait::async_trait]
 pub trait OpenData {
+    async fn get_public_instruments(
+        &self,
+        request: GeneralInstrumentsRequest,
+    ) -> Result<Vec<Instrument>, ExchangeErrors>;
+
     async fn fetch_candles(
         &self,
         pair: Pair,
