@@ -65,11 +65,11 @@ export enum TradeModeType {
 }
 
 export enum OrderTypeType {
-  Fok = "Fok",
-  Ioc = "Ioc",
-  Limit = "Limit",
-  PostOnly = "PostOnly",
   Market = "Market",
+  Limit = "Limit",
+  Ioc = "Ioc",
+  Fok = "Fok",
+  PostOnly = "PostOnly",
 }
 
 export enum PositionSideType {
