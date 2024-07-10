@@ -3,19 +3,28 @@
   import Badge from "$components/shad/ui/badge/badge.svelte";
 
   interface IProps {
-    selectedExchange: Exchanges;
+    selectedExchanges: Array<Exchanges>;
+    availableExchanges: Array<Exchanges>;
   }
 
-  let availableExchanges = Object.keys(Exchanges).map((e) => e as Exchanges);
+  let { selectedExchanges = $bindable(), availableExchanges }: IProps =
+    $props();
 
-  let { selectedExchange = $bindable() }: IProps = $props();
+  const toggleExchange = (e: Exchanges) => {
+    if (selectedExchanges.includes(e)) {
+      selectedExchanges = selectedExchanges.filter((ex) => ex !== e);
+    } else {
+      selectedExchanges = [...selectedExchanges, e];
+    }
+  };
 </script>
 
 <div class="grid grid-cols-8 h-8 gap-2">
   {#each availableExchanges as e}
     <Badge
-      variant={selectedExchange != e ? "outline" : undefined}
-      onclick={() => (selectedExchange = e)}>{e}</Badge
+      class="rounded-sm"
+      variant={!selectedExchanges.includes(e) ? "outline" : undefined}
+      onclick={() => toggleExchange(e)}>{e}</Badge
     >
   {/each}
 </div>

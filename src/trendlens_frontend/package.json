@@ -18,7 +18,7 @@
     "@dfinity/candid": "^1.4",
     "@dfinity/identity": "^1.4",
     "@dfinity/principal": "^1.4",
-    "bits-ui": "^0.21.11",
+    "bits-ui": "^0.21.12",
     "clsx": "^2.1.1",
     "lightweight-charts": "^4.1.6",
     "lucide-svelte": "^0.397.0",

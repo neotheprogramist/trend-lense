@@ -2,7 +2,7 @@
   import * as Select from "./shad/ui/select/index";
 
   interface IProps {
-    placeholder: string;
+    placeholder?: string;
     value: T;
     items: T[];
     onChange?: (v: T) => void;
@@ -26,7 +26,9 @@
   }}
 >
   <Select.Trigger class="w-100%">
-    <Select.Value {placeholder} />
+    {#if placeholder !== undefined}
+      <Select.Value {placeholder} />
+    {/if}
   </Select.Trigger>
   <Select.Content>
     {#each items as key}
