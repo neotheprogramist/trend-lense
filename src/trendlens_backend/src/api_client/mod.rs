@@ -4,6 +4,7 @@ use ic_cdk::api::{
     call::RejectionCode,
     management_canister::http_request::{http_request, CanisterHttpRequestArgument, HttpHeader},
 };
+use ic_stable_structures::Storable;
 use thiserror::Error;
 
 #[derive(Error, Debug, CandidType)]
@@ -61,12 +62,13 @@ impl ApiClient {
         R: ApiRequest,
         A: Authorize,
     {
-        let api_url = format!(
-            "https://{}/{}{}",
-            R::HOST,
-            R::URI,
+        let qs = if R::BODY {
+            "".to_string()
+        } else {
             format!("?{}", request.to_query_string())
-        );
+        };
+
+        let api_url = format!("https://{}/{}{}", R::HOST, R::URI, qs);
 
         ic_cdk::println!("{}", api_url);
 
@@ -78,11 +80,13 @@ impl ApiClient {
 
         ic_cdk::println!("{:?}", auth_headers);
 
+        let body = R::BODY.then(|| request.to_body());
+
         let request = CanisterHttpRequestArgument {
             url: api_url,
             method: R::METHOD,
             headers: [auth_headers, self.headers(R::HOST)].concat(),
-            body: None,
+            body: body.and_then(|b| Some(b.to_bytes().to_vec())),
             ..Default::default()
         };
 

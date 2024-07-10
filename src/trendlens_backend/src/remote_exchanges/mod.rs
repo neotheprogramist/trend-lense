@@ -58,6 +58,7 @@ pub trait UserData {
     ) -> Result<Response, ExchangeErrors>;
 }
 
+
 pub trait ApiRequest: Serialize {
     const METHOD: HttpMethod;
     const URI: &'static str;
