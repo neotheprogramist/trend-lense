@@ -16,7 +16,8 @@ export function extractOkValue(
   if ("Ok" in result) {
     return result.Ok;
   } else if ("Err" in result) {
-    throw new Error(`Err: ${JSON.stringify(result.Err)}`);
+    console.log(result.Err)
+    // throw new Error(`Err: ${JSON.stringify(result.Err)}`);
   }
 
   throw new Error("Unexpected result format");

@@ -20,7 +20,7 @@
   import RequestCreator from "$components/requestCreator.svelte";
   import Separator from "$components/shad/ui/separator/separator.svelte";
   import TradeForm from "$components/tradeForm.svelte";
-  import type { PostOrderRequest } from "$lib/postOrder";
+  import { executeRequest, type PostOrderRequest } from "$lib/postOrder.svelte";
 
   interface IProps {
     data: PageData;
@@ -107,14 +107,11 @@
   };
 
   const handlePost = (request: PostOrderRequest) => {
-    if (!wallet || !wallet.connected) {
-      
-    }
-    console.log("Post", request);
+    throw new Error("Not implemented");
   };
 
-  const handleExecute = (request: PostOrderRequest) => {
-    console.log("Execute", request);
+  const handleExecute = async (request: PostOrderRequest) => {
+    await executeRequest(selectedExchanges[0], request);
   };
 
   onMount(async () => {
@@ -128,7 +125,7 @@
       instrumentType={data.instrumentType}
       onInstrumentSelect={(s) => {
         selectedInstrument = s;
-        // fetchCandles();
+        fetchCandles();
       }}
     />
   </div>

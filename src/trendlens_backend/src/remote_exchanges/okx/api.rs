@@ -96,6 +96,7 @@ impl ApiRequest for GetInstrumentsRequest {
     const URI: &'static str = "api/v5/account/instruments";
     const HOST: &'static str = "www.okx.com";
     const PUBLIC: bool = false;
+    const BODY: bool = false;
 
     type Response = Vec<ConcreteInstrument>;
 }
@@ -117,6 +118,7 @@ impl ApiRequest for GetInstrumentsRequestPublic {
     const URI: &'static str = "api/v5/public/instruments";
     const HOST: &'static str = "www.okx.com";
     const PUBLIC: bool = true;
+    const BODY: bool = false;
 
     type Response = Vec<ConcreteInstrument>;
 }
@@ -134,6 +136,7 @@ impl ApiRequest for GetBalanceRequest {
     const URI: &'static str = "api/v5/account/balance";
     const HOST: &'static str = "www.okx.com";
     const PUBLIC: bool = false;
+    const BODY: bool = false;
 
     type Response = AccountInfo;
 }
@@ -168,6 +171,7 @@ impl ApiRequest for PlaceOrderBody {
     const URI: &'static str = "api/v5/trade/order";
     const HOST: &'static str = "www.okx.com";
     const PUBLIC: bool = false;
+    const BODY: bool = true;
 
     type Response = PlaceOrderResponse;
 }
@@ -193,6 +197,7 @@ impl ApiRequest for IndexCandleStickRequest {
     const URI: &'static str = "api/v5/market/index-candles";
     const HOST: &'static str = "www.okx.com";
     const PUBLIC: bool = true;
+    const BODY: bool = false;
 
     type Response = Vec<CandleStick>;
 }

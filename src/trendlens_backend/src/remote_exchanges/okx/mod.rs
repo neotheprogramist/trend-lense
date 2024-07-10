@@ -30,7 +30,7 @@ impl Okx {
         .to_string()
     }
 
-    fn side_string(side: OrderSide) -> String {
+    pub fn side_string(side: OrderSide) -> String {
         match side {
             OrderSide::Buy => "buy",
             OrderSide::Sell => "sell",
@@ -38,7 +38,7 @@ impl Okx {
         .to_string()
     }
 
-    fn order_type_string(order_type: OrderType) -> String {
+    pub fn order_type_string(order_type: OrderType) -> String {
         match order_type {
             OrderType::Limit => "limit",
             OrderType::Market => "market",
@@ -49,7 +49,7 @@ impl Okx {
         .to_string()
     }
 
-    fn trade_mode_string(trade_mode: TradeMode) -> String {
+    pub fn trade_mode_string(trade_mode: TradeMode) -> String {
         match trade_mode {
             TradeMode::Cross => "cross",
             TradeMode::Isolated => "isolated",
@@ -70,7 +70,13 @@ impl Okx {
     pub fn get_signature_data<R: ApiRequest>(&self, request: R) -> String {
         let api_url = format!("/{}{}", R::URI, format!("?{}", request.to_query_string()));
 
-        format!("{:?}{}{}", R::METHOD, R::BODY, api_url).to_string()
+        let body =  if R::BODY {
+            request.to_body()
+        } else {
+            "".to_string()
+        };
+
+        format!("{:?}{}{}{}", R::METHOD, R::BODY, api_url, body).to_string()
     }
 }
 

@@ -1,6 +1,6 @@
 import type {
   Instrument,
-  PlaceOrderResponse,
+  OrderData,
   Response,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
@@ -14,6 +14,6 @@ export function isInstrumentsResponse(
 
 export function isPostOrderResponse(
   response: Response,
-): response is { Order: PlaceOrderResponse } {
-  return (response as { Order: PlaceOrderResponse }).Order !== undefined;
+): response is { Order: OrderData } {
+  return (response as { Order: OrderData }).Order !== undefined;
 }

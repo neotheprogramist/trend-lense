@@ -31,6 +31,10 @@ impl ApiClient {
                 name: "User-Agent".to_string(),
                 value: "trend_lense_backend".to_string(),
             },
+            HttpHeader {
+                name: "Content-Type".to_string(),
+                value: "application/json".to_string(),
+            },
         ]
     }
 
@@ -86,14 +90,15 @@ impl ApiClient {
 
         match http_request(request, required_cycles).await {
             Ok((response,)) => {
-                ic_cdk::println!("{:?}", String::from_utf8(response.body.clone()).expect("conversion failed"));
+                ic_cdk::println!(
+                    "{:?}",
+                    String::from_utf8(response.body.clone()).expect("conversion failed")
+                );
                 if response.status != Nat::from(200u32) {
                     return Err(ApiClientErrors::Http {
                         status: response.status,
                     });
                 }
-
-              
 
                 let body: String = String::from_utf8(response.body).expect("conversion failed");
                 let deserialized_response: ApiResponse<R::Response> =
@@ -105,11 +110,10 @@ impl ApiClient {
             Err(err) => {
                 ic_cdk::println!("{:?}", err);
 
-
                 return Err(ApiClientErrors::Reject {
                     message: err.1,
                     code: err.0,
-                })
+                });
             }
         }
     }

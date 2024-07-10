@@ -8,3 +8,9 @@ pub struct Instrument {
     pub instrument_id: Pair,
     pub instrument_type: InstrumentType,
 }
+
+
+#[derive(Deserialize, Debug, Clone, CandidType, Serialize)]
+pub struct OrderData {
+    pub code: String
+}

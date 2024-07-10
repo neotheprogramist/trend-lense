@@ -11,7 +11,7 @@
   import Badge from "./shad/ui/badge/badge.svelte";
   import Input from "./shad/ui/input/input.svelte";
 
-  import { inferTradeModes, PostOrderRequest } from "$lib/postOrder";
+  import { inferTradeModes, PostOrderRequest } from "$lib/postOrder.svelte";
 
   interface IProps {
     instrumentId: string;

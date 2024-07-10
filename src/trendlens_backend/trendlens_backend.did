@@ -95,23 +95,10 @@ type Instrument = record {
   instrument_type : InstrumentType;
 };
 type InstrumentType = variant { Spot; Swap; Futures; Option; Margin };
+type OrderData = record { code : text };
 type OrderSide = variant { Buy; Sell };
 type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
 type Pair = record { base : text; quote : text };
-type PlaceOrderDetails = record {
-  tag : text;
-  clOrdId : text;
-  ordId : text;
-  sMsg : text;
-  sCode : text;
-};
-type PlaceOrderResponse = record {
-  msg : text;
-  in_time : text;
-  out_time : text;
-  code : text;
-  data : vec PlaceOrderDetails;
-};
 type PositionSide = variant { Short; Long };
 type RejectionCode = variant {
   NoError;
@@ -130,7 +117,7 @@ type Request = variant {
 };
 type Response = variant {
   Instruments : vec Instrument;
-  Order : PlaceOrderResponse;
+  Order : OrderData;
   Balances : AccountInfo;
 };
 type Result = variant { Ok : vec Candle; Err : ExchangeErrors };

@@ -5,7 +5,7 @@ use super::{
 use crate::{
     remote_exchanges::{
         request::{GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest},
-        response::Instrument,
+        response::{Instrument, OrderData},
         ExchangeErrors, UserData,
     },
     request_store::request::Response,
@@ -19,7 +19,7 @@ impl UserData for Okx {
     ) -> Result<Response, ExchangeErrors> {
         let exchange_request = GetInstrumentsRequest {
             instrument_type: req.instrument_type,
-            instrument_id: req.instrument_id.and_then(|p| Self::instrument_id(p))
+            instrument_id: req.instrument_id.and_then(|p| Self::instrument_id(p)),
         };
 
         let instrument_response = self
@@ -75,6 +75,8 @@ impl UserData for Okx {
             .call(exchange_request, self.auth.as_ref())
             .await?;
 
-        Ok(Response::Order(order_response))
+        Ok(Response::Order(OrderData {
+            code: order_response.code,
+        }))
     }
 }

@@ -3,7 +3,6 @@
 <script lang="ts">
   import {
     ColorType,
-    type ChartOptions,
     type SeriesDataItemTypeMap,
   } from "lightweight-charts";
   import { CandlestickSeries, Chart } from "svelte-lightweight-charts";

@@ -184,7 +184,7 @@ export const executeRequest = async (
     if (isPostOrderResponse(response)) {
       const order = response.Order;
 
-      console.log(order.msg);
+      console.log(order.code);
     } else {
       throw new Error("Response returned not type of order");
     }
