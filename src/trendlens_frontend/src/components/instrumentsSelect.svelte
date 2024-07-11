@@ -17,6 +17,7 @@
   });
 </script>
 
+
 <BindableSelect
   bind:value={currentInstrument}
   items={instrumentsStore.filteredInstruments.map(

@@ -76,7 +76,7 @@ impl UserData for Okx {
             .await?;
 
         Ok(Response::Order(OrderData {
-            code: order_response.code,
+            code: order_response[0].code.clone(),
         }))
     }
 }

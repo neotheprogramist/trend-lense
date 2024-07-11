@@ -10,7 +10,7 @@ use crate::{
     remote_exchanges::{
         coinbase::Coinbase,
         okx::{
-            api::{GetInstrumentsRequest, InstrumentType, PlaceOrderBody},
+            api::{GetBalanceRequest, GetInstrumentsRequest, InstrumentType, PlaceOrderBody},
             Okx,
         },
         request::GeneralInstrumentsRequest,
@@ -118,6 +118,13 @@ impl ExchangeImpl {
                         instrument_id: i.instrument_id.and_then(|p| Okx::instrument_id(p)),
                         instrument_type: i.instrument_type,
                     };
+                    o.get_signature_data(request)
+                }
+                Request::Balances(b) => {
+                    let request = GetBalanceRequest {
+                        currencies: Some(b.currency.join(",")),
+                    };
+
                     o.get_signature_data(request)
                 }
                 Request::PostOrder(request) => {

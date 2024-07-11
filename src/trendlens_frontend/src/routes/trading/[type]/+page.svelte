@@ -21,6 +21,7 @@
   import Separator from "$components/shad/ui/separator/separator.svelte";
   import TradeForm from "$components/tradeForm.svelte";
   import { executeRequest, type PostOrderRequest } from "$lib/postOrder.svelte";
+    import { getBalance } from "$lib/getBalance";
 
   interface IProps {
     data: PageData;
@@ -36,6 +37,10 @@
   let interval = $state<number | null>(null);
   let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
   let stopTimestamp = $state<number>(Date.now());
+  let balances = $state<{
+    base?: number;
+    quote?: number;
+  }>({ base: undefined, quote: undefined });
 
   const availableExchanges = Object.keys(Exchanges).map((e) => e as Exchanges);
 
@@ -114,6 +119,12 @@
     await executeRequest(selectedExchanges[0], request);
   };
 
+  const fetchBalances = async (instrumentId: string) => {
+    const currencies = instrumentId.split('-');
+
+    await getBalance(selectedExchanges[0], currencies)
+  }
+
   onMount(async () => {
     await instrumentsStore.filterByType(data.instrumentType);
   });
@@ -125,6 +136,7 @@
       instrumentType={data.instrumentType}
       onInstrumentSelect={(s) => {
         selectedInstrument = s;
+        fetchBalances(s);
         fetchCandles();
       }}
     />
@@ -151,6 +163,7 @@
     <Separator orientation="horizontal" />
     {#if selectedInstrument}
       <TradeForm
+        exchange={selectedExchanges[0]}
         instrumentId={selectedInstrument}
         instrumentType={data.instrumentType}
         onExecute={handleExecute}

@@ -12,15 +12,18 @@
   import Input from "./shad/ui/input/input.svelte";
 
   import { inferTradeModes, PostOrderRequest } from "$lib/postOrder.svelte";
+  import type { Exchanges } from "$lib/exchange";
 
   interface IProps {
+    exchange: Exchanges;
     instrumentId: string;
     instrumentType: InstrumentType;
     onPost: (request: PostOrderRequest) => void;
     onExecute: (request: PostOrderRequest) => void;
   }
 
-  let { instrumentId, instrumentType, onExecute, onPost }: IProps = $props();
+  let { instrumentId, instrumentType, onExecute, onPost, exchange }: IProps =
+    $props();
 
   const request = new PostOrderRequest(
     inferTradeModes(instrumentType),
