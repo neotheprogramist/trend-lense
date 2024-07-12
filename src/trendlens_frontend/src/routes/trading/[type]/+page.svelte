@@ -21,7 +21,7 @@
   import Separator from "$components/shad/ui/separator/separator.svelte";
   import TradeForm from "$components/tradeForm.svelte";
   import { executeRequest, type PostOrderRequest } from "$lib/postOrder.svelte";
-    import { getBalance } from "$lib/getBalance";
+  import { getBalance } from "$lib/getBalance";
 
   interface IProps {
     data: PageData;
@@ -120,13 +120,13 @@
   };
 
   const fetchBalances = async (instrumentId: string) => {
-    const currencies = instrumentId.split('-');
+    const currencies = instrumentId.split("-");
 
-    await getBalance(selectedExchanges[0], currencies)
-  }
+    await getBalance(selectedExchanges[0], currencies);
+  };
 
   onMount(async () => {
-    await instrumentsStore.filterByType(data.instrumentType);
+    await instrumentsStore.filterByType(data.instrumentType, false);
   });
 </script>
 

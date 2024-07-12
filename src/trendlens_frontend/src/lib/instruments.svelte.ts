@@ -106,10 +106,13 @@ class InstrumentsStore {
     }
   }
 
-  private flatInstruments(type: InstrumentType): Pair[] {
+  private flatInstruments(
+    instruments: Map<[Exchanges, InstrumentType], Pair[]>,
+    type: InstrumentType,
+  ): Pair[] {
     const flatUnique = new Set<Pair>();
 
-    this.globalInstruments.forEach((values, key) => {
+    instruments.forEach((values, key) => {
       const [_, instrumentType] = key;
       if (instrumentType === type) {
         values.forEach((value) => flatUnique.add(value));
@@ -119,30 +122,37 @@ class InstrumentsStore {
     return Array.from(flatUnique);
   }
 
-  public async filterByType(type: InstrumentType) {
-    this.filteredInstruments = await this.getAllInstruments(type, true);
+  public async filterByType(type: InstrumentType, loaded?: boolean) {
+    this.filteredInstruments = await this.getAllInstruments(type, loaded);
+  }
+
+  public async filterByUser(type: InstrumentType, loaded?: boolean) {
+    const instruments = await this.getAllUserInstruments(type, loaded);
+    const intersect = instruments.filter(el => this.filteredInstruments.some(e => e.base == el.base && e.quote == el.quote))
+   
+    this.filteredInstruments = intersect;
   }
 
   public async getAllUserInstruments(
     type: InstrumentType,
     loaded?: boolean,
   ): Promise<Pair[]> {
-    if (loaded != undefined && loaded != false) {
+    if (loaded != undefined && !loaded) {
       await this.loadAllUserInstruments(type);
     }
 
-    return this.flatInstruments(type);
+    return this.flatInstruments(this.userInstruments, type);
   }
 
   public async getAllInstruments(
     type: InstrumentType,
     loaded?: boolean,
   ): Promise<Pair[]> {
-    if (loaded != undefined && loaded != false) {
+    if (loaded != undefined && !loaded) {
       await this.loadAllGlobalInstruments(type);
     }
 
-    return this.flatInstruments(type);
+    return this.flatInstruments(this.globalInstruments, type);
   }
 }
 
