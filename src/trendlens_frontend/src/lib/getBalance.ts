@@ -7,7 +7,7 @@ import { wallet } from "./wallet.svelte";
 
 export const getBalance = async (
   exchange: Exchanges,
-  currencies: Array<string>,
+  currencies: Array<string> = [],
 ) => {
   if (!wallet.actor) {
     throw new Error("wallet not connected");
@@ -19,12 +19,17 @@ export const getBalance = async (
     throw new Error("missing key");
   }
 
+  let currenciesList: [] | [string[]] = [];
+  if (currencies.length > 0) {
+    currenciesList = [currencies];
+  }
+
   const requestNumber = await wallet.actor.add_instruction({
     api_key: key.apiKey,
     exchange: handleExchange(exchange),
     request: {
       Balances: {
-        currency: currencies,
+        currency: currenciesList,
       },
     },
   });
@@ -52,13 +57,12 @@ export const getBalance = async (
     const response = extractOkValue(result);
 
     if (isBalanceResponse(response)) {
-      const balances = response.Balances;
-
-      console.log(balances);
+      return response.Balances;
     } else {
       throw new Error("Response returned not type of balances");
     }
   } catch (err) {
     console.error(err);
+    return [];
   }
 };

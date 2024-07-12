@@ -72,7 +72,15 @@ impl Okx {
         let (qs, body) = if R::BODY {
             ("".to_string(), request.to_body())
         } else {
-            (format!("?{}", request.to_query_string()), "".to_string())
+            let qs = request.to_query_string();
+
+            let qs = if qs == "" {
+                "".to_string()
+            } else {
+                format!("?{}", qs)
+            };
+
+            (qs, "".to_string())
         };
 
         let method_str = if R::METHOD == HttpMethod::GET {
@@ -83,13 +91,7 @@ impl Okx {
 
         let api_url = format!("/{}{}", R::URI, qs);
 
-        format!(
-            "{}{}{}",
-            method_str,
-            api_url,
-            body
-        )
-        .to_string()
+        format!("{}{}{}", method_str, api_url, body).to_string()
     }
 }
 

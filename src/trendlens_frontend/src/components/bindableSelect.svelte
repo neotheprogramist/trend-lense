@@ -1,4 +1,5 @@
 <script lang="ts" generics="T">
+  import ScrollArea from "./shad/ui/scroll-area/scroll-area.svelte";
   import * as Select from "./shad/ui/select/index";
 
   interface IProps {
@@ -31,8 +32,10 @@
     {/if}
   </Select.Trigger>
   <Select.Content>
-    {#each items as key}
-      <Select.Item value={key}>{key}</Select.Item>
-    {/each}
+    <ScrollArea class="h-[200px] w-full rounded-md border p-4">
+      {#each items as key}
+        <Select.Item value={key}>{key}</Select.Item>
+      {/each}
+    </ScrollArea>
   </Select.Content>
 </Select.Root>

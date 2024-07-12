@@ -122,7 +122,7 @@ impl ExchangeImpl {
                 }
                 Request::Balances(b) => {
                     let request = GetBalanceRequest {
-                        currencies: Some(b.currency.join(",")),
+                        currencies: b.currency.and_then(|c| Some(c.join(","))),
                     };
 
                     o.get_signature_data(request)

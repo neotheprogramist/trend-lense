@@ -60,5 +60,5 @@ pub struct GeneralInstrumentsRequest {
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GeneralBalanceRequest {
-    pub currency: Vec<String>,
+    pub currency: Option<Vec<String>>
 }

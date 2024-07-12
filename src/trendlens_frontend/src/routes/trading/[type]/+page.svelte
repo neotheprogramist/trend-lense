@@ -38,9 +38,9 @@
   let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
   let stopTimestamp = $state<number>(Date.now());
   let balances = $state<{
-    base?: number;
-    quote?: number;
-  }>({ base: undefined, quote: undefined });
+    base: number;
+    quote: number;
+  }>({ base: 0, quote: 0 });
 
   const availableExchanges = Object.keys(Exchanges).map((e) => e as Exchanges);
 
@@ -120,9 +120,32 @@
   };
 
   const fetchBalances = async (instrumentId: string) => {
-    const currencies = instrumentId.split("-");
+    const [base, quote] = instrumentId.split("-");
 
-    await getBalance(selectedExchanges[0], currencies);
+    const fetched = await getBalance(selectedExchanges[0]);
+
+    console.log(fetched)
+    const baseBalance = fetched[0].details
+      .filter((e) => e.ccy === base)
+      .map((e) => e.eq)[0];
+    const quoteBalance = fetched[0].details
+      .filter((e) => e.ccy === quote)
+      .map((e) => e.eq)[0];
+
+    balances = {
+      base: baseBalance == undefined ? 0 : Number(baseBalance),
+      quote: quoteBalance == undefined ? 0 : Number(quoteBalance),
+    };
+
+    console.log(balances);
+
+    console.log("balances", balances);
+  };
+
+  const handleInstrumentChange = (i: string) => {
+    selectedInstrument = i;
+    fetchBalances(i);
+    fetchCandles();
   };
 
   onMount(async () => {
@@ -134,11 +157,7 @@
   <div class="col-span-2 border p-2">
     <InstrumentsSelect
       instrumentType={data.instrumentType}
-      onInstrumentSelect={(s) => {
-        selectedInstrument = s;
-        fetchBalances(s);
-        fetchCandles();
-      }}
+      onInstrumentSelect={handleInstrumentChange}
     />
   </div>
 
@@ -163,6 +182,7 @@
     <Separator orientation="horizontal" />
     {#if selectedInstrument}
       <TradeForm
+        {balances}
         exchange={selectedExchanges[0]}
         instrumentId={selectedInstrument}
         instrumentType={data.instrumentType}

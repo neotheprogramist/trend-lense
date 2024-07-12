@@ -42,11 +42,8 @@ impl UserData for Okx {
         &self,
         request: GeneralBalanceRequest,
     ) -> Result<Response, ExchangeErrors> {
-        let currencies = match request.currency.len() {
-            0 => None,
-            _ => Some(request.currency.join(",")),
-        };
-
+        let currencies = request.currency.and_then(|c| Some(c.join(","
+        )));
         let exchange_request = GetBalanceRequest { currencies };
 
         let balances_response = self
