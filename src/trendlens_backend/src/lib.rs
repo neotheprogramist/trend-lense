@@ -8,6 +8,7 @@ use instruments::save_instruments;
 use remote_exchanges::{
     coinbase::{Coinbase, CoinbaseAuth},
     okx::{api::InstrumentType, auth::OkxAuth, Okx},
+    request::{GeneralPostOrderRequest, OrderSide, OrderType, TradeMode},
     ExchangeErrors, UserData,
 };
 use request_store::{
@@ -182,6 +183,66 @@ fn initialize_pair(pair: String, exchange: Exchange) {
     let pair: Pair = Pair::from_str(&pair).expect("invalid pair");
     let exchange = ExchangeImpl::new(exchange);
     exchange.set_data(pair.clone(), StorableWrapper(ExchangeData::default()));
+}
+
+#[ic_cdk::update]
+async fn split_transaction(
+    keys: Vec<ApiData>,
+    pair: String,
+    order_side: OrderSide,
+    size: f64,
+    price_limit: u32,
+) -> Result<u32, ExchangeErrors> {
+    let identity = ic_cdk::caller();
+    let pair = Pair::from_str(&pair).expect("invalid pair");
+
+    let mut volumes: Vec<f64> = vec![];
+
+    for k in keys.iter() {
+        let key =
+            ApiStore::get_by_api(&identity, &k.api_key).ok_or(ExchangeErrors::MissingApiKey)?;
+        let exchange = ExchangeImpl::new(key.exchange);
+
+        volumes.push(
+            exchange
+                .get_market_depth(&pair, &order_side, price_limit)
+                .await,
+        )
+    }
+
+    let weights = volumes
+        .iter()
+        .map(|v| v / volumes.iter().sum::<f64>())
+        .collect::<Vec<_>>();
+
+    let trade_cuts = weights.iter().map(|w| w * size).collect::<Vec<_>>();
+
+    let instructions: Vec<Result<Instruction, ExchangeErrors>> = keys
+        .iter()
+        .zip(trade_cuts.iter())
+        .map(|(k, c)| {
+            Ok(Instruction {
+                api_key: k.api_key.clone(),
+                exchange: k.exchange,
+                request: Request::PostOrder(GeneralPostOrderRequest {
+                    instrument_id: Okx::instrument_id(&pair).ok_or(ExchangeErrors::MissingIndex)?,
+                    order_type: OrderType::Market,
+                    side: order_side.clone(),
+                    size: *c,
+                    trade_mode: TradeMode::Cash,
+                    margin_currency: None,
+                    order_price: None,
+                    position_side: None,
+                }),
+            })
+        })
+        .collect();
+
+    let instructions = instructions.into_iter().collect::<Result<Vec<_>, _>>()?;
+
+    Ok(TransactionStore::add_transaction(&identity, instructions))
+
+    // let volumes;
 }
 
 // TODO: split this function into smaller ones
