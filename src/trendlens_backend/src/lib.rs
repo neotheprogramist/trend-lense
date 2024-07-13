@@ -216,7 +216,7 @@ async fn pull_candles(
     let fetched_candles = match range_to_fetch {
         Some(ref range) => {
             exchange
-                .fetch_candles(pair.clone(), range.clone(), 1)
+                .fetch_candles(&pair, range.clone(), 1)
                 .await?
         }
         None => {

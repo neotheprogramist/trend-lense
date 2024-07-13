@@ -60,7 +60,7 @@ impl Okx {
     }
 
     /// gets index name from global pair enum
-    pub fn instrument_id(pair: Pair) -> Option<String> {
+    pub fn instrument_id(pair: &Pair) -> Option<String> {
         return format!("{:?}-{:?}", pair.base, pair.quote)
             .to_uppercase()
             .parse()

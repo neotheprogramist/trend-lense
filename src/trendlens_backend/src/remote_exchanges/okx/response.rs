@@ -36,6 +36,23 @@ impl<R: DeserializeOwned> ApiResponseWrapper<R> for ApiResponse<R> {
     }
 }
 
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct BidAsk {
+    pub price: f64,
+    pub size: f64,
+    pub deprecated: u32,
+    pub orders_count: u32,
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct OrderBook {
+    pub asks: Vec<BidAsk>,
+    pub bids: Vec<BidAsk>,
+    #[serde(rename = "ts")]
+    pub timestamp: u64,
+}
+
 #[serde_as]
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct CandleStick {

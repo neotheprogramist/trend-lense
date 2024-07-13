@@ -4,6 +4,7 @@ use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod};
+use okx::response::OrderBook;
 use request::{GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -28,7 +29,9 @@ pub enum ExchangeErrors {
     #[error("could not deserialize: {message}")]
     DeserializationFailed {
         message: String,
-    }
+    },
+    #[error("api key not found")]
+    MissingApiKey,
 }
 
 #[async_trait::async_trait]
@@ -40,10 +43,12 @@ pub trait OpenData {
 
     async fn fetch_candles(
         &self,
-        pair: Pair,
+        pair: &Pair,
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors>;
+
+    async fn get_orderbook(&self, pair: &Pair, size: u32) -> Result<Vec<OrderBook>, ExchangeErrors>;
 }
 
 #[async_trait::async_trait]
@@ -61,7 +66,6 @@ pub trait UserData {
         request: GeneralPostOrderRequest,
     ) -> Result<Response, ExchangeErrors>;
 }
-
 
 pub trait ApiRequest: Serialize {
     const METHOD: HttpMethod;

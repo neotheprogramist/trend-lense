@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt, mem::size_of, str::FromStr};
 
-use super::response::{AccountInfo, CandleStick, ConcreteInstrument, PlaceOrderResponse};
+use super::response::{AccountInfo, CandleStick, ConcreteInstrument, OrderBook, PlaceOrderResponse};
 use crate::remote_exchanges::ApiRequest;
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
@@ -71,12 +71,25 @@ impl fmt::Display for InstrumentType {
     }
 }
 
+
 #[serde_as]
 #[skip_serializing_none]
-#[derive(Debug, Clone, CandidType, Deserialize)]
-pub struct InstrumentsRequest {
-    pub instrument_type: InstrumentType,
-    pub instrument_id: Option<String>,
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+pub struct  GetOrderBookRequest {
+    #[serde(rename = "instId")]
+    pub instrument_id: String,
+    #[serde(rename = "sz")]
+    pub depth: Option<u32>,
+}
+
+impl ApiRequest for GetOrderBookRequest {
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "api/v5/market/books";
+    const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = true;
+    const BODY: bool = false;
+
+    type Response = Vec<OrderBook>;
 }
 
 #[serde_as]

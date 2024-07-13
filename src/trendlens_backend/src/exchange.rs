@@ -13,7 +13,8 @@ use crate::{
             api::{GetBalanceRequest, GetInstrumentsRequest, InstrumentType, PlaceOrderBody},
             Okx,
         },
-        request::{GeneralInstrumentsRequest, OrderType},
+        request::{GeneralInstrumentsRequest, OrderSide},
+    
         response::Instrument,
         ExchangeErrors, OpenData,
     },
@@ -107,6 +108,43 @@ impl ExchangeImpl {
         }
     }
 
+    pub async fn get_market_depth(
+        &self,
+        pair: &Pair,
+        order_side: &OrderSide,
+        price_limit: u32,
+    ) -> f64 {
+        match self {
+            ExchangeImpl::Coinbase(_) => 0.0,
+            ExchangeImpl::Okx(o) => {
+                let orderbook = o
+                    .get_orderbook(pair, 50)
+                    .await
+                    .expect("failed to get orderbook data");
+                let first = orderbook.first().expect("no orderbook data");
+
+                let orders = match order_side {
+                    OrderSide::Buy => &first.asks,
+                    OrderSide::Sell => &first.bids,
+                };
+
+                let start_price = orders.first().expect("no orders").price;
+                let stop_price = start_price * (1.0 + price_limit as f64 / 100.0);
+
+                orders
+                    .iter()
+                    .filter_map(|order| {
+                        if order.price <= stop_price {
+                            Some(order.size)
+                        } else {
+                            None
+                        }
+                    })
+                    .fold(0.0, |acc, x| acc + x)
+            }
+        }
+    }
+
     // right now for testing purposes used single request, but it should be
     // preconstructed for further use or migrate signature generation to client
     pub fn get_signature_string(&self, request: Request) -> String {
@@ -134,7 +172,7 @@ impl ExchangeImpl {
             ExchangeImpl::Okx(o) => match request {
                 Request::Instruments(i) => {
                     let request = GetInstrumentsRequest {
-                        instrument_id: i.instrument_id.and_then(|p| Okx::instrument_id(p)),
+                        instrument_id: i.instrument_id.and_then(|p| Okx::instrument_id(&p)),
                         instrument_type: i.instrument_type,
                     };
                     o.get_signature_data(request)
@@ -194,7 +232,7 @@ impl ExchangeImpl {
 
     pub async fn fetch_candles(
         &self,
-        pair: Pair,
+        pair: &Pair,
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, super::ExchangeErrors> {

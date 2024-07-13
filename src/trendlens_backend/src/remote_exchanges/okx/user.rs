@@ -21,7 +21,7 @@ impl UserData for Okx {
     ) -> Result<Response, ExchangeErrors> {
         let exchange_request = GetInstrumentsRequest {
             instrument_type: req.instrument_type,
-            instrument_id: req.instrument_id.and_then(|p| Self::instrument_id(p)),
+            instrument_id: req.instrument_id.and_then(|p| Self::instrument_id(&p)),
         };
 
         let instrument_response = self

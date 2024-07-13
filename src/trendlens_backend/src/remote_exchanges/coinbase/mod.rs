@@ -6,20 +6,22 @@ use crate::{
     api_client::ApiClient,
     chain_data::ChainData,
     exchange::{Candle, Exchange, ExchangeId},
+    pair::Pair,
 };
 
 use super::{ApiRequest, OpenData};
 use response::ConcreteInstrument;
 
 pub use request::GetProfileAccountsRequest;
-pub use request::PostOrderBody;
 pub use request::OrderType as CoinbaseOrderType;
+pub use request::PostOrderBody;
 
 mod auth;
 mod request;
 mod response;
 mod user;
 
+use super::{okx::response::OrderBook, ExchangeErrors};
 pub use auth::CoinbaseAuth;
 
 #[derive(Default)]
@@ -60,7 +62,7 @@ impl Coinbase {
 impl OpenData for Coinbase {
     async fn fetch_candles(
         &self,
-        _pair: crate::pair::Pair,
+        _pair: &Pair,
         _range: std::ops::Range<u64>,
         _interval: u32,
     ) -> Result<Vec<Candle>, super::ExchangeErrors> {
@@ -82,6 +84,14 @@ impl OpenData for Coinbase {
             .await?;
 
         Ok(response.into_iter().map(Into::into).collect())
+    }
+
+    async fn get_orderbook(
+        &self,
+        _pair: &Pair,
+        _size: u32,
+    ) -> Result<Vec<OrderBook>, ExchangeErrors> {
+        todo!()
     }
 }
 
