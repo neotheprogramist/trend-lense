@@ -85,7 +85,7 @@
     stopTimestamp = Date.now();
 
     console.log("Fetching candles from", lastTimestamp, "to", stopTimestamp);
-
+    console.log(pair)
     try {
       const newCandles = extractOkValue(
         await anonymousBackend.pull_candles(

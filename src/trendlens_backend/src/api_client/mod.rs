@@ -83,6 +83,8 @@ impl ApiClient {
         // let qs = format!("?{}", request.to_query_string());
         // let qs = if qs == "?" { "".to_string() } else { qs };
 
+        ic_cdk::println!("qs {}", qs);
+
         let api_url = format!("https://{}/{}{}", R::HOST, R::URI, qs);
 
         ic_cdk::println!("{}", api_url);

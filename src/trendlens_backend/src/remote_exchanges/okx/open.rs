@@ -20,6 +20,7 @@ impl OpenData for Okx {
     ) -> Result<Vec<Candle>, ExchangeErrors> {
         let index_name = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
 
+        ic_cdk::println!("index_name: {:?}", index_name);
         let candle_request = IndexCandleStickRequest {
             after_timestamp: None,
             before_timestamp: Some(range.start * 1000),

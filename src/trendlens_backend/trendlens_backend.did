@@ -27,6 +27,7 @@ type ExchangeErrors = variant {
   MissingIndex;
   MissingPair;
   DeserializationFailed : record { message : text };
+  MissingApiKey;
   UnsupportedPairFormat;
 };
 type GeneralBalanceRequest = record { currency : opt vec text };
@@ -82,6 +83,7 @@ type Response = variant {
 type Result = variant { Ok : vec Candle; Err : ExchangeErrors };
 type Result_1 = variant { Ok : bool; Err : ExchangeErrors };
 type Result_2 = variant { Ok : Response; Err : ExchangeErrors };
+type Result_3 = variant { Ok : nat32; Err : ExchangeErrors };
 type TradeMode = variant { Cash; SpotIsolated; Isolated; Cross };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
@@ -98,4 +100,7 @@ service : () -> {
   register_api_key : (ApiData) -> (bool);
   remove_api_key : (text) -> (opt ApiData);
   run_request : (nat32, text, text, nat64) -> (Result_2);
+  split_transaction : (vec ApiData, text, OrderSide, float64, nat32) -> (
+      Result_3,
+    );
 }
