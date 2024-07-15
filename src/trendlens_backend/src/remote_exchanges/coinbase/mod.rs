@@ -1,13 +1,26 @@
+use auth::CoinbaseAuth;
+use request::GetAllPairsRequest;
+use response::CoinbaseResponse;
+
 use crate::{
+    api_client::ApiClient,
     chain_data::ChainData,
     exchange::{Candle, Exchange, ExchangeId},
     request_store::request::Response,
 };
 
 use super::{request::GeneralInstrumentsRequest, ExchangeErrors, OpenData, UserData};
+use response::ConcreteInstrument;
+
+mod auth;
+mod request;
+mod response;
 
 #[derive(Default)]
-pub struct Coinbase;
+pub struct Coinbase {
+    api_client: ApiClient,
+    auth: Option<auth::CoinbaseAuth>,
+}
 
 #[async_trait::async_trait]
 impl OpenData for Coinbase {
@@ -24,7 +37,17 @@ impl OpenData for Coinbase {
         &self,
         _request: crate::remote_exchanges::request::GeneralInstrumentsRequest,
     ) -> Result<Vec<crate::remote_exchanges::response::Instrument>, super::ExchangeErrors> {
-        Ok(vec![])
+        let coinbase_instruction = GetAllPairsRequest {};
+
+        let response = self
+            .api_client
+            .call::<CoinbaseResponse<Vec<ConcreteInstrument>>, GetAllPairsRequest, CoinbaseAuth>(
+                coinbase_instruction,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(response.into_iter().map(Into::into).collect())
     }
 }
 

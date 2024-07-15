@@ -1,4 +1,4 @@
-use crate::remote_exchanges::{okx::response::ApiResponse, ApiRequest, Authorize};
+use crate::remote_exchanges::{response::ApiResponseWrapper, ApiRequest, Authorize};
 use candid::{CandidType, Nat};
 use ic_cdk::api::{
     call::RejectionCode,
@@ -53,7 +53,7 @@ impl ApiClient {
             * 13
     }
 
-    pub async fn call<R, A>(
+    pub async fn call<W, R, A>(
         &self,
         request: R,
         auth: Option<&A>,
@@ -61,6 +61,7 @@ impl ApiClient {
     where
         R: ApiRequest,
         A: Authorize,
+        W: ApiResponseWrapper<R::Response>,
     {
         let qs = if R::BODY {
             "".to_string()
@@ -98,6 +99,7 @@ impl ApiClient {
                     "{:?}",
                     String::from_utf8(response.body.clone()).expect("conversion failed")
                 );
+
                 if response.status != Nat::from(200u32) {
                     return Err(ApiClientErrors::Http {
                         status: response.status,
@@ -105,11 +107,10 @@ impl ApiClient {
                 }
 
                 let body: String = String::from_utf8(response.body).expect("conversion failed");
-                let deserialized_response: ApiResponse<R::Response> =
+                let deserialized_response: W =
                     serde_json::from_str(&body).expect("deserialization failed");
-                // TODO: handle errors and messages
 
-                return Ok(deserialized_response.data);
+                return Ok(deserialized_response.extract_response().unwrap());
             }
             Err(err) => {
                 ic_cdk::println!("{:?}", err);

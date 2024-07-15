@@ -1,5 +1,7 @@
 use super::{
     api::{GetBalanceRequest, GetInstrumentsRequest, PlaceOrderBody},
+    auth::OkxAuth,
+    response::{AccountInfo, ApiResponse, ConcreteInstrument, PlaceOrderResponse},
     Okx,
 };
 use crate::{
@@ -24,7 +26,10 @@ impl UserData for Okx {
 
         let instrument_response = self
             .api_client
-            .call(exchange_request, self.auth.as_ref())
+            .call::<ApiResponse<Vec<ConcreteInstrument>>, GetInstrumentsRequest, OkxAuth>(
+                exchange_request,
+                self.auth.as_ref(),
+            )
             .await?;
 
         let parsed_instruments = instrument_response
@@ -42,13 +47,15 @@ impl UserData for Okx {
         &self,
         request: GeneralBalanceRequest,
     ) -> Result<Response, ExchangeErrors> {
-        let currencies = request.currency.and_then(|c| Some(c.join(","
-        )));
+        let currencies = request.currency.and_then(|c| Some(c.join(",")));
         let exchange_request = GetBalanceRequest { currencies };
 
         let balances_response = self
             .api_client
-            .call(exchange_request, self.auth.as_ref())
+            .call::<ApiResponse<Vec<AccountInfo>>, GetBalanceRequest, OkxAuth>(
+                exchange_request,
+                self.auth.as_ref(),
+            )
             .await?;
 
         Ok(Response::Balances(balances_response))
@@ -69,7 +76,10 @@ impl UserData for Okx {
 
         let order_response = self
             .api_client
-            .call(exchange_request, self.auth.as_ref())
+            .call::<ApiResponse<Vec<PlaceOrderResponse>>, PlaceOrderBody, OkxAuth>(
+                exchange_request,
+                self.auth.as_ref(),
+            )
             .await?;
 
         Ok(Response::Order(OrderData {

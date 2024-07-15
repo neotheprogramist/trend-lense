@@ -1,3 +1,5 @@
+use super::auth::OkxAuth;
+use super::response::{ApiResponse, CandleStick, ConcreteInstrument};
 use super::{api::IndexCandleStickRequest, Okx};
 use crate::remote_exchanges::request::GeneralInstrumentsRequest;
 use crate::remote_exchanges::response::Instrument;
@@ -27,7 +29,10 @@ impl OpenData for Okx {
 
         let candle_response = self
             .api_client
-            .call(candle_request, self.auth.as_ref())
+            .call::<ApiResponse<Vec<CandleStick>>, IndexCandleStickRequest, OkxAuth>(
+                candle_request,
+                self.auth.as_ref(),
+            )
             .await?;
 
         Ok(candle_response
@@ -47,7 +52,10 @@ impl OpenData for Okx {
 
         let instrument_response = self
             .api_client
-            .call(okx_request, self.auth.as_ref())
+            .call::<ApiResponse<Vec<ConcreteInstrument>>, GetInstrumentsRequestPublic, OkxAuth>(
+                okx_request,
+                self.auth.as_ref(),
+            )
             .await?;
 
         Ok(instrument_response

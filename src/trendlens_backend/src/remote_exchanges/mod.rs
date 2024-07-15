@@ -25,6 +25,8 @@ pub enum ExchangeErrors {
     InvalidTimestamps,
     #[error("pair format given is not supported")]
     UnsupportedPairFormat,
+    #[error("could not deserialize")]
+    DeserializationFailed
 }
 
 #[async_trait::async_trait]
