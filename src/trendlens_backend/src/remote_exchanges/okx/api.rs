@@ -1,19 +1,47 @@
-use std::{fmt, str::FromStr};
+use std::{borrow::Cow, fmt, mem::size_of, str::FromStr};
 
-use super::response::{AccountInfo, CandleStick, Instrument, PlaceOrderResponse};
+use super::response::{AccountInfo, CandleStick, ConcreteInstrument, PlaceOrderResponse};
 use crate::remote_exchanges::ApiRequest;
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
+use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, skip_serializing_none, DisplayFromStr};
 
-#[derive(Debug, Clone, CandidType, Deserialize, Serialize)]
+#[repr(u8)]
+#[derive(
+    Debug, Clone, Copy, CandidType, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord,
+)]
 pub enum InstrumentType {
-    Spot,
+    Spot = 0,
     Futures,
     Swap,
     Option,
     Margin,
+}
+
+impl Storable for InstrumentType {
+    const BOUND: Bound = Bound::Bounded {
+        max_size: size_of::<InstrumentType>() as u32,
+        is_fixed_size: true,
+    };
+
+    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+        let byte = bytes.as_ref()[0];
+        match byte {
+            0 => InstrumentType::Spot,
+            1 => InstrumentType::Futures,
+            2 => InstrumentType::Swap,
+            3 => InstrumentType::Option,
+            4 => InstrumentType::Margin,
+            _ => panic!("Invalid byte for InstrumentType"),
+        }
+    }
+
+    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+        let byte = *self as u8;
+        Cow::Owned(vec![byte])
+    }
 }
 
 impl FromStr for InstrumentType {
@@ -69,7 +97,28 @@ impl ApiRequest for GetInstrumentsRequest {
     const HOST: &'static str = "www.okx.com";
     const PUBLIC: bool = false;
 
-    type Response = Vec<Instrument>;
+    type Response = Vec<ConcreteInstrument>;
+}
+
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
+pub struct GetInstrumentsRequestPublic {
+    #[serde(rename = "instType")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub instrument_type: InstrumentType,
+    #[serde(rename = "instId")]
+    pub instrument_id: Option<String>,
+    // for now skipped conditional fields
+}
+
+impl ApiRequest for GetInstrumentsRequestPublic {
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "api/v5/public/instruments";
+    const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = true;
+
+    type Response = Vec<ConcreteInstrument>;
 }
 
 #[serde_as]
@@ -122,7 +171,6 @@ impl ApiRequest for PlaceOrderBody {
 
     type Response = PlaceOrderResponse;
 }
-
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]

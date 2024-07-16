@@ -1,47 +1,21 @@
 <script lang="ts">
   import { Exchanges } from "$lib/exchange";
-  import { exchangePairs } from "$lib/exchangePairs";
-  import type { Pairs } from "$lib/pair";
-  import BindableSelect from "./bindableSelect.svelte";
+  import Badge from "$components/shad/ui/badge/badge.svelte";
 
   interface IProps {
-    onSelectionCompleted: (pair: Pairs) => void;
     selectedExchange: Exchanges;
   }
-  let { onSelectionCompleted, selectedExchange = $bindable() }: IProps =
-    $props();
 
-  let selectedPair = $state<Pairs | null>(null);
+  let availableExchanges = Object.keys(Exchanges).map((e) => e as Exchanges);
 
-  // should be taken from outside of fetched from api here
-  let pairs = $derived.by(() => {
-    if (selectedExchange in exchangePairs) {
-      return exchangePairs[selectedExchange];
-    } else {
-      return [];
-    }
-  });
+  let { selectedExchange = $bindable() }: IProps = $props();
 </script>
 
 <div class="grid grid-cols-8 h-8 gap-2">
-  <div class="col-span-2">
-    <BindableSelect
-      bind:value={selectedExchange}
-      items={Object.keys(Exchanges)}
-      placeholder="exchange"
-    />
-  </div>
-
-  <div class="col-span-2">
-    <BindableSelect
-      bind:value={selectedPair}
-      items={pairs}
-      placeholder="pair"
-      onChange={() => {
-        if (selectedPair) {
-          onSelectionCompleted(selectedPair);
-        }
-      }}
-    />
-  </div>
+  {#each availableExchanges as e}
+    <Badge
+      variant={selectedExchange != e ? "outline" : undefined}
+      onclick={() => (selectedExchange = e)}>{e}</Badge
+    >
+  {/each}
 </div>

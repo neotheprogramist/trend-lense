@@ -1,4 +1,10 @@
-use crate::exchange::Candle;
+use std::str::FromStr;
+
+use crate::{
+    exchange::Candle,
+    pair::Pair,
+    remote_exchanges::{response::Instrument, ExchangeErrors},
+};
 use candid::CandidType;
 use serde::{self, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
@@ -166,11 +172,75 @@ pub struct AssetDetail {
     maintenance_margin_requirement: String,
 }
 
+impl FromStr for Pair {
+    type Err = ExchangeErrors;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let all_alphanumeric = s.chars().all(char::is_alphanumeric);
+
+        // handle it later
+        if all_alphanumeric {
+            return Err(ExchangeErrors::UnsupportedPairFormat);
+        }
+
+        let splitted = s
+            .split(|pat: char| !pat.is_alphanumeric())
+            .collect::<Vec<_>>();
+
+        if splitted.len() != 2 {
+            return Err(ExchangeErrors::UnsupportedPairFormat);
+        }
+
+        Ok(Pair {
+            base: splitted[0].to_string(),
+            quote: splitted[1].to_string(),
+        })
+    }
+}
+
+#[cfg(test)]
+mod pair_from_str_test {
+    use super::*;
+
+    #[test]
+    fn test_conversion_success() {
+        assert_eq!(
+            Pair::from_str("btc_usd").unwrap(),
+            Pair {
+                base: "BTC".to_string(),
+                quote: "USD".to_string()
+            }
+        );
+        assert_eq!(
+            Pair::from_str("btc.usd").unwrap(),
+            Pair {
+                base: "BTC".to_string(),
+                quote: "USD".to_string()
+            }
+        );
+        assert_eq!(
+            Pair::from_str("btc-usdt").unwrap(),
+            Pair {
+                base: "BTC".to_string(),
+                quote: "USDT".to_string()
+            }
+        );
+        assert_eq!(
+            Pair::from_str("btc.usdt").unwrap(),
+            Pair {
+                base: "BTC".to_string(),
+                quote: "USDT".to_string()
+            }
+        );
+    }
+}
+
 #[serde_as]
 #[derive(Deserialize, Debug, Clone, CandidType)]
-pub struct Instrument {
+pub struct ConcreteInstrument {
     #[serde(rename = "instId")]
-    pub instrument_id: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub instrument_id: Pair,
     #[serde(rename = "instType")]
     #[serde_as(as = "DisplayFromStr")]
     pub instrument_type: InstrumentType,
@@ -182,50 +252,59 @@ pub struct Instrument {
     base_currency: Option<String>,
     #[serde(rename = "quoteCcy")]
     quote_currency: Option<String>,
-    #[serde(rename = "settleCcy")]
-    settlement_currency: Option<String>,
-    #[serde(rename = "ctVal")]
-    contract_value: Option<String>,
-    #[serde(rename = "ctMult")]
-    contract_multiplier: Option<String>,
-    #[serde(rename = "ctValCcy")]
-    contract_value_currency: Option<String>,
-    #[serde(rename = "optType")]
-    option_type: Option<String>,
-    #[serde(rename = "stk")]
-    strike_price: Option<String>,
-    #[serde(rename = "listTime")]
-    listing_time: Option<String>,
-    #[serde(rename = "expTime")]
-    expiry_time: Option<String>,
-    #[serde(rename = "lever")]
-    leverage: Option<String>,
-    #[serde(rename = "tickSz")]
-    tick_size: String,
-    #[serde(rename = "lotSz")]
-    lot_size: String,
-    #[serde(rename = "minSz")]
-    minimum_order_size: String,
-    #[serde(rename = "ctType")]
-    contract_type: Option<String>,
-    #[serde(rename = "state")]
-    state: String,
-    #[serde(rename = "maxLmtSz")]
-    max_limit_size: String,
-    #[serde(rename = "maxMktSz")]
-    max_market_size: String,
-    #[serde(rename = "maxLmtAmt")]
-    max_limit_amount: Option<String>,
-    #[serde(rename = "maxMktAmt")]
-    max_market_amount: Option<String>,
-    #[serde(rename = "maxTwapSz")]
-    max_twap_size: String,
-    #[serde(rename = "maxIcebergSz")]
-    max_iceberg_size: String,
-    #[serde(rename = "maxTriggerSz")]
-    max_trigger_size: String,
-    #[serde(rename = "maxStopSz")]
-    max_stop_size: String,
+    // #[serde(rename = "settleCcy")]
+    // settlement_currency: Option<String>,
+    // #[serde(rename = "ctVal")]
+    // contract_value: Option<String>,
+    // #[serde(rename = "ctMult")]
+    // contract_multiplier: Option<String>,
+    // #[serde(rename = "ctValCcy")]
+    // contract_value_currency: Option<String>,
+    // #[serde(rename = "optType")]
+    // option_type: Option<String>,
+    // #[serde(rename = "stk")]
+    // strike_price: Option<String>,
+    // #[serde(rename = "listTime")]
+    // listing_time: Option<String>,
+    // #[serde(rename = "expTime")]
+    // expiry_time: Option<String>,
+    // #[serde(rename = "lever")]
+    // leverage: Option<String>,
+    // #[serde(rename = "tickSz")]
+    // tick_size: String,
+    // #[serde(rename = "lotSz")]
+    // lot_size: String,
+    // #[serde(rename = "minSz")]
+    // minimum_order_size: String,
+    // #[serde(rename = "ctType")]
+    // contract_type: Option<String>,
+    // #[serde(rename = "state")]
+    // state: String,
+    // #[serde(rename = "maxLmtSz")]
+    // max_limit_size: String,
+    // #[serde(rename = "maxMktSz")]
+    // max_market_size: String,
+    // #[serde(rename = "maxLmtAmt")]
+    // max_limit_amount: Option<String>,
+    // #[serde(rename = "maxMktAmt")]
+    // max_market_amount: Option<String>,
+    // #[serde(rename = "maxTwapSz")]
+    // max_twap_size: String,
+    // #[serde(rename = "maxIcebergSz")]
+    // max_iceberg_size: String,
+    // #[serde(rename = "maxTriggerSz")]
+    // max_trigger_size: String,
+    // #[serde(rename = "maxStopSz")]
+    // max_stop_size: String,
+}
+
+impl Into<Instrument> for ConcreteInstrument {
+    fn into(self) -> Instrument {
+        Instrument {
+            instrument_id: self.instrument_id,
+            instrument_type: self.instrument_type,
+        }
+    }
 }
 
 #[cfg(test)]

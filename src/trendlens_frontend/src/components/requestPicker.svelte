@@ -14,7 +14,7 @@
 
 </script>
 
-<ul class="flex gap-10">
+<ul class="flex flex-col gap-10">
   {#each variants as key}
     <li>
       <Button onclick={() => onRequestPick(RequestType[key])}>{RequestType[key]}</Button>

@@ -5,6 +5,7 @@ use super::{
 use crate::{
     remote_exchanges::{
         request::{GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest},
+        response::Instrument,
         ExchangeErrors, UserData,
     },
     request_store::request::Response,
@@ -18,7 +19,7 @@ impl UserData for Okx {
     ) -> Result<Response, ExchangeErrors> {
         let exchange_request = GetInstrumentsRequest {
             instrument_type: req.instrument_type,
-            instrument_id: req.instrument_id,
+            instrument_id: req.instrument_id.and_then(|p| Self::instrument_id(p))
         };
 
         let instrument_response = self
@@ -26,7 +27,15 @@ impl UserData for Okx {
             .call(exchange_request, self.auth.as_ref())
             .await?;
 
-        Ok(Response::Instruments(instrument_response))
+        let parsed_instruments = instrument_response
+            .into_iter()
+            .map(|e| Instrument {
+                instrument_id: e.instrument_id,
+                instrument_type: e.instrument_type,
+            })
+            .collect();
+
+        Ok(Response::Instruments(parsed_instruments))
     }
 
     async fn get_balance(

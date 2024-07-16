@@ -1,6 +1,6 @@
 use crate::{
     chain_data::ChainData,
-    exchange::{Candle, Exchange, ExchangeInfo},
+    exchange::{Candle, Exchange, ExchangeId},
     request_store::request::Response,
 };
 
@@ -18,6 +18,19 @@ impl OpenData for Coinbase {
         _interval: u32,
     ) -> Result<Vec<Candle>, super::ExchangeErrors> {
         Ok(vec![])
+    }
+
+    async fn get_public_instruments(
+        &self,
+        _request: crate::remote_exchanges::request::GeneralInstrumentsRequest,
+    ) -> Result<Vec<crate::remote_exchanges::response::Instrument>, super::ExchangeErrors> {
+        Ok(vec![])
+    }
+}
+
+impl ExchangeId for Coinbase {
+    fn exchange_id(&self) -> Exchange {
+        Exchange::Coinbase
     }
 }
 
@@ -48,11 +61,5 @@ impl UserData for Coinbase {
 impl ChainData for Coinbase {
     fn key(&self) -> Exchange {
         Exchange::Coinbase
-    }
-}
-
-impl ExchangeInfo for Coinbase {
-    fn get_pairs(&self) -> Vec<crate::pair::Pair> {
-        vec![]
     }
 }

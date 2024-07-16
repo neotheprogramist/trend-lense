@@ -4,11 +4,15 @@ import type {
   Response,
   Result,
   Result_1,
+  Result_2,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
 export function extractOkValue(result: Result): Array<Candle>;
-export function extractOkValue(result: Result_1): Response;
-export function extractOkValue(result: Result | Result_1): Array<Candle> | Response {
+export function extractOkValue(result: Result_1): boolean;
+export function extractOkValue(result: Result_2): Response;
+export function extractOkValue(
+  result: Result | Result_1 | Result_2,
+): Array<Candle> | Response | boolean {
   if ("Ok" in result) {
     return result.Ok;
   } else if ("Err" in result) {

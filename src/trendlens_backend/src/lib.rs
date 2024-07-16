@@ -1,21 +1,26 @@
+use std::str::FromStr;
+
 use crate::pair::Pair;
 use api_store::{ApiData, ApiStore};
-use chain_data::TimestampBased;
+use chain_data::{ExchangeData, TimestampBased};
 use exchange::{Candle, Exchange, ExchangeImpl};
+use instruments::save_instruments;
 use remote_exchanges::{
     coinbase::Coinbase,
-    okx::{auth::OkxAuth, Okx},
+    okx::{api::InstrumentType, auth::OkxAuth, Okx},
     ExchangeErrors, UserData,
 };
 use request_store::{
     request::{Request, Response},
     Instruction, Transaction, TransactionStore,
 };
+use storable_wrapper::StorableWrapper;
 
 mod api_client;
 mod api_store;
 mod chain_data;
 mod exchange;
+mod instruments;
 mod memory;
 mod pair;
 mod remote_exchanges;
@@ -38,8 +43,10 @@ fn get_range_to_fetch(stop: u64, current: u64) -> Option<std::ops::Range<u64>> {
 
 // TODO: rename or get rid off
 #[ic_cdk::query]
-fn get_last_timestamp(exchange: Exchange, pair: Pair) -> Option<u64> {
+fn get_last_timestamp(exchange: Exchange, pair: String) -> Option<u64> {
     let exchange_impl = ExchangeImpl::new(exchange);
+
+    let pair = Pair::from_str(&pair).expect("invalid pair");
 
     exchange_impl.get_data(pair)?.candles.last_timestamp()
 }
@@ -101,11 +108,23 @@ fn get_requests() -> Option<Vec<Transaction>> {
     TransactionStore::get_transactions(&identity)
 }
 
+#[ic_cdk::update]
+async fn refresh_instruments(
+    exchange: Exchange,
+    instrument_type: InstrumentType,
+) -> Result<bool, ExchangeErrors> {
+    ic_cdk::println!("{:?}", exchange as u8);
+    let exchange_impl = ExchangeImpl::new(exchange);
+    let instruments = exchange_impl.refresh_instruments(&instrument_type).await?;
+    save_instruments(exchange, instrument_type, instruments);
+    Ok(true)
+}
+
 #[ic_cdk::query]
-fn get_pairs(exchange: Exchange) -> Vec<Pair> {
+fn get_instruments(exchange: Exchange, instrument_type: InstrumentType) -> Vec<Pair> {
     let exchange_impl = ExchangeImpl::new(exchange);
 
-    exchange_impl.get_pairs()
+    exchange_impl.get_pairs(instrument_type)
 }
 
 #[ic_cdk::update]
@@ -144,11 +163,33 @@ async fn run_request(
     Ok(response)
 }
 
+#[ic_cdk::init]
+async fn init() {
+    let btc_usd_pair: Pair = Pair::from_str("btc-usd").expect("invalid pair");
+    let exchange = ExchangeImpl::new(Exchange::Okx);
+    exchange.set_data(btc_usd_pair, StorableWrapper(ExchangeData::default()));
+
+    let btc_eur_pair: Pair = Pair::from_str("btc-eur").expect("invalid pair");
+    exchange.set_data(btc_eur_pair, StorableWrapper(ExchangeData::default()));
+
+    exchange
+        .refresh_instruments(&InstrumentType::Spot)
+        .await
+        .unwrap();
+}
+
+#[ic_cdk::update]
+fn initialize_pair(pair: String, exchange: Exchange) {
+    let pair: Pair = Pair::from_str(&pair).expect("invalid pair");
+    let exchange = ExchangeImpl::new(exchange);
+    exchange.set_data(pair.clone(), StorableWrapper(ExchangeData::default()));
+}
+
 // TODO: split this function into smaller ones
 // TODO: handle errors, return to caller
 #[ic_cdk::update]
 async fn pull_candles(
-    pair: Pair,
+    pair: String,
     exchange: Exchange,
     start_timestamp: u64,
     end_timestamp: u64,
@@ -157,8 +198,11 @@ async fn pull_candles(
         return Err(ExchangeErrors::InvalidTimestamps);
     }
 
+    let pair = Pair::from_str(&pair).expect("invalid pair");
     let exchange = ExchangeImpl::new(exchange);
-    let mut exchange_data = exchange.get_data(pair).ok_or(ExchangeErrors::MissingPair)?;
+    let mut exchange_data = exchange
+        .get_data(pair.clone())
+        .ok_or(ExchangeErrors::MissingPair)?;
 
     let last_candle_timestamp = exchange_data
         .candles
@@ -171,7 +215,11 @@ async fn pull_candles(
 
     // !!!! hardcoded interval
     let fetched_candles = match range_to_fetch {
-        Some(ref range) => exchange.fetch_candles(pair, range.clone(), 1).await?,
+        Some(ref range) => {
+            exchange
+                .fetch_candles(pair.clone(), range.clone(), 1)
+                .await?
+        }
         None => {
             vec![]
         }

@@ -26,19 +26,19 @@
   import { keyStore } from "$lib/keystore.svelte";
   import { onMount } from "svelte";
   import { wallet } from "$lib/wallet.svelte";
-  import type {
-    Request as BackendRequest,
-  } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type { Request as BackendRequest } from "../../../declarations/trendlens_backend/trendlens_backend.did";
   import Button from "./shad/ui/button/button.svelte";
-    import { handleInstrumentType } from "$lib/instrumentType";
+  import { handleInstrumentType } from "$lib/instrumentType";
+  import { handlePair } from "$lib/pair";
 
   // right now i pass exchange as prop, but it could be store or context
 
   interface IProps {
     exchange: Exchanges;
+    instrumentId: string;
   }
 
-  let { exchange }: IProps = $props();
+  let { exchange, instrumentId }: IProps = $props();
   let exchangeKey = keyStore.getByExchange(exchange);
   let request = $state<Fields<ExchangeRequest | null>>(null);
 
@@ -60,7 +60,7 @@
       case RequestType.PostOrder:
         return {
           type: RequestType.PostOrder,
-          instrumentId: "",
+          instrumentId,
           side: new OrderSide(OrderSideType.Buy),
           marginCurrency: new OptionalField<string>(null),
           size: 1,
@@ -75,6 +75,7 @@
   };
 
   const handleRequestPick = (r: RequestType) => {
+    console.log('picked', request);
     request = getDefaultRequestOfType(r);
 
     pushState("", {
@@ -83,7 +84,6 @@
     });
   };
 
- 
   const handleRequest = (r: ExchangeRequest): BackendRequest => {
     switch (r.type) {
       case RequestType.GetInstruments:
@@ -92,22 +92,22 @@
         return {
           Instruments: {
             instrument_id: req.instrumentId.value
-              ? [req.instrumentId.value]
+              ? [handlePair(req.instrumentId.value)]
               : [],
             instrument_type: handleInstrumentType(req.instrumentType.v),
           },
         };
       case RequestType.Empty:
-        throw new Error('unsupported');
+        throw new Error("unsupported");
       case RequestType.GetBalance:
         let b_req = r as BalanceRequests;
 
         return {
           Balances: {
-            currency: [b_req.currencies.value ?? '']
-          }
-        }
-        
+            currency: [b_req.currencies.value ?? ""],
+          },
+        };
+
       case RequestType.PostOrder:
     }
 
@@ -117,7 +117,7 @@
   };
 
   const sendRequest = async () => {
-    console.log(request)
+    console.log(request);
     if (!request) {
       throw new Error("No request");
     }
@@ -134,7 +134,7 @@
       api_key: key.apiKey,
       exchange: handleExchange(exchange),
     });
-    console.log()
+    console.log();
   };
 
   onMount(() => {

@@ -60,11 +60,11 @@ impl Okx {
     }
 
     /// gets index name from global pair enum
-    fn index_name(pair: Pair) -> Option<String> {
-        match pair {
-            Pair::BtcUsd => Some("BTC-USD".to_string()),
-            Pair::EthUsd => Some("ETH-USD".to_string()),
-        }
+    pub fn instrument_id(pair: Pair) -> Option<String> {
+        return format!("{:?}-{:?}", pair.base, pair.quote)
+            .to_uppercase()
+            .parse()
+            .ok();
     }
 
     pub fn get_signature_data<R: ApiRequest>(&self, request: R) -> String {
@@ -83,8 +83,7 @@ impl ChainData for Okx {
 #[cfg(test)]
 mod test_okx_helpers {
     use super::*;
-    use crate::Pair;
-
+ 
     #[test]
     fn test_okx_interval_string() {
         assert_eq!(Okx::interval_string(0), "1m");
@@ -97,9 +96,4 @@ mod test_okx_helpers {
         assert_eq!(Okx::interval_string(u32::MAX), "5m");
     }
 
-    #[test]
-    fn test_okx_index_name() {
-        assert_eq!(Okx::index_name(Pair::BtcUsd), Some("BTC-USD".to_string()));
-        assert_eq!(Okx::index_name(Pair::EthUsd), Some("ETH-USD".to_string()));
-    }
 }

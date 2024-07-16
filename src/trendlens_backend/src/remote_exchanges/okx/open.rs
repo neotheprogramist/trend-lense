@@ -1,7 +1,11 @@
-use crate::{exchange::Candle, pair::Pair, remote_exchanges::{ExchangeErrors, OpenData}};
-
 use super::{api::IndexCandleStickRequest, Okx};
-
+use crate::remote_exchanges::request::GeneralInstrumentsRequest;
+use crate::remote_exchanges::response::Instrument;
+use crate::{
+    exchange::Candle,
+    pair::Pair,
+    remote_exchanges::{okx::api::GetInstrumentsRequestPublic, ExchangeErrors, OpenData},
+};
 
 #[async_trait::async_trait]
 impl OpenData for Okx {
@@ -11,7 +15,7 @@ impl OpenData for Okx {
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors> {
-        let index_name = Okx::index_name(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
+        let index_name = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
 
         let candle_request = IndexCandleStickRequest {
             after_timestamp: None,
@@ -29,6 +33,26 @@ impl OpenData for Okx {
         Ok(candle_response
             .into_iter()
             .map(|concrete_candle| concrete_candle.into())
+            .collect())
+    }
+
+    async fn get_public_instruments(
+        &self,
+        request: GeneralInstrumentsRequest,
+    ) -> Result<Vec<Instrument>, ExchangeErrors> {
+        let okx_request = GetInstrumentsRequestPublic {
+            instrument_id: request.instrument_id.and_then(|p| Okx::instrument_id(p)),
+            instrument_type: request.instrument_type,
+        };
+
+        let instrument_response = self
+            .api_client
+            .call(okx_request, self.auth.as_ref())
+            .await?;
+
+        Ok(instrument_response
+            .into_iter()
+            .map(|concrete_instrument| concrete_instrument.into())
             .collect())
     }
 }

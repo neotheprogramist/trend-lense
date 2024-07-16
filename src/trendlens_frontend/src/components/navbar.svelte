@@ -9,7 +9,7 @@
 
 	<nav class="flex items-center space-x-4 lg:space-x-6 text-sm">
 		<a
-			href="/trading"
+			href="/trading/spot"
 			class={cn('text-sm font-medium text-muted-foreground transition-colors hover:text-primary')}
 		>
 			Trading

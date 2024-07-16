@@ -68,10 +68,11 @@ type ExchangeErrors = variant {
   InvalidTimestamps;
   MissingIndex;
   MissingPair;
+  UnsupportedPairFormat;
 };
 type GeneralBalanceRequest = record { currency : vec text };
 type GeneralInstrumentsRequest = record {
-  instrument_id : opt text;
+  instrument_id : opt Pair;
   instrument_type : InstrumentType;
 };
 type GeneralPostOrderRequest = record {
@@ -90,39 +91,13 @@ type Instruction = record {
   exchange : Exchange;
 };
 type Instrument = record {
-  stk : opt text;
-  uly : text;
-  minSz : text;
-  expTime : opt text;
-  tickSz : text;
-  maxLmtSz : text;
-  instFamily : text;
-  listTime : opt text;
-  baseCcy : opt text;
-  maxStopSz : text;
-  maxIcebergSz : text;
-  ctVal : opt text;
-  instType : InstrumentType;
-  maxTwapSz : text;
-  maxLmtAmt : opt text;
-  lever : opt text;
-  maxTriggerSz : text;
-  lotSz : text;
-  ctValCcy : opt text;
-  state : text;
-  ctMult : opt text;
-  ctType : opt text;
-  instId : text;
-  maxMktAmt : opt text;
-  quoteCcy : opt text;
-  maxMktSz : text;
-  optType : opt text;
-  settleCcy : opt text;
+  instrument_id : Pair;
+  instrument_type : InstrumentType;
 };
 type InstrumentType = variant { Spot; Swap; Futures; Option; Margin };
 type OrderSide = variant { Buy; Sell };
 type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
-type Pair = variant { BtcUsd; EthUsd };
+type Pair = record { base : text; quote : text };
 type PlaceOrderDetails = record {
   tag : text;
   clOrdId : text;
@@ -159,19 +134,22 @@ type Response = variant {
   Balances : AccountInfo;
 };
 type Result = variant { Ok : vec Candle; Err : ExchangeErrors };
-type Result_1 = variant { Ok : Response; Err : ExchangeErrors };
+type Result_1 = variant { Ok : bool; Err : ExchangeErrors };
+type Result_2 = variant { Ok : Response; Err : ExchangeErrors };
 type TradeMode = variant { Cash; SpotIsolated; Isolated; Cross };
 service : {
   __get_candid_interface_tmp_hack : () -> (text) query;
   add_instruction : (Instruction) -> (nat32);
   delete_transaction : (nat32) -> ();
-  get_last_timestamp : (Exchange, Pair) -> (opt nat64) query;
-  get_pairs : (Exchange) -> (vec Pair) query;
+  get_instruments : (Exchange, InstrumentType) -> (vec Pair) query;
+  get_last_timestamp : (Exchange, text) -> (opt nat64) query;
   get_requests : () -> (opt vec vec Instruction) query;
   get_signature_string : (nat32) -> (text) query;
   get_transaction : (nat32) -> (opt vec Instruction) query;
-  pull_candles : (Pair, Exchange, nat64, nat64) -> (Result);
+  initialize_pair : (text, Exchange) -> ();
+  pull_candles : (text, Exchange, nat64, nat64) -> (Result);
+  refresh_instruments : (Exchange, InstrumentType) -> (Result_1);
   register_api_key : (ApiData) -> (bool);
   remove_api_key : (text) -> (opt ApiData);
-  run_request : (nat32, text, text) -> (Result_1);
+  run_request : (nat32, text, text) -> (Result_2);
 }
