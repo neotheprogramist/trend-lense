@@ -1,8 +1,9 @@
 <script lang="ts">
   import type { InstrumentType } from "$lib/request";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import BindableSelect from "./bindableSelect.svelte";
   import { instrumentsStore } from "$lib/instruments.svelte";
+  import { wallet } from "$lib/wallet.svelte";
 
   interface IProps {
     instrumentType: InstrumentType;
@@ -12,8 +13,16 @@
   let { instrumentType, onInstrumentSelect }: IProps = $props();
   let currentInstrument = $state<string | null>(null);
 
-  onMount(async () => {
-    await instrumentsStore.filterByType(instrumentType);
+
+  // @ts-ignore
+  $effect(async () => {
+    console.log('running effect ')
+    if (wallet.connected && wallet.actor) {
+      
+      untrack(async () => {
+        await instrumentsStore.filterByUser(instrumentType, false);
+      });
+    }
   });
 </script>
 

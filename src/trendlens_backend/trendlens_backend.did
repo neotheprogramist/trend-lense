@@ -1,16 +1,16 @@
 type AccountInfo = record {
-  imr : text;
-  mmr : text;
-  upl : text;
-  adjEq : text;
-  borrowFroz : text;
+  imr : opt text;
+  mmr : opt text;
+  upl : opt text;
+  adjEq : opt text;
+  borrowFroz : opt text;
   totalEq : text;
-  ordFroz : text;
-  mgnRatio : text;
+  ordFroz : opt text;
+  mgnRatio : opt text;
   uTime : text;
   details : vec AssetDetail;
-  isoEq : text;
-  notionalUsd : text;
+  isoEq : opt text;
+  notionalUsd : opt text;
 };
 type ApiClientErrors = variant {
   Http : record { status : nat };
@@ -24,36 +24,8 @@ type ApiData = record {
 type AssetDetail = record {
   eq : text;
   ccy : text;
-  imr : text;
-  mmr : text;
-  upl : text;
-  spotIsoBal : text;
-  clSpotInUseAmt : text;
-  stgyEq : text;
-  availEq : text;
-  ordFrozen : text;
-  borrowFroz : text;
-  isoLiab : text;
-  interest : text;
-  uplLiab : text;
-  maxSpotInUseAmt : text;
-  fixedBal : text;
-  liab : text;
-  twap : text;
   cashBal : text;
-  availBal : text;
-  eqUsd : text;
-  crossLiab : text;
-  isoUpl : text;
-  rewardBal : text;
-  spotInUseAmt : text;
-  mgnRatio : text;
   uTime : text;
-  notionalLever : text;
-  isoEq : text;
-  frozenBal : text;
-  maxLoan : text;
-  disEq : text;
 };
 type Candle = record {
   close_price : float64;
@@ -70,7 +42,7 @@ type ExchangeErrors = variant {
   MissingPair;
   UnsupportedPairFormat;
 };
-type GeneralBalanceRequest = record { currency : vec text };
+type GeneralBalanceRequest = record { currency : opt vec text };
 type GeneralInstrumentsRequest = record {
   instrument_id : opt Pair;
   instrument_type : InstrumentType;
@@ -118,7 +90,7 @@ type Request = variant {
 type Response = variant {
   Instruments : vec Instrument;
   Order : OrderData;
-  Balances : AccountInfo;
+  Balances : vec AccountInfo;
 };
 type Result = variant { Ok : vec Candle; Err : ExchangeErrors };
 type Result_1 = variant { Ok : bool; Err : ExchangeErrors };

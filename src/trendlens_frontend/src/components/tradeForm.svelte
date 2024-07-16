@@ -12,15 +12,19 @@
   import Input from "./shad/ui/input/input.svelte";
 
   import { inferTradeModes, PostOrderRequest } from "$lib/postOrder.svelte";
+  import type { Exchanges } from "$lib/exchange";
 
   interface IProps {
+    balances: { base: number; quote: number };
+    exchange: Exchanges;
     instrumentId: string;
     instrumentType: InstrumentType;
     onPost: (request: PostOrderRequest) => void;
     onExecute: (request: PostOrderRequest) => void;
   }
 
-  let { instrumentId, instrumentType, onExecute, onPost }: IProps = $props();
+  let { instrumentId, instrumentType, onExecute, onPost, exchange, balances }: IProps =
+    $props();
 
   const request = new PostOrderRequest(
     inferTradeModes(instrumentType),
@@ -82,6 +86,17 @@
         {#if request.orderPrice.required}
           <Input type="number" placeholder="price" />
         {/if}
+        <div class="flex justify-between">
+          <span>Available</span>
+
+          <span>
+            {#if request.orderSide == OrderSideType.Buy}
+            <span>{balances.quote}</span>
+          {:else}
+            <span>{balances.base}</span>
+          {/if}
+          </span>
+        </div>
         <Input type="number" placeholder="amount" bind:value={request.size} />
       </Tabs.Content>
       <div class="flex justify-between w-3/4 mx-auto">

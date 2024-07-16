@@ -138,7 +138,7 @@ impl ApiRequest for GetBalanceRequest {
     const PUBLIC: bool = false;
     const BODY: bool = false;
 
-    type Response = AccountInfo;
+    type Response = Vec<AccountInfo>;
 }
 
 #[serde_as]
@@ -173,7 +173,7 @@ impl ApiRequest for PlaceOrderBody {
     const PUBLIC: bool = false;
     const BODY: bool = true;
 
-    type Response = PlaceOrderResponse;
+    type Response = Vec<PlaceOrderResponse>;
 }
 
 #[skip_serializing_none]

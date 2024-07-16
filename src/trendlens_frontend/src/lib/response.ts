@@ -2,6 +2,7 @@ import type {
   Instrument,
   OrderData,
   Response,
+  AccountInfo,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
 export function isInstrumentsResponse(
@@ -16,4 +17,10 @@ export function isPostOrderResponse(
   response: Response,
 ): response is { Order: OrderData } {
   return (response as { Order: OrderData }).Order !== undefined;
+}
+
+export function isBalanceResponse(
+  response: Response,
+): response is { Balances: Array<AccountInfo> } {
+  return (response as { Balances: Array<AccountInfo> }).Balances !== undefined;
 }

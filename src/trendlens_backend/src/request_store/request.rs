@@ -20,6 +20,6 @@ pub enum Request {
 #[derive(Debug, Clone, Deserialize, CandidType)]
 pub enum Response {
     Instruments(Vec<Instrument>),
-    Balances(AccountInfo),
+    Balances(Vec<AccountInfo>),
     Order(OrderData),
 }
