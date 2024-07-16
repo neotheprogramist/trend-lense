@@ -65,12 +65,9 @@ type Candle = record {
 type Exchange = variant { Okx; Coinbase };
 type ExchangeErrors = variant {
   ApiClientError : ApiClientErrors;
+  InvalidTimestamps;
   MissingIndex;
-};
-type ExchangeRequestInfo = record {
-  api_key : text;
-  request : Request;
-  exchange : Exchange;
+  MissingPair;
 };
 type GeneralBalanceRequest = record { currency : vec text };
 type GeneralInstrumentsRequest = record {
@@ -86,6 +83,11 @@ type GeneralPostOrderRequest = record {
   instrument_id : text;
   order_price : opt float64;
   position_side : opt PositionSide;
+};
+type Instruction = record {
+  api_key : text;
+  request : Request;
+  exchange : Exchange;
 };
 type Instrument = record {
   stk : opt text;
@@ -156,20 +158,20 @@ type Response = variant {
   Order : PlaceOrderResponse;
   Balances : AccountInfo;
 };
-type Result = variant { Ok : Response; Err : ExchangeErrors };
+type Result = variant { Ok : vec Candle; Err : ExchangeErrors };
+type Result_1 = variant { Ok : Response; Err : ExchangeErrors };
 type TradeMode = variant { Cash; SpotIsolated; Isolated; Cross };
-service : () -> {
+service : {
   __get_candid_interface_tmp_hack : () -> (text) query;
-  delete_request : (nat8) -> ();
-  get_api_keys : () -> (vec ApiData) query;
+  add_instruction : (Instruction) -> (nat32);
+  delete_transaction : (nat32) -> ();
   get_last_timestamp : (Exchange, Pair) -> (opt nat64) query;
   get_pairs : (Exchange) -> (vec Pair) query;
-  get_request : (nat8) -> (opt ExchangeRequestInfo) query;
-  get_request_signature_string : (nat8) -> (text) query;
-  get_requests : () -> (vec opt ExchangeRequestInfo) query;
-  initialize_request : (ExchangeRequestInfo) -> (nat8);
-  pull_candles : (Pair, Exchange, nat64, nat64) -> (vec Candle);
+  get_requests : () -> (opt vec vec Instruction) query;
+  get_signature_string : (nat32) -> (text) query;
+  get_transaction : (nat32) -> (opt vec Instruction) query;
+  pull_candles : (Pair, Exchange, nat64, nat64) -> (Result);
   register_api_key : (ApiData) -> (bool);
-  remove_api_key : (text) -> ();
-  run_request : (nat8, text, text) -> (Result);
+  remove_api_key : (text) -> (opt ApiData);
+  run_request : (nat32, text, text) -> (Result_1);
 }

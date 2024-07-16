@@ -8,5 +8,8 @@
 
 <div class="relative flex min-h-screen flex-col bg-background">
 	<Header />
-	<slot />
+	<div class="container">
+		<slot />
+	</div>
+
 </div>

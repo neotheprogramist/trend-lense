@@ -2,6 +2,7 @@ import { createActor, canisterId } from '../../../declarations/trendlens_backend
 import { AuthClient } from '@dfinity/auth-client';
 import type { _SERVICE } from '../../../declarations/trendlens_backend/trendlens_backend.did';
 import { canisters } from '../../../../dfx.json';
+import { canisterId as identityCanisterId } from '../../../declarations/internet_identity';
 
 export const anonymousBackend = createActor(canisterId);
 
@@ -13,7 +14,7 @@ export const connect = async () => {
 			identityProvider:
 				process.env.DFX_NETWORK === 'ic'
 					? 'https://identity.ic0.app'
-					: `http://${canisters.internet_identity.remote.id.ic}.localhost:4943/`,
+					: `http://${identityCanisterId}.localhost:4943/`,
 			onSuccess: () => resolve(undefined)
 		});
 	});

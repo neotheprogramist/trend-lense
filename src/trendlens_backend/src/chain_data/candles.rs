@@ -5,6 +5,14 @@ use super::{BTreeMap, Candle, Deserialize, Serialize, Timestamp, TimestampBased}
 #[derive(Deserialize, Serialize, Default)]
 pub struct CandlesStore(BTreeMap<Timestamp, Candle>);
 
+impl CandlesStore {
+    pub fn insert_many(&mut self, candles: Vec<Candle>) {
+        for c in candles {
+            self.insert(c.timestamp, c);
+        }
+    }
+}
+
 impl Deref for CandlesStore {
     type Target = BTreeMap<Timestamp, Candle>;
 

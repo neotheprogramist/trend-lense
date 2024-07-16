@@ -22,6 +22,14 @@ class KeyStore {
     }
   }
 
+  public exchanges(): Exchanges[] {
+    this.ensureLoaded();
+
+    return this.keys
+      .map((e) => e.exchange)
+      .filter((el, index, arr) => arr.indexOf(el) === index);
+  }
+
   public getByExchange(exchange: Exchanges): ApiWithSecret | null {
     this.ensureLoaded();
 

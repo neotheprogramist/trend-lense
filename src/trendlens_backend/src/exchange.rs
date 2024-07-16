@@ -9,12 +9,11 @@ use crate::{
     remote_exchanges::{
         coinbase::Coinbase,
         okx::{api::GetInstrumentsRequest, Okx},
+        OpenData,
     },
     request_store::request::Request,
     storable_wrapper::StorableWrapper,
 };
-
-const MAX_EXCHANGE_SIZE: u32 = 21;
 
 #[repr(u8)]
 #[derive(
@@ -36,8 +35,8 @@ impl From<Exchange> for u8 {
 
 impl Storable for Exchange {
     const BOUND: Bound = Bound::Bounded {
-        max_size: MAX_EXCHANGE_SIZE,
-        is_fixed_size: true,
+        max_size: std::mem::size_of::<Exchange>() as u32,
+        is_fixed_size: false,
     };
 
     fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
@@ -74,7 +73,7 @@ impl ExchangeImpl {
 
     pub fn get_pairs(&self) -> Vec<Pair> {
         match self {
-            ExchangeImpl::Coinbase(_) => vec![],
+            ExchangeImpl::Coinbase(_) => unimplemented!(),
             ExchangeImpl::Okx(o) => o.get_pairs(),
         }
     }
@@ -97,10 +96,29 @@ impl ExchangeImpl {
         }
     }
 
-    pub fn data_mut(&self) -> StorableWrapper<ExchangeData> {
+    pub fn get_data(&self, pair: Pair) -> Option<StorableWrapper<ExchangeData>> {
         match self {
-            ExchangeImpl::Coinbase(c) => c.data_mut(),
-            ExchangeImpl::Okx(o) => o.data_mut(),
+            ExchangeImpl::Coinbase(c) => c.get_data(pair),
+            ExchangeImpl::Okx(o) => o.get_data(pair),
+        }
+    }
+
+    pub fn set_data(&self, pair: Pair, data: StorableWrapper<ExchangeData>) {
+        match self {
+            ExchangeImpl::Coinbase(c) => c.set_data(pair, data),
+            ExchangeImpl::Okx(o) => o.set_data(pair, data),
+        }
+    }
+
+    pub async fn fetch_candles(
+        &self,
+        pair: Pair,
+        range: std::ops::Range<u64>,
+        interval: u32,
+    ) -> Result<Vec<Candle>, super::ExchangeErrors> {
+        match self {
+            ExchangeImpl::Coinbase(c) => c.fetch_candles(pair, range, interval).await,
+            ExchangeImpl::Okx(o) => o.fetch_candles(pair, range, interval).await,
         }
     }
 }
