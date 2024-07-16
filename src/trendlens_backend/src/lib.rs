@@ -7,11 +7,7 @@ use exchange::{Candle, Exchange, ExchangeImpl};
 use instruments::save_instruments;
 use remote_exchanges::{
     coinbase::{Coinbase, CoinbaseAuth},
-    okx::{
-        api::{self, InstrumentType},
-        auth::OkxAuth,
-        Okx,
-    },
+    okx::{api::InstrumentType, auth::OkxAuth, Okx},
     ExchangeErrors, UserData,
 };
 use request_store::{
@@ -116,7 +112,6 @@ async fn refresh_instruments(
     exchange: Exchange,
     instrument_type: InstrumentType,
 ) -> Result<bool, ExchangeErrors> {
-    ic_cdk::println!("{:?}", exchange as u8);
     let exchange_impl = ExchangeImpl::new(exchange);
     let instruments = exchange_impl.refresh_instruments(&instrument_type).await?;
     save_instruments(exchange, instrument_type, instruments);
@@ -135,7 +130,7 @@ async fn run_request(
     index: u32,
     signature: String,
     timestamp_utc: String,
-    timestamp: u64
+    timestamp: u64,
 ) -> Result<Response, ExchangeErrors> {
     let identity = ic_cdk::caller();
     let tx = TransactionStore::get_transaction(&identity, index).expect("missing transaction");

@@ -8,12 +8,12 @@ use crate::{
     instruments::get_instruments,
     pair::Pair,
     remote_exchanges::{
-        coinbase::{Coinbase, GetProfileAccountsRequest},
+        coinbase::{Coinbase, GetProfileAccountsRequest, PostOrderBody},
         okx::{
             api::{GetBalanceRequest, GetInstrumentsRequest, InstrumentType, PlaceOrderBody},
             Okx,
         },
-        request::GeneralInstrumentsRequest,
+        request::{GeneralInstrumentsRequest, OrderType},
         response::Instrument,
         ExchangeErrors, OpenData,
     },
@@ -116,6 +116,18 @@ impl ExchangeImpl {
                     let request = GetProfileAccountsRequest {};
 
                     c.get_signature_data(request)
+                }
+                Request::PostOrder(request) => {
+                    let exchange_request = PostOrderBody {
+                        product_id: request.instrument_id,
+                        price: request.order_price,
+                        side: request.side.into(),
+                        funds: None,
+                        size: Some(request.size.to_string()),
+                        order_type: crate::remote_exchanges::coinbase::CoinbaseOrderType::Market,
+                    };
+
+                    c.get_signature_data(exchange_request)
                 }
                 _ => "".to_string(),
             },

@@ -4,7 +4,7 @@ use crate::{
     pair::Pair,
     remote_exchanges::{
         okx::api::InstrumentType,
-        response::{ApiResponseWrapper, Balance, Instrument},
+        response::{ApiResponseWrapper, Balance, Instrument, OrderData},
         ExchangeErrors,
     },
 };
@@ -110,6 +110,15 @@ pub struct OrderResponse {
     pub max_floor: Option<String>,
     pub secondary_order_id: Option<String>,
     pub stop_limit_price: Option<String>,
+}
+
+impl Into<OrderData> for OrderResponse {
+    fn into(self) -> OrderData {
+        OrderData {
+           code: self.id,
+        }
+    }
+
 }
 
 #[derive(Deserialize, Serialize)]

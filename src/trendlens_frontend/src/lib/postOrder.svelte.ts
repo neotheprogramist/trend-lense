@@ -43,6 +43,10 @@ export class PostOrderRequest {
       this.tradeMode = tradeModes[0];
     }
   }
+
+  changeInstrumentId(instrumentId: string) {
+    this.instrumentId = instrumentId;
+  }
 }
 
 const handleOrderSide = (orderSide: OrderSideType): OrderSide => {
@@ -162,6 +166,8 @@ export const executeRequest = async (
 
   const requestSignatureData =
     await wallet.actor.get_signature_string(requestNumber);
+
+  console.log(requestSignatureData);
 
   const timestamp = Math.round(Date.now() / 1000) - 1;
   const isoTimestamp = new Date().toISOString();

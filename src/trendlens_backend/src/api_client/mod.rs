@@ -65,8 +65,23 @@ impl ApiClient {
         A: Authorize,
         W: ApiResponseWrapper<R::Response>,
     {
-        let qs = format!("?{}", request.to_query_string());
-        let qs = if qs == "?" { "".to_string() } else { qs };
+
+        let qs = if R::BODY {
+            "".to_string()
+        } else {
+            let qs = request.to_query_string();
+
+            let qs = if qs == "" {
+                "".to_string()
+            } else {
+                format!("?{}", qs)
+            };
+
+            qs
+        };
+        
+        // let qs = format!("?{}", request.to_query_string());
+        // let qs = if qs == "?" { "".to_string() } else { qs };
 
         let api_url = format!("https://{}/{}{}", R::HOST, R::URI, qs);
 

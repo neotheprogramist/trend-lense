@@ -12,6 +12,8 @@ use super::{ApiRequest, OpenData};
 use response::ConcreteInstrument;
 
 pub use request::GetProfileAccountsRequest;
+pub use request::PostOrderBody;
+pub use request::OrderType as CoinbaseOrderType;
 
 mod auth;
 mod request;

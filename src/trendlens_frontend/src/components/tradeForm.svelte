@@ -49,6 +49,8 @@
         balances.quote = Number(balance.available);
       }
     }
+
+    request.changeInstrumentId(pairToString(instrument));
   });
 
   const request = new PostOrderRequest(
