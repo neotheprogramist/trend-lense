@@ -1,7 +1,7 @@
 use crate::remote_exchanges::{
-    okx::response::{AccountInfo, PlaceOrderResponse},
+    okx::response::AccountInfo,
     request,
-    response::Instrument,
+    response::{Instrument, OrderData},
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -21,5 +21,5 @@ pub enum Request {
 pub enum Response {
     Instruments(Vec<Instrument>),
     Balances(AccountInfo),
-    Order(PlaceOrderResponse),
+    Order(OrderData),
 }

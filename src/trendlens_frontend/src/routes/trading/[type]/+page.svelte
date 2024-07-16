@@ -18,6 +18,9 @@
   import { instrumentsStore } from "$lib/instruments.svelte";
   import * as Tabs from "$components/shad/ui/tabs";
   import RequestCreator from "$components/requestCreator.svelte";
+  import Separator from "$components/shad/ui/separator/separator.svelte";
+  import TradeForm from "$components/tradeForm.svelte";
+  import { executeRequest, type PostOrderRequest } from "$lib/postOrder.svelte";
 
   interface IProps {
     data: PageData;
@@ -34,7 +37,9 @@
   let lastTimestamp = $state<number>(Date.now() - ONE_HOUR);
   let stopTimestamp = $state<number>(Date.now());
 
-  let selectedExchange = $state<Exchanges>(data.exchange);
+  const availableExchanges = Object.keys(Exchanges).map((e) => e as Exchanges);
+
+  let selectedExchanges = $state<Exchanges[]>([data.exchange]);
   let selectedInstrument = $state<string | null>(null);
 
   const transformCandleData = (
@@ -97,8 +102,16 @@
       clearInterval(interval);
     }
 
-    fetchNewCandles(selectedExchange, selectedInstrument!);
+    fetchNewCandles(selectedExchanges[0], selectedInstrument!);
     interval = setInterval(fetchNewCandles, fetchInterval);
+  };
+
+  const handlePost = (request: PostOrderRequest) => {
+    throw new Error("Not implemented");
+  };
+
+  const handleExecute = async (request: PostOrderRequest) => {
+    await executeRequest(selectedExchanges[0], request);
   };
 
   onMount(async () => {
@@ -106,77 +119,47 @@
   });
 </script>
 
-<div class="grid gap-2 md:grid-cols-2 lg:grid-cols-7">
-  <Card.Root class="col-span-3">
-    <Card.Header>
-      <Card.Title>Instruments</Card.Title>
-    </Card.Header>
-    <Card.Content>
-      <Tabs.Root
-        value="open"
-        onValueChange={(v) => {
-          console.log(v);
-        }}
-      >
-        <div class="grid grid-cols-5">
-          <div class="col-span-2">
-            <Tabs.List>
-              <Tabs.Trigger value="open">Open</Tabs.Trigger>
-              <Tabs.Trigger value="account">Account</Tabs.Trigger>
-            </Tabs.List>
-          </div>
-          <div></div>
-          <div class="col-span-2">
-            <InstrumentsSelect
-              instrumentType={data.instrumentType}
-              onInstrumentSelect={(s) => {
-                selectedInstrument = s;
-                fetchCandles();
-              }}
-            />
-          </div>
-        </div>
-        <Tabs.Content value="open">list of open commands</Tabs.Content>
-        <Tabs.Content value="account">
-          {#if wallet.connected && wallet.actor}
-            {#if selectedInstrument}
-              <RequestCreator
-                exchange={selectedExchange}
-                instrumentId={selectedInstrument}
-              />
-            {:else}
-              select instrument
-            {/if}
-          {:else}
-            connect the wallet
-          {/if}
-        </Tabs.Content>
-      </Tabs.Root>
+<div class="mt-2 grid md:grid-cols-2 lg:grid-cols-8">
+  <div class="col-span-2 border p-2">
+    <InstrumentsSelect
+      instrumentType={data.instrumentType}
+      onInstrumentSelect={(s) => {
+        selectedInstrument = s;
+        fetchCandles();
+      }}
+    />
+  </div>
 
-      <!-- <RequestList /> -->
-    </Card.Content>
-  </Card.Root>
+  <div class="col-span-4 border-t border-b">
+    <div class="p-2">
+      <TradingHeader bind:selectedExchanges {availableExchanges} />
+    </div>
+    <Separator orientation="horizontal" />
+    <Tabs.Root value="trading" class="p-2">
+      <Tabs.List>
+        <Tabs.Trigger value="trading">Trading</Tabs.Trigger>
+        <Tabs.Trigger value="charts">Charts</Tabs.Trigger>
+        <Tabs.Trigger value="info">Info</Tabs.Trigger>
+      </Tabs.List>
+      <Tabs.Content value="trading">
+        <TradingView candlesData={candlesFromBackend} />
+      </Tabs.Content>
+      <Tabs.Content value="charts">Change your password here.</Tabs.Content>
+      <Tabs.Content value="info">Change your password here.</Tabs.Content>
+    </Tabs.Root>
 
-  <Card.Root class="col-span-4">
-    <Card.Header>
-      <Card.Title>Price chart</Card.Title>
-    </Card.Header>
-    <Card.Content>
-      <TradingHeader bind:selectedExchange />
-      <TradingView candlesData={candlesFromBackend} />
-    </Card.Content>
-  </Card.Root>
+    <Separator orientation="horizontal" />
+    {#if selectedInstrument}
+      <TradeForm
+        instrumentId={selectedInstrument}
+        instrumentType={data.instrumentType}
+        onExecute={handleExecute}
+        onPost={handlePost}
+      />
+    {:else}
+      Select instrument to trade
+    {/if}
+  </div>
 
-  <Card.Root class="col-span-7">
-    <Card.Header>
-      <Card.Title>Actions</Card.Title>
-    </Card.Header>
-    <Card.Content>
-      <!-- {#if selectedExchange}
-        <RequestCreator exchange={selectedExchange} />
-      {:else}
-        Choose exchange and pair to view options
-      {/if} -->
-    </Card.Content>
-  </Card.Root>
+  <div class="col-span-2 border"></div>
 </div>

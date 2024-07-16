@@ -58,11 +58,12 @@ pub trait UserData {
     ) -> Result<Response, ExchangeErrors>;
 }
 
+
 pub trait ApiRequest: Serialize {
     const METHOD: HttpMethod;
     const URI: &'static str;
     const HOST: &'static str;
-    const BODY: &'static str = "";
+    const BODY: bool;
     const PUBLIC: bool;
 
     type Response: for<'de> Deserialize<'de>;
@@ -72,6 +73,13 @@ pub trait ApiRequest: Serialize {
         Self: Serialize + Sized,
     {
         serde_qs::to_string(self).unwrap()
+    }
+
+    fn to_body(&self) -> String
+    where
+        Self: Serialize + Sized,
+    {
+        serde_json::to_string(self).unwrap()
     }
 }
 

@@ -3,6 +3,7 @@ use crate::chain_data::ChainData;
 use crate::exchange::Exchange;
 use crate::Pair;
 use auth::OkxAuth;
+use ic_cdk::api::management_canister::http_request::HttpMethod;
 
 use super::request::{OrderSide, OrderType, TradeMode};
 use super::ApiRequest;
@@ -30,7 +31,7 @@ impl Okx {
         .to_string()
     }
 
-    fn side_string(side: OrderSide) -> String {
+    pub fn side_string(side: OrderSide) -> String {
         match side {
             OrderSide::Buy => "buy",
             OrderSide::Sell => "sell",
@@ -38,7 +39,7 @@ impl Okx {
         .to_string()
     }
 
-    fn order_type_string(order_type: OrderType) -> String {
+    pub fn order_type_string(order_type: OrderType) -> String {
         match order_type {
             OrderType::Limit => "limit",
             OrderType::Market => "market",
@@ -49,7 +50,7 @@ impl Okx {
         .to_string()
     }
 
-    fn trade_mode_string(trade_mode: TradeMode) -> String {
+    pub fn trade_mode_string(trade_mode: TradeMode) -> String {
         match trade_mode {
             TradeMode::Cross => "cross",
             TradeMode::Isolated => "isolated",
@@ -68,9 +69,27 @@ impl Okx {
     }
 
     pub fn get_signature_data<R: ApiRequest>(&self, request: R) -> String {
-        let api_url = format!("/{}{}", R::URI, format!("?{}", request.to_query_string()));
+        let (qs, body) = if R::BODY {
+            ("".to_string(), request.to_body())
+        } else {
+            (format!("?{}", request.to_query_string()), "".to_string())
+        };
 
-        format!("{:?}{}{}", R::METHOD, R::BODY, api_url).to_string()
+        let method_str = if R::METHOD == HttpMethod::GET {
+            "GET"
+        } else {
+            "POST"
+        };
+
+        let api_url = format!("/{}{}", R::URI, qs);
+
+        format!(
+            "{}{}{}",
+            method_str,
+            api_url,
+            body
+        )
+        .to_string()
     }
 }
 
@@ -83,7 +102,7 @@ impl ChainData for Okx {
 #[cfg(test)]
 mod test_okx_helpers {
     use super::*;
- 
+
     #[test]
     fn test_okx_interval_string() {
         assert_eq!(Okx::interval_string(0), "1m");
@@ -95,5 +114,4 @@ mod test_okx_helpers {
         assert_eq!(Okx::interval_string(50), "5m");
         assert_eq!(Okx::interval_string(u32::MAX), "5m");
     }
-
 }
