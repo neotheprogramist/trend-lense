@@ -6,7 +6,7 @@ use chain_data::{ExchangeData, TimestampBased};
 use exchange::{Candle, Exchange, ExchangeImpl};
 use instruments::save_instruments;
 use remote_exchanges::{
-    coinbase::Coinbase,
+    coinbase::{Coinbase, CoinbaseAuth},
     okx::{api::InstrumentType, auth::OkxAuth, Okx},
     ExchangeErrors, UserData,
 };
@@ -56,7 +56,6 @@ fn register_api_key(exchange_api: ApiData) -> bool {
     let principal = ic_cdk::caller();
 
     ApiStore::register_key(&principal, exchange_api);
-
     // There should be test if key is a valid key
 
     true
@@ -113,7 +112,6 @@ async fn refresh_instruments(
     exchange: Exchange,
     instrument_type: InstrumentType,
 ) -> Result<bool, ExchangeErrors> {
-    ic_cdk::println!("{:?}", exchange as u8);
     let exchange_impl = ExchangeImpl::new(exchange);
     let instruments = exchange_impl.refresh_instruments(&instrument_type).await?;
     save_instruments(exchange, instrument_type, instruments);
@@ -132,6 +130,7 @@ async fn run_request(
     index: u32,
     signature: String,
     timestamp_utc: String,
+    timestamp: u64,
 ) -> Result<Response, ExchangeErrors> {
     let identity = ic_cdk::caller();
     let tx = TransactionStore::get_transaction(&identity, index).expect("missing transaction");
@@ -148,7 +147,12 @@ async fn run_request(
             timestamp: timestamp_utc,
             signature,
         })),
-        Exchange::Coinbase => Box::new(Coinbase::default()),
+        Exchange::Coinbase => Box::new(Coinbase::with_auth(CoinbaseAuth {
+            api_key: ix.api_key,
+            passphrase: api_info.passphrase.unwrap(),
+            signature,
+            timestamp,
+        })),
     };
 
     let response = match ix.request {

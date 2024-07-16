@@ -3,8 +3,6 @@ import type { Exchange } from "../../../declarations/trendlens_backend/trendlens
 export enum Exchanges {
   Okx = "Okx",
   Coinbase = "Coinbase",
-  Kraken = "Kraken",
-  Binance = "Binance",
 }
 
 export type ExchangeKey = keyof typeof Exchanges;
@@ -22,9 +20,6 @@ export const handleExchange = (exchange: Exchanges): Exchange => {
     case Exchanges.Okx:
       return { Okx: null };
     case Exchanges.Coinbase:
-      return { Coinbase: null };
-    case Exchanges.Binance:
-    case Exchanges.Kraken:
       return { Coinbase: null };
   }
 };

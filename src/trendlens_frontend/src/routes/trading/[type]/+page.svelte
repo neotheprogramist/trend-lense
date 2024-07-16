@@ -42,10 +42,28 @@
     quote: number;
   }>({ base: 0, quote: 0 });
 
-  const availableExchanges = Object.keys(Exchanges).map((e) => e as Exchanges);
+  let selectedExchanges = $state<Exchanges[]>([]);
+  let selectedInstrument = $state<Pair | null>(null);
 
-  let selectedExchanges = $state<Exchanges[]>([data.exchange]);
-  let selectedInstrument = $state<string | null>(null);
+  let availableExchanges = $derived.by(() => {
+    if (selectedInstrument) {
+      return Object.keys(Exchanges)
+        .map((e) => {
+          const key = e as Exchanges;
+          console.log(key);
+          return instrumentsStore.hasExchangeInstrument(
+            key,
+            data.instrumentType,
+            selectedInstrument!,
+          )
+            ? key
+            : null;
+        })
+        .filter((e) => e !== null) as Exchanges[];
+    }
+
+    return [];
+  });
 
   const transformCandleData = (
     candles: Candle[],
@@ -107,8 +125,8 @@
       clearInterval(interval);
     }
 
-    fetchNewCandles(selectedExchanges[0], selectedInstrument!);
-    interval = setInterval(fetchNewCandles, fetchInterval);
+    // fetchNewCandles(selectedExchanges[0], selectedInstrument!);
+    // interval = setInterval(fetchNewCandles, fetchInterval);
   };
 
   const handlePost = (request: PostOrderRequest) => {
@@ -119,38 +137,17 @@
     await executeRequest(selectedExchanges[0], request);
   };
 
-  const fetchBalances = async (instrumentId: string) => {
-    const [base, quote] = instrumentId.split("-");
 
-    const fetched = await getBalance(selectedExchanges[0]);
 
-    console.log(fetched)
-    const baseBalance = fetched[0].details
-      .filter((e) => e.ccy === base)
-      .map((e) => e.eq)[0];
-    const quoteBalance = fetched[0].details
-      .filter((e) => e.ccy === quote)
-      .map((e) => e.eq)[0];
-
-    balances = {
-      base: baseBalance == undefined ? 0 : Number(baseBalance),
-      quote: quoteBalance == undefined ? 0 : Number(quoteBalance),
-    };
-
-    console.log(balances);
-
-    console.log("balances", balances);
-  };
-
-  const handleInstrumentChange = (i: string) => {
+  const handleInstrumentChange = (i: Pair) => {
     selectedInstrument = i;
-    fetchBalances(i);
+    // fetchBalances(i);
     fetchCandles();
   };
 
-  onMount(async () => {
-    await instrumentsStore.filterByType(data.instrumentType, false);
-  });
+  // onMount(async () => {
+  //   await instrumentsStore.filterByType(data.instrumentType, false);
+  // });
 </script>
 
 <div class="mt-2 grid md:grid-cols-2 lg:grid-cols-8">
@@ -180,17 +177,19 @@
     </Tabs.Root>
 
     <Separator orientation="horizontal" />
-    {#if selectedInstrument}
+
+    {#if selectedExchanges.length == 0}
+      Select exchange to trade
+    {:else if selectedExchanges.length == 1}
       <TradeForm
-        {balances}
         exchange={selectedExchanges[0]}
-        instrumentId={selectedInstrument}
+        instrument={selectedInstrument!}
         instrumentType={data.instrumentType}
         onExecute={handleExecute}
         onPost={handlePost}
       />
     {:else}
-      Select instrument to trade
+      multiform
     {/if}
   </div>
 

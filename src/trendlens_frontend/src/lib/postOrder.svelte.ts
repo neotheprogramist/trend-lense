@@ -4,7 +4,7 @@ import type {
   TradeMode,
   PositionSide as BackendPositionSide,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-import { handleExchange, type Exchanges } from "./exchange";
+import { handleExchange, Exchanges } from "./exchange";
 import { keyStore } from "./keystore.svelte";
 import {
   OrderSideType,
@@ -42,6 +42,10 @@ export class PostOrderRequest {
     if (tradeModes.length > 0) {
       this.tradeMode = tradeModes[0];
     }
+  }
+
+  changeInstrumentId(instrumentId: string) {
+    this.instrumentId = instrumentId;
   }
 }
 
@@ -158,24 +162,28 @@ export const executeRequest = async (
     throw new Error("api key not exist in local storage");
   }
 
-
   const requestNumber = await postRequest(exchange, request);
 
   const requestSignatureData =
     await wallet.actor.get_signature_string(requestNumber);
 
+  console.log(requestSignatureData);
+
+  const timestamp = Math.round(Date.now() / 1000) - 1;
   const isoTimestamp = new Date().toISOString();
 
   const signature = await finishSignature(
+    exchange,
     requestSignatureData,
     key.secretKey,
-    isoTimestamp,
+    exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
   );
 
   const result = await wallet.actor!.run_request(
     requestNumber,
     signature,
     isoTimestamp,
+    BigInt(timestamp),
   );
 
   try {

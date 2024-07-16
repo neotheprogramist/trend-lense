@@ -8,12 +8,12 @@ use crate::{
     instruments::get_instruments,
     pair::Pair,
     remote_exchanges::{
-        coinbase::Coinbase,
+        coinbase::{Coinbase, GetProfileAccountsRequest, PostOrderBody},
         okx::{
             api::{GetBalanceRequest, GetInstrumentsRequest, InstrumentType, PlaceOrderBody},
             Okx,
         },
-        request::GeneralInstrumentsRequest,
+        request::{GeneralInstrumentsRequest, OrderType},
         response::Instrument,
         ExchangeErrors, OpenData,
     },
@@ -102,7 +102,7 @@ impl ExchangeImpl {
 
     pub fn get_pairs(&self, instrument_type: InstrumentType) -> Vec<Pair> {
         match self {
-            ExchangeImpl::Coinbase(_) => vec![],
+            ExchangeImpl::Coinbase(c) => c.get_pairs(instrument_type),
             ExchangeImpl::Okx(o) => o.get_pairs(instrument_type),
         }
     }
@@ -111,7 +111,26 @@ impl ExchangeImpl {
     // preconstructed for further use or migrate signature generation to client
     pub fn get_signature_string(&self, request: Request) -> String {
         match self {
-            ExchangeImpl::Coinbase(_) => "".to_string(),
+            ExchangeImpl::Coinbase(c) => match request {
+                Request::Balances(_) => {
+                    let request = GetProfileAccountsRequest {};
+
+                    c.get_signature_data(request)
+                }
+                Request::PostOrder(request) => {
+                    let exchange_request = PostOrderBody {
+                        product_id: request.instrument_id,
+                        price: request.order_price,
+                        side: request.side.into(),
+                        funds: None,
+                        size: Some(request.size.to_string()),
+                        order_type: crate::remote_exchanges::coinbase::CoinbaseOrderType::Market,
+                    };
+
+                    c.get_signature_data(exchange_request)
+                }
+                _ => "".to_string(),
+            },
             ExchangeImpl::Okx(o) => match request {
                 Request::Instruments(i) => {
                     let request = GetInstrumentsRequest {
@@ -168,7 +187,7 @@ impl ExchangeImpl {
         };
 
         match self {
-            ExchangeImpl::Coinbase(_) => Ok(vec![]),
+            ExchangeImpl::Coinbase(c) => c.get_public_instruments(get_instruments_request).await,
             ExchangeImpl::Okx(o) => o.get_public_instruments(get_instruments_request).await,
         }
     }

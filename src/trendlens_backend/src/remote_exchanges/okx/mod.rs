@@ -4,7 +4,6 @@ use crate::exchange::Exchange;
 use crate::Pair;
 use auth::OkxAuth;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
-
 use super::request::{OrderSide, OrderType, TradeMode};
 use super::ApiRequest;
 

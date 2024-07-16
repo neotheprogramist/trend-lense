@@ -1,23 +1,39 @@
 use std::str::FromStr;
 
 use crate::{
+    api_client::ApiClientErrors,
     exchange::Candle,
     pair::Pair,
-    remote_exchanges::{response::Instrument, ExchangeErrors},
+    remote_exchanges::{
+        response::{ApiResponseWrapper, Balance, Instrument},
+        ExchangeErrors,
+    },
 };
-use candid::CandidType;
-use serde::{self, Deserialize, Serialize};
+use candid::{CandidType, Nat};
+use serde::{self, de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
 use super::api::InstrumentType;
 
 #[serde_as]
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Default)]
 pub struct ApiResponse<T> {
     #[serde_as(as = "DisplayFromStr")]
     pub code: u32,
     pub msg: String,
     pub data: T,
+}
+
+impl<R: DeserializeOwned> ApiResponseWrapper<R> for ApiResponse<R> {
+    fn extract_response(self) -> Result<R, ExchangeErrors> {
+        if self.code != 0 {
+            return Err(ExchangeErrors::ApiClientError(ApiClientErrors::Http {
+                status: Nat(self.code.into()),
+            }));
+        }
+
+        Ok(self.data)
+    }
 }
 
 #[serde_as]
@@ -102,6 +118,20 @@ pub struct AccountInfo {
     #[serde(rename = "upl")]
     unrealized_profit_loss: Option<String>,
     details: Vec<AssetDetail>,
+}
+
+impl Into<Vec<Balance>> for AccountInfo {
+    fn into(self) -> Vec<Balance> {
+        self.details
+            .into_iter()
+            .map(|d| Balance {
+                currency: d.currency,
+                available: d.equity,
+                balance: d.cash_balance,
+                hold: "0".to_string(),
+            })
+            .collect::<Vec<_>>()
+    }
 }
 
 #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]

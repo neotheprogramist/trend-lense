@@ -1,4 +1,5 @@
 import { Buffer } from "buffer";
+import { Exchanges } from "./exchange";
 
 function base64ToArrayBuffer(base64: string) {
   return Buffer.from(base64, "base64");
@@ -10,6 +11,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer) {
 
 // this is not generic right now, but solely based on the requirements of the OKX api
 export const finishSignature = async (
+  exchange: Exchanges,
   signatureData: string,
   secret: string,
   timestamp: string,
@@ -17,7 +19,10 @@ export const finishSignature = async (
   console.log(timestamp);
   const preHashString = timestamp + signatureData;
   console.log(preHashString);
-  const keyData = base64ToArrayBuffer(btoa(secret));
+
+  const keyData = base64ToArrayBuffer(
+    exchange == Exchanges.Okx ? btoa(secret) : secret,
+  );
   const cryptoKey = await crypto.subtle.importKey(
     "raw",
     keyData,
