@@ -19,12 +19,18 @@
   };
 </script>
 
-<div class="grid grid-cols-8 h-8 gap-2">
-  {#each availableExchanges as e}
-    <Badge
-      class="rounded-sm"
-      variant={!selectedExchanges.includes(e) ? "outline" : undefined}
-      onclick={() => toggleExchange(e)}>{e}</Badge
-    >
-  {/each}
-</div>
+{#if availableExchanges.length == 0}
+  <Badge class="rounded-sm" variant="secondary">
+    no exchanges available
+  </Badge>
+{:else}
+  <div class="grid grid-cols-8 h-8 gap-2">
+    {#each availableExchanges as e}
+      <Badge
+        class="rounded-sm"
+        variant={!selectedExchanges.includes(e) ? "outline" : undefined}
+        onclick={() => toggleExchange(e)}>{e}</Badge
+      >
+    {/each}
+  </div>
+{/if}

@@ -13,6 +13,7 @@
   }
 
   let { onUpload }: IProps = $props();
+  let open = $state(false);
   let apiKey = $state<string>("");
   let secretKey = $state<string>("");
   let passphrase = $state<string>("");
@@ -45,10 +46,14 @@
 
 		status = 'registering...'
     status = await onUpload(localData);
+
+    if (status == "key registered") {
+      open = false;
+    }
   }
 </script>
 
-<Dialog.Root>
+<Dialog.Root {open}>
   <Button><Dialog.Trigger>Add</Dialog.Trigger></Button>
 
   <Dialog.Content class="sm:max-w-[425px]">

@@ -6,7 +6,7 @@ pub struct CoinbaseAuth {
     pub api_key: String,
     pub passphrase: String,
     pub signature: String,
-    pub timestamp: String,
+    pub timestamp: u64,
 }
 
 impl Authorize for CoinbaseAuth {
@@ -22,7 +22,7 @@ impl Authorize for CoinbaseAuth {
             },
             HttpHeader {
                 name: "CB-ACCESS-TIMESTAMP".to_string(),
-                value: self.timestamp.clone(),
+                value: self.timestamp.to_string(),
             },
             HttpHeader {
                 name: "CB-ACCESS-PASSPHRASE".to_string(),

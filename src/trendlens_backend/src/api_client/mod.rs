@@ -1,4 +1,6 @@
-use crate::remote_exchanges::{response::ApiResponseWrapper, ApiRequest, Authorize};
+use crate::remote_exchanges::{
+    response::ApiResponseWrapper, ApiRequest, Authorize, ExchangeErrors,
+};
 use candid::{CandidType, Nat};
 use ic_cdk::api::{
     call::RejectionCode,
@@ -57,17 +59,14 @@ impl ApiClient {
         &self,
         request: R,
         auth: Option<&A>,
-    ) -> Result<R::Response, ApiClientErrors>
+    ) -> Result<R::Response, ExchangeErrors>
     where
         R: ApiRequest,
         A: Authorize,
         W: ApiResponseWrapper<R::Response>,
     {
-        let qs = if R::BODY {
-            "".to_string()
-        } else {
-            format!("?{}", request.to_query_string())
-        };
+        let qs = format!("?{}", request.to_query_string());
+        let qs = if qs == "?" { "".to_string() } else { qs };
 
         let api_url = format!("https://{}/{}{}", R::HOST, R::URI, qs);
 
@@ -103,12 +102,16 @@ impl ApiClient {
                 if response.status != Nat::from(200u32) {
                     return Err(ApiClientErrors::Http {
                         status: response.status,
-                    });
+                    }
+                    .into());
                 }
 
                 let body: String = String::from_utf8(response.body).expect("conversion failed");
-                let deserialized_response: W =
-                    serde_json::from_str(&body).expect("deserialization failed");
+                let deserialized_response: W = serde_json::from_str(&body).map_err(|e| {
+                    ExchangeErrors::DeserializationFailed {
+                        message: e.to_string(),
+                    }
+                })?;
 
                 return Ok(deserialized_response.extract_response().unwrap());
             }
@@ -118,7 +121,8 @@ impl ApiClient {
                 return Err(ApiClientErrors::Reject {
                     message: err.1,
                     code: err.0,
-                });
+                }
+                .into());
             }
         }
     }

@@ -5,7 +5,7 @@ use crate::{
     exchange::Candle,
     pair::Pair,
     remote_exchanges::{
-        response::{ApiResponseWrapper, Instrument},
+        response::{ApiResponseWrapper, Balance, Instrument},
         ExchangeErrors,
     },
 };
@@ -118,6 +118,20 @@ pub struct AccountInfo {
     #[serde(rename = "upl")]
     unrealized_profit_loss: Option<String>,
     details: Vec<AssetDetail>,
+}
+
+impl Into<Vec<Balance>> for AccountInfo {
+    fn into(self) -> Vec<Balance> {
+        self.details
+            .into_iter()
+            .map(|d| Balance {
+                currency: d.currency,
+                available: d.equity,
+                balance: d.cash_balance,
+                hold: "0".to_string(),
+            })
+            .collect::<Vec<_>>()
+    }
 }
 
 #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]

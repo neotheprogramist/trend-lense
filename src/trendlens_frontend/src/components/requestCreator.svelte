@@ -29,7 +29,7 @@
   import type { Request as BackendRequest } from "../../../declarations/trendlens_backend/trendlens_backend.did";
   import Button from "./shad/ui/button/button.svelte";
   import { handleInstrumentType } from "$lib/instrumentType";
-  import { handlePair } from "$lib/pair";
+    import { pairFromString, pairToString } from "$lib/pair";
 
   // right now i pass exchange as prop, but it could be store or context
 
@@ -92,7 +92,7 @@
         return {
           Instruments: {
             instrument_id: req.instrumentId.value
-              ? [handlePair(req.instrumentId.value)]
+              ? [pairFromString(req.instrumentId.value)]
               : [],
             instrument_type: handleInstrumentType(req.instrumentType.v),
           },
@@ -104,7 +104,7 @@
 
         return {
           Balances: {
-            currency: [b_req.currencies.value ?? ""],
+            currency: [[b_req.currencies.value ?? ""]],
           },
         };
 

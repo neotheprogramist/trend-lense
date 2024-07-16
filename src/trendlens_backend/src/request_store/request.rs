@@ -1,7 +1,6 @@
 use crate::remote_exchanges::{
-    okx::response::AccountInfo,
     request,
-    response::{Instrument, OrderData},
+    response::{Balance, Instrument, OrderData},
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -20,6 +19,6 @@ pub enum Request {
 #[derive(Debug, Clone, Deserialize, CandidType)]
 pub enum Response {
     Instruments(Vec<Instrument>),
-    Balances(Vec<AccountInfo>),
+    Balances(Vec<Balance>),
     Order(OrderData),
 }

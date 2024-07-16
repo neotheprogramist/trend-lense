@@ -7,7 +7,7 @@ use super::{
 use crate::{
     remote_exchanges::{
         request::{GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest},
-        response::{Instrument, OrderData},
+        response::{Balance, Instrument, OrderData},
         ExchangeErrors, UserData,
     },
     request_store::request::Response,
@@ -58,7 +58,12 @@ impl UserData for Okx {
             )
             .await?;
 
-        Ok(Response::Balances(balances_response))
+        Ok(Response::Balances(
+            balances_response
+                .into_iter()
+                .flat_map(|r| Into::<Vec<Balance>>::into(r))
+                .collect::<Vec<_>>(),
+        ))
     }
 
     async fn post_order(

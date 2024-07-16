@@ -1,4 +1,4 @@
-use auth::CoinbaseAuth;
+use ic_cdk::api::management_canister::http_request::HttpMethod;
 use request::GetAllPairsRequest;
 use response::CoinbaseResponse;
 
@@ -6,20 +6,52 @@ use crate::{
     api_client::ApiClient,
     chain_data::ChainData,
     exchange::{Candle, Exchange, ExchangeId},
-    request_store::request::Response,
 };
 
-use super::{request::GeneralInstrumentsRequest, ExchangeErrors, OpenData, UserData};
+use super::{ApiRequest, OpenData};
 use response::ConcreteInstrument;
+
+pub use request::GetProfileAccountsRequest;
 
 mod auth;
 mod request;
 mod response;
+mod user;
+
+pub use auth::CoinbaseAuth;
 
 #[derive(Default)]
 pub struct Coinbase {
     api_client: ApiClient,
     auth: Option<auth::CoinbaseAuth>,
+}
+
+impl Coinbase {
+    pub fn get_signature_data<R: ApiRequest>(&self, request: R) -> String {
+        let (qs, body) = if R::BODY {
+            ("".to_string(), request.to_body())
+        } else {
+            let qs = request.to_query_string();
+
+            let qs = if qs == "" {
+                "".to_string()
+            } else {
+                format!("?{}", qs)
+            };
+
+            (qs, "".to_string())
+        };
+
+        let method_str = if R::METHOD == HttpMethod::GET {
+            "GET"
+        } else {
+            "POST"
+        };
+
+        let api_url = format!("/{}{}", R::URI, qs);
+
+        format!("{}{}{}", method_str, api_url, body).to_string()
+    }
 }
 
 #[async_trait::async_trait]
@@ -54,30 +86,6 @@ impl OpenData for Coinbase {
 impl ExchangeId for Coinbase {
     fn exchange_id(&self) -> Exchange {
         Exchange::Coinbase
-    }
-}
-
-#[async_trait::async_trait]
-impl UserData for Coinbase {
-    async fn get_instruments(
-        &self,
-        _req: GeneralInstrumentsRequest,
-    ) -> Result<Response, ExchangeErrors> {
-        Ok(Response::Instruments(vec![]))
-    }
-
-    async fn get_balance(
-        &self,
-        _request: crate::remote_exchanges::request::GeneralBalanceRequest,
-    ) -> Result<Response, ExchangeErrors> {
-        todo!()
-    }
-
-    async fn post_order(
-        &self,
-        _request: crate::remote_exchanges::request::GeneralPostOrderRequest,
-    ) -> Result<Response, ExchangeErrors> {
-        todo!()
     }
 }
 

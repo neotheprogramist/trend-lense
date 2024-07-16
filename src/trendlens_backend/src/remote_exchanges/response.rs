@@ -17,3 +17,11 @@ pub struct Instrument {
 pub struct OrderData {
     pub code: String,
 }
+
+#[derive(Deserialize, Debug, Clone, CandidType, Serialize)]
+pub struct Balance {
+    pub currency: String,
+    pub balance: String,
+    pub available: String,
+    pub hold: String,
+}

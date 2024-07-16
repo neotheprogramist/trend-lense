@@ -1,7 +1,6 @@
 import { createActor, canisterId } from '../../../declarations/trendlens_backend/index';
 import { AuthClient } from '@dfinity/auth-client';
 import type { _SERVICE } from '../../../declarations/trendlens_backend/trendlens_backend.did';
-import { canisters } from '../../../../dfx.json';
 import { canisterId as identityCanisterId } from '../../../declarations/internet_identity';
 
 export const anonymousBackend = createActor(canisterId);

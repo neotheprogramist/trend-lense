@@ -4,37 +4,41 @@
   import BindableSelect from "./bindableSelect.svelte";
   import { instrumentsStore } from "$lib/instruments.svelte";
   import { wallet } from "$lib/wallet.svelte";
+  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
   interface IProps {
     instrumentType: InstrumentType;
-    onInstrumentSelect: (ins: string) => void;
+    onInstrumentSelect: (instrument: Pair) => void;
   }
 
   let { instrumentType, onInstrumentSelect }: IProps = $props();
   let currentInstrument = $state<string | null>(null);
 
-
-  // @ts-ignore
-  $effect(async () => {
-    console.log('running effect ')
-    if (wallet.connected && wallet.actor) {
-      
-      untrack(async () => {
-        await instrumentsStore.filterByUser(instrumentType, false);
-      });
-    }
-  });
+  // // @ts-ignore
+  // $effect(async () => {
+  //   console.log("running effect ");
+  //   if (wallet.connected && wallet.actor) {
+  //     untrack(async () => {
+  //       await instrumentsStore.filterByUser(instrumentType, false);
+  //     });
+  //   }
+  // });
 </script>
 
-<BindableSelect
-  bind:value={currentInstrument}
-  items={instrumentsStore.filteredInstruments.map(
-    (e) => e.base + "-" + e.quote,
-  )}
-  placeholder="instruments"
-  onChange={(v) => {
-    if (v) {
-      onInstrumentSelect(v);
-    }
-  }}
-/>
+{#await instrumentsStore.getUniqueInstruments(instrumentType)}
+  loading instruments...
+{:then instruments}
+  {@const instrumentNames = instruments.map((e) => e.base + "-" + e.quote)}
+
+  <BindableSelect
+    value={null}
+    items={instrumentNames}
+    placeholder="instruments"
+    onChange={(v) => {
+      if (v) {
+        const pair = v.split("-");
+        onInstrumentSelect({ base: pair[0], quote: pair[1] });
+      }
+    }}
+  />
+{/await}
