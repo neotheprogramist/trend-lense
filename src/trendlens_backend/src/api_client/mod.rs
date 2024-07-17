@@ -1,5 +1,5 @@
 use crate::remote_exchanges::{
-    response::ApiResponseWrapper, ApiRequest, Authorize, ExchangeErrors,
+    response::ApiResponseWrapper, ApiRequest, Authorize, ExchangeErrors, PathFormatter,
 };
 use candid::{CandidType, Nat};
 use ic_cdk::api::{
@@ -71,21 +71,24 @@ impl ApiClient {
         } else {
             let qs = request.to_query_string();
 
-            let qs = if qs == "" {
+            if qs == "" {
                 "".to_string()
             } else {
                 format!("?{}", qs)
-            };
-
-            qs
+            }
         };
         
-        // let qs = format!("?{}", request.to_query_string());
-        // let qs = if qs == "?" { "".to_string() } else { qs };
-
         ic_cdk::println!("qs {}", qs);
 
-        let api_url = format!("https://{}/{}{}", R::HOST, R::URI, qs);
+        let path = if R::PATH_PARAMS {
+            request.get_path(R::URI)
+        } else {
+            R::URI.to_string()
+        };
+
+        ic_cdk::println!("path {}", path);
+      
+        let api_url = format!("https://{}/{}{}", R::HOST, path, qs);
 
         ic_cdk::println!("{}", api_url);
 

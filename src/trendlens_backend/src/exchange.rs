@@ -14,7 +14,6 @@ use crate::{
             Okx,
         },
         request::{GeneralInstrumentsRequest, OrderSide},
-    
         response::Instrument,
         ExchangeErrors, OpenData,
     },
@@ -115,17 +114,40 @@ impl ExchangeImpl {
         price_limit: u32,
     ) -> f64 {
         match self {
-            ExchangeImpl::Coinbase(_) => 0.0,
+            ExchangeImpl::Coinbase(c) => {
+                let orderbook = c
+                    .get_orderbook(pair, 50)
+                    .await
+                    .expect("failed to get orderbook data");
+
+                let orders = match order_side {
+                    OrderSide::Buy => &orderbook.asks,
+                    OrderSide::Sell => &orderbook.bids,
+                };
+
+                let start_price = orders.first().expect("no orders").price;
+                let stop_price = start_price * (1.0 + price_limit as f64 / 100.0);
+
+                orders
+                    .iter()
+                    .filter_map(|order| {
+                        if order.price <= stop_price {
+                            Some(order.size)
+                        } else {
+                            None
+                        }
+                    })
+                    .fold(0.0, |acc, x| acc + x)
+            }
             ExchangeImpl::Okx(o) => {
                 let orderbook = o
                     .get_orderbook(pair, 50)
                     .await
                     .expect("failed to get orderbook data");
-                let first = orderbook.first().expect("no orderbook data");
 
                 let orders = match order_side {
-                    OrderSide::Buy => &first.asks,
-                    OrderSide::Sell => &first.bids,
+                    OrderSide::Buy => &orderbook.asks,
+                    OrderSide::Sell => &orderbook.bids,
                 };
 
                 let start_price = orders.first().expect("no orders").price;

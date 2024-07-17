@@ -4,9 +4,10 @@ use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod};
-use okx::response::OrderBook;
 use request::{GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest};
+use response::OrderBook;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use thiserror::Error;
 
 pub mod coinbase;
@@ -27,9 +28,7 @@ pub enum ExchangeErrors {
     #[error("pair format given is not supported")]
     UnsupportedPairFormat,
     #[error("could not deserialize: {message}")]
-    DeserializationFailed {
-        message: String,
-    },
+    DeserializationFailed { message: String },
     #[error("api key not found")]
     MissingApiKey,
 }
@@ -48,7 +47,8 @@ pub trait OpenData {
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors>;
 
-    async fn get_orderbook(&self, pair: &Pair, size: u32) -> Result<Vec<OrderBook>, ExchangeErrors>;
+    async fn get_orderbook(&self, pair: &Pair, size: u32)
+        -> Result<OrderBook, ExchangeErrors>;
 }
 
 #[async_trait::async_trait]
@@ -67,12 +67,70 @@ pub trait UserData {
     ) -> Result<Response, ExchangeErrors>;
 }
 
+pub trait PathFormatter {
+    fn get_path(&self, template: &str) -> String;
+}
+
+impl<T> PathFormatter for T
+where
+    T: ApiRequest,
+{
+    fn get_path(&self, template: &str) -> String {
+        let json_value = serde_json::to_value(self).unwrap();
+
+        // Replace placeholders with actual values
+        let mut path = template.to_string();
+        if let Value::Object(map) = json_value {
+            for (key, value) in map {
+                if let Value::String(val) = value {
+                    let placeholder = format!("{{{}}}", key);
+                    path = path.replace(&placeholder, &val);
+                }
+            }
+        }
+        path
+    }
+}
+
+#[cfg(test)]
+mod path_formatter_test {
+    use super::*;
+
+    #[test]
+    fn test_serialize_to_path() {
+        #[derive(Serialize)]
+        struct TestRequest {
+            pub product_id: String,
+            pub name: String,
+        }
+
+        impl ApiRequest for TestRequest {
+            const METHOD: HttpMethod = HttpMethod::GET;
+            const URI: &'static str = "/test/{product_id}/{name}";
+            const HOST: &'static str = "test.com";
+            const BODY: bool = false;
+            const PUBLIC: bool = false;
+
+            type Response = ();
+        }
+
+        let request = TestRequest {
+            product_id: "123".to_string(),
+            name: "test".to_string(),
+        };
+
+        let path = request.get_path("/test/{product_id}/{name}");
+        assert_eq!(path, "/test/123/test");
+    }
+}
+
 pub trait ApiRequest: Serialize {
     const METHOD: HttpMethod;
     const URI: &'static str;
     const HOST: &'static str;
     const BODY: bool;
     const PUBLIC: bool;
+    const PATH_PARAMS: bool = false;
 
     type Response: for<'de> Deserialize<'de>;
 

@@ -25,3 +25,16 @@ pub struct Balance {
     pub available: String,
     pub hold: String,
 }
+
+#[derive(Deserialize, Debug, Clone, CandidType, Serialize)]
+pub struct BidAsk {
+    pub price: f64,
+    pub size: f64,
+}
+
+#[derive(Deserialize, Debug, Clone, CandidType, Serialize)]
+pub struct OrderBook {
+    pub sequence: u64,
+    pub bids: Vec<BidAsk>,
+    pub asks: Vec<BidAsk>,
+}

@@ -127,6 +127,15 @@ fn get_instruments(exchange: Exchange, instrument_type: InstrumentType) -> Vec<P
 }
 
 #[ic_cdk::update]
+async fn get_orderbook(exchange: Exchange, pair: String) -> f64 {
+    let exchange_impl = ExchangeImpl::new(exchange);
+    let pair = Pair::from_str(&pair).expect("invalid pair");
+    let volume = exchange_impl.get_market_depth(&pair, &OrderSide::Buy, 50).await;
+
+    volume
+}
+
+#[ic_cdk::update]
 async fn run_request(
     index: u32,
     signature: String,
@@ -275,11 +284,7 @@ async fn pull_candles(
 
     // !!!! hardcoded interval
     let fetched_candles = match range_to_fetch {
-        Some(ref range) => {
-            exchange
-                .fetch_candles(&pair, range.clone(), 1)
-                .await?
-        }
+        Some(ref range) => exchange.fetch_candles(&pair, range.clone(), 1).await?,
         None => {
             vec![]
         }

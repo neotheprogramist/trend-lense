@@ -26,8 +26,8 @@ type ExchangeErrors = variant {
   InvalidTimestamps;
   MissingIndex;
   MissingPair;
-  DeserializationFailed : record { message : text };
   MissingApiKey;
+  DeserializationFailed : record { message : text };
   UnsupportedPairFormat;
 };
 type GeneralBalanceRequest = record { currency : opt vec text };
@@ -91,6 +91,7 @@ service : () -> {
   delete_transaction : (nat32) -> ();
   get_instruments : (Exchange, InstrumentType) -> (vec Pair) query;
   get_last_timestamp : (Exchange, text) -> (opt nat64) query;
+  get_orderbook : (Exchange, text) -> (float64);
   get_requests : () -> (opt vec vec Instruction) query;
   get_signature_string : (nat32) -> (text) query;
   get_transaction : (nat32) -> (opt vec Instruction) query;

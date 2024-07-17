@@ -1,9 +1,9 @@
+use super::api::GetOrderBookRequest;
 use super::auth::OkxAuth;
 use super::response::{ApiResponse, CandleStick, ConcreteInstrument, OrderBook};
-use super::api::GetOrderBookRequest;
 use super::{api::IndexCandleStickRequest, Okx};
 use crate::remote_exchanges::request::GeneralInstrumentsRequest;
-use crate::remote_exchanges::response::Instrument;
+use crate::remote_exchanges::response::{Instrument, OrderBook as GlobalOrderBook};
 use crate::{
     exchange::Candle,
     pair::Pair,
@@ -66,7 +66,7 @@ impl OpenData for Okx {
             .collect())
     }
 
-    async fn get_orderbook(&self, pair: &Pair, size: u32) -> Result<Vec<OrderBook>, ExchangeErrors> {
+    async fn get_orderbook(&self, pair: &Pair, size: u32) -> Result<GlobalOrderBook, ExchangeErrors> {
         let instrument_id = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
 
         let orderbook_request = GetOrderBookRequest {
@@ -74,9 +74,18 @@ impl OpenData for Okx {
             depth: Some(size),
         };
 
-        self.api_client
-            .call::<ApiResponse<Vec<OrderBook>>, GetOrderBookRequest, OkxAuth>(orderbook_request, self.auth.as_ref())
-            .await
-            .map_err(Into::into)
+        let response = self
+            .api_client
+            .call::<ApiResponse<Vec<OrderBook>>, GetOrderBookRequest, OkxAuth>(
+                orderbook_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(response
+            .into_iter()
+            .next()
+            .ok_or(ExchangeErrors::MissingPair)?
+            .into())
     }
 }

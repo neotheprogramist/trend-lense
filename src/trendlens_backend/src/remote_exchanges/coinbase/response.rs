@@ -4,7 +4,10 @@ use crate::{
     pair::Pair,
     remote_exchanges::{
         okx::api::InstrumentType,
-        response::{ApiResponseWrapper, Balance, Instrument, OrderData},
+        response::{
+            ApiResponseWrapper, Balance, BidAsk as GlobalBidAsk, Instrument,
+            OrderBook as GlobalOrderBook, OrderData,
+        },
         ExchangeErrors,
     },
 };
@@ -114,11 +117,8 @@ pub struct OrderResponse {
 
 impl Into<OrderData> for OrderResponse {
     fn into(self) -> OrderData {
-        OrderData {
-           code: self.id,
-        }
+        OrderData { code: self.id }
     }
-
 }
 
 #[derive(Deserialize, Serialize)]
@@ -149,6 +149,44 @@ impl Into<Balance> for Account {
             balance: self.balance,
             available: self.available,
             hold: self.hold,
+        }
+    }
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct BidAsk {
+    #[serde_as(as="DisplayFromStr")]
+    pub price: f64,
+    #[serde_as(as="DisplayFromStr")]
+    pub size: f64,
+    pub orders_count: u32,
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct OrderBook {
+    pub asks: Vec<BidAsk>,
+    pub bids: Vec<BidAsk>,
+    pub sequence: u64,
+    pub time: String,
+}
+
+impl Into<GlobalBidAsk> for BidAsk {
+    fn into(self) -> GlobalBidAsk {
+        GlobalBidAsk {
+            price: self.price,
+            size: self.size,
+        }
+    }
+}
+
+impl Into<GlobalOrderBook> for OrderBook {
+    fn into(self) -> GlobalOrderBook {
+        GlobalOrderBook {
+            asks: self.asks.into_iter().map(|x| x.into()).collect(),
+            bids: self.bids.into_iter().map(|x| x.into()).collect(),
+            sequence: self.sequence,
         }
     }
 }
