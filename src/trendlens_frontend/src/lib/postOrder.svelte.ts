@@ -49,7 +49,7 @@ export class PostOrderRequest {
   }
 }
 
-const handleOrderSide = (orderSide: OrderSideType): OrderSide => {
+export const handleOrderSide = (orderSide: OrderSideType): OrderSide => {
   switch (orderSide) {
     case OrderSideType.Buy:
       return { Buy: null };
@@ -69,7 +69,7 @@ const handlePositionSide = (
   }
 };
 
-const handleOrderType = (orderType: OrderTypeType): OrderType => {
+export const handleOrderType = (orderType: OrderTypeType): OrderType => {
   switch (orderType) {
     case OrderTypeType.Limit:
       return { Limit: null };
@@ -84,7 +84,7 @@ const handleOrderType = (orderType: OrderTypeType): OrderType => {
   }
 };
 
-const handleTradeMode = (tradeMode: TradeModeType): TradeMode => {
+export const handleTradeMode = (tradeMode: TradeModeType): TradeMode => {
   switch (tradeMode) {
     case TradeModeType.Cash:
       return { Cash: null };

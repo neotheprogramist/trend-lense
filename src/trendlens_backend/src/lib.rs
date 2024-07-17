@@ -130,7 +130,9 @@ fn get_instruments(exchange: Exchange, instrument_type: InstrumentType) -> Vec<P
 async fn get_orderbook(exchange: Exchange, pair: String) -> f64 {
     let exchange_impl = ExchangeImpl::new(exchange);
     let pair = Pair::from_str(&pair).expect("invalid pair");
-    let volume = exchange_impl.get_market_depth(&pair, &OrderSide::Buy, 50).await;
+    let volume = exchange_impl
+        .get_market_depth(&pair, &OrderSide::Buy, 50)
+        .await;
 
     volume
 }
@@ -201,6 +203,8 @@ async fn split_transaction(
     order_side: OrderSide,
     size: f64,
     price_limit: u32,
+    volume_ratios: Vec<f64>,
+    ratios_weights: u32,
 ) -> Result<u32, ExchangeErrors> {
     let identity = ic_cdk::caller();
     let pair = Pair::from_str(&pair).expect("invalid pair");
@@ -221,7 +225,11 @@ async fn split_transaction(
 
     let weights = volumes
         .iter()
-        .map(|v| v / volumes.iter().sum::<f64>())
+        .zip(volume_ratios.iter())
+        .map(|(v, r)| {
+            ((v / volumes.iter().sum::<f64>()) + r * ratios_weights as f64)
+                / (1.0 + ratios_weights as f64)
+        })
         .collect::<Vec<_>>();
 
     let trade_cuts = weights.iter().map(|w| w * size).collect::<Vec<_>>();

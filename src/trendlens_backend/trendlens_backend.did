@@ -101,7 +101,13 @@ service : () -> {
   register_api_key : (ApiData) -> (bool);
   remove_api_key : (text) -> (opt ApiData);
   run_request : (nat32, text, text, nat64) -> (Result_2);
-  split_transaction : (vec ApiData, text, OrderSide, float64, nat32) -> (
-      Result_3,
-    );
+  split_transaction : (
+      vec ApiData,
+      text,
+      OrderSide,
+      float64,
+      nat32,
+      vec float64,
+      nat32,
+    ) -> (Result_3);
 }

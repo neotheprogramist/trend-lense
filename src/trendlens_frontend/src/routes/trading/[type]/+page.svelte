@@ -22,6 +22,7 @@
   import TradeForm from "$components/tradeForm.svelte";
   import { executeRequest, type PostOrderRequest } from "$lib/postOrder.svelte";
   import { getBalance } from "$lib/getBalance";
+  import MultiForm from "$components/multiForm.svelte";
 
   interface IProps {
     data: PageData;
@@ -85,7 +86,7 @@
     stopTimestamp = Date.now();
 
     console.log("Fetching candles from", lastTimestamp, "to", stopTimestamp);
-    console.log(pair)
+    console.log(pair);
     try {
       const newCandles = extractOkValue(
         await anonymousBackend.pull_candles(
@@ -137,8 +138,6 @@
     await executeRequest(selectedExchanges[0], request);
   };
 
-
-
   const handleInstrumentChange = (i: Pair) => {
     selectedInstrument = i;
     // fetchBalances(i);
@@ -151,6 +150,16 @@
 </script>
 
 <div class="mt-2 grid md:grid-cols-2 lg:grid-cols-8">
+  <div class="col-span-8 border-t border-l border-r p-2">
+    <div class="color-primary">
+      <!-- <legend class="-ml-1 px-1 text-sm font-medium"> Settings </legend> -->
+      {#if selectedInstrument}
+        {selectedInstrument.base + "/" + selectedInstrument.quote}
+      {:else}
+        no instrument selected
+      {/if}
+    </div>
+  </div>
   <div class="col-span-2 border p-2">
     <InstrumentsSelect
       instrumentType={data.instrumentType}
@@ -189,7 +198,11 @@
         onPost={handlePost}
       />
     {:else}
-      multiform
+      <MultiForm
+        exchanges={selectedExchanges}
+        instrument={selectedInstrument!}
+        instrumentType={data.instrumentType}
+      />
     {/if}
   </div>
 

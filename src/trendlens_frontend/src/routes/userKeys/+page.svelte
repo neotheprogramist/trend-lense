@@ -7,6 +7,7 @@
   import { keyStore, type ApiWithSecret } from "$lib/keystore.svelte";
   import {
     ApiRegisterStatus,
+    handleApiData,
     type ApiRegisterStatusType,
   } from "$lib/apiAddition";
     import { onMount } from "svelte";
@@ -39,14 +40,7 @@
     if (!wallet.connected || !wallet.actor) {
       return ApiRegisterStatus.NotConnected;
     }
-
-    const apiData: ApiData = {
-      api_key: data.apiKey,
-      passphrase: [data.passphrase],
-      exchange: handleExchange(data.exchange),
-    };
-
-    const done = await wallet.actor.register_api_key(apiData);
+    const done = await wallet.actor.register_api_key(handleApiData(data));
 
     if (done) {
       saveApiData(data);
