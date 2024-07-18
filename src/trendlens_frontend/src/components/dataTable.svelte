@@ -1,15 +1,14 @@
 <script lang="ts">
+  import * as Table from "$components/shad/ui/table/index";
+  import type { ApiData } from "$lib/keystore.svelte";
   import {
+    createRender,
     createTable,
     Render,
     Subscribe,
-    createRender,
   } from "svelte-headless-table";
-  import {  writable, type Writable } from "svelte/store";
-  import * as Table from "$components/shad/ui/table/index";
+  import { writable, type Writable } from "svelte/store";
   import DataTableActions from "./dataTableActions.svelte";
-    import type { ApiData } from "$lib/keystore.svelte";
-
 
   interface IProps {
     children: any;

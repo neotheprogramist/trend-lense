@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Exchanges } from "$lib/exchange";
   import { keyStore } from "$lib/keystore.svelte";
-  import { finishSignature } from "$lib/signature";
   import { wallet } from "$lib/wallet.svelte";
   import type { Instruction } from "../../../declarations/trendlens_backend/trendlens_backend.did";
   import Button from "./shad/ui/button/button.svelte";
@@ -45,7 +44,7 @@
       return;
     }
 
-    const timestamp = Math.round(Date.now() / 1000)
+    const timestamp = Math.round(Date.now() / 1000);
     const timestampUtc = new Date().toISOString();
 
     // const signature = await finishSignature(

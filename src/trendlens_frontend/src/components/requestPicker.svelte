@@ -8,16 +8,17 @@
 
   let { onRequestPick }: IProps = $props();
 
-  const variants = Object.keys(RequestType).map(
-    (k) => k as keyof typeof RequestType,
-  ).filter(e => e !== 'Empty');
-
+  const variants = Object.keys(RequestType)
+    .map((k) => k as keyof typeof RequestType)
+    .filter((e) => e !== "Empty");
 </script>
 
 <ul class="flex flex-col gap-10">
   {#each variants as key}
     <li>
-      <Button onclick={() => onRequestPick(RequestType[key])}>{RequestType[key]}</Button>
+      <Button onclick={() => onRequestPick(RequestType[key])}
+        >{RequestType[key]}</Button
+      >
     </li>
   {/each}
 </ul>

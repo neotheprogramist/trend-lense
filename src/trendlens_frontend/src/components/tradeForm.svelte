@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { Button } from "./shad/ui/button/index";
+  import type { Exchanges } from "$lib/exchange";
+  import { getBalance } from "$lib/getBalance";
+  import { pairToString } from "$lib/pair";
+  import { inferTradeModes, PostOrderRequest } from "$lib/postOrder.svelte";
   import {
     InstrumentType,
     OrderSideType,
     OrderTypeType,
     TradeModeType,
   } from "$lib/request";
+  import { wallet } from "$lib/wallet.svelte";
+  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import Badge from "./shad/ui/badge/badge.svelte";
+  import { Button } from "./shad/ui/button/index";
+  import Input from "./shad/ui/input/input.svelte";
   import * as Tabs from "./shad/ui/tabs/index";
   import Toggle from "./shad/ui/toggle/toggle.svelte";
-  import Badge from "./shad/ui/badge/badge.svelte";
-  import Input from "./shad/ui/input/input.svelte";
-  import { inferTradeModes, PostOrderRequest } from "$lib/postOrder.svelte";
-  import type { Exchanges } from "$lib/exchange";
-  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-  import { pairToString } from "$lib/pair";
-  import { getBalance } from "$lib/getBalance";
-  import { wallet } from "$lib/wallet.svelte";
 
   interface IProps {
     exchange: Exchanges;
@@ -75,7 +75,7 @@
 </script>
 
 <form>
-  <Tabs.Root bind:value={request.orderType} class="p-2 space-y-10">
+  <Tabs.Root bind:value={request.orderType} class="space-y-10 p-2">
     <div class="flex justify-between">
       <Tabs.List>
         {#each orderTypes as orderType}
@@ -108,7 +108,7 @@
       {/if}
     </div>
 
-    <div class="mt-4 w-3/4 mx-auto space-y-5">
+    <div class="mx-auto mt-4 w-3/4 space-y-5">
       <Tabs.Content value={request.orderType} class="space-y-2">
         {#if request.orderPrice.required}
           <Input type="number" placeholder="price" />
@@ -117,7 +117,7 @@
         <Input type="number" placeholder="amount" bind:value={request.size} />
       </Tabs.Content>
     </div>
-    <div class="w-full gap-3 ml-auto inline-flex justify-between">
+    <div class="ml-auto inline-flex w-full justify-between gap-3">
       <div>
         {#if wallet.connected && wallet.actor}
           <Button variant="outline" onclick={() => onPost(request)}>Post</Button
@@ -130,7 +130,7 @@
         {/if}
       </div>
 
-      <div class="flex align-center text-lg">
+      <div class="align-center flex text-lg">
         {#if request.orderSide == OrderSideType.Buy}
           {balances.quote == 0 ? "-" : balances.quote} {instrument.quote}
         {:else}

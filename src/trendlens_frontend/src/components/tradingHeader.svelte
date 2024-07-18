@@ -20,11 +20,9 @@
 </script>
 
 {#if availableExchanges.length == 0}
-  <Badge class="rounded-sm" variant="secondary">
-    no exchanges available
-  </Badge>
+  <Badge class="rounded-sm" variant="secondary">no exchanges available</Badge>
 {:else}
-  <div class="grid grid-cols-8 h-8 gap-2">
+  <div class="grid h-8 grid-cols-8 gap-2">
     {#each availableExchanges as e}
       <Badge
         class="rounded-sm"

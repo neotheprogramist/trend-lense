@@ -1,15 +1,14 @@
 <script lang="ts">
-	import Header from '$components/header.svelte';
-	import '$styles/index.scss';
-	import { ModeWatcher } from 'mode-watcher';
+  import Header from "$components/header.svelte";
+  import "$styles/index.scss";
+  import { ModeWatcher } from "mode-watcher";
 </script>
 
 <ModeWatcher />
 
 <div class="relative flex min-h-screen flex-col bg-background">
-	<Header />
-	<div class="container">
-		<slot />
-	</div>
-
+  <Header />
+  <div class="container">
+    <slot />
+  </div>
 </div>

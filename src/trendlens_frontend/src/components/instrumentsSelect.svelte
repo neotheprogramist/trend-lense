@@ -1,12 +1,9 @@
 <script lang="ts">
-  import type { InstrumentType } from "$lib/request";
-  import { onMount, untrack } from "svelte";
-  import BindableSelect from "./bindableSelect.svelte";
-  import { instrumentsStore } from "$lib/instruments.svelte";
-  import { wallet } from "$lib/wallet.svelte";
-  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-  import * as Command from "$components/shad/ui/command";
   import { Badge } from "$components/shad/ui/badge";
+  import * as Command from "$components/shad/ui/command";
+  import { instrumentsStore } from "$lib/instruments.svelte";
+  import type { InstrumentType } from "$lib/request";
+  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
   interface IProps {
     instrumentType: InstrumentType;

@@ -1,30 +1,30 @@
 <script lang="ts">
+  import { handleApiData } from "$lib/apiAddition";
   import { Exchanges } from "$lib/exchange";
-  import * as Tabs from "./shad/ui/tabs/index";
-  import Toggle from "./shad/ui/toggle/toggle.svelte";
-  import Badge from "./shad/ui/badge/badge.svelte";
-  import Input from "./shad/ui/input/input.svelte";
+  import { getBalance } from "$lib/getBalance";
+  import { keyStore } from "$lib/keystore.svelte";
+  import { pairToString } from "$lib/pair";
+  import {
+    handleOrderSide,
+    inferTradeModes,
+    PostOrderRequest,
+  } from "$lib/postOrder.svelte";
   import {
     InstrumentType,
     OrderSideType,
     OrderTypeType,
     TradeModeType,
   } from "$lib/request";
-  import {
-    handleOrderSide,
-    inferTradeModes,
-    PostOrderRequest,
-  } from "$lib/postOrder.svelte";
-  import { pairToString } from "$lib/pair";
-  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-  import Slider from "./shad/ui/slider/slider.svelte";
-  import { wallet } from "$lib/wallet.svelte";
-  import Button from "./shad/ui/button/button.svelte";
-  import { getBalance } from "$lib/getBalance";
-  import { keyStore } from "$lib/keystore.svelte";
-  import { handleApiData } from "$lib/apiAddition";
   import { extractOkValue } from "$lib/result";
-    import { finishSignature } from "$lib/signature";
+  import { finishSignature } from "$lib/signature";
+  import { wallet } from "$lib/wallet.svelte";
+  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import Badge from "./shad/ui/badge/badge.svelte";
+  import Button from "./shad/ui/button/button.svelte";
+  import Input from "./shad/ui/input/input.svelte";
+  import Slider from "./shad/ui/slider/slider.svelte";
+  import * as Tabs from "./shad/ui/tabs/index";
+  import Toggle from "./shad/ui/toggle/toggle.svelte";
 
   interface IProps {
     instrument: Pair;
@@ -105,10 +105,10 @@
     const timestamp = Math.round(Date.now() / 1000) - 1;
     const isoTimestamp = new Date().toISOString();
 
-    let signatures = []
+    let signatures = [];
 
     for (let i = 0; i < signatureData.length; i++) {
-      const exchange = exchanges[i]
+      const exchange = exchanges[i];
       const key = keyStore.getByExchange(exchange);
 
       if (!key) {
@@ -122,7 +122,7 @@
         exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
       );
 
-      signatures.push(signature)
+      signatures.push(signature);
     }
 
     const result = await wallet.actor.run_transaction(
@@ -132,7 +132,7 @@
       BigInt(timestamp),
     );
 
-    console.log(result)
+    console.log(result);
   };
 
   //@ts-ignore
@@ -164,7 +164,7 @@
   });
 </script>
 
-<Tabs.Root bind:value={request.orderType} class="p-2 pb-10 space-y-10">
+<Tabs.Root bind:value={request.orderType} class="space-y-10 p-2 pb-10">
   <div class="flex justify-between">
     <Tabs.List>
       {#each orderTypes as orderType}
@@ -197,7 +197,7 @@
     {/if}
   </div>
 
-  <div class="mt-4 w-3/4 mx-auto space-y-5">
+  <div class="mx-auto mt-4 w-3/4 space-y-5">
     <Tabs.Content value={request.orderType} class="space-y-5">
       {#if request.orderType == OrderTypeType.Market}
         {#if request.orderPrice.required}
@@ -216,7 +216,7 @@
       {/if}
     </Tabs.Content>
   </div>
-  <div class="w-full gap-3 ml-auto inline-flex justify-evenly items-center">
+  <div class="ml-auto inline-flex w-full items-center justify-evenly gap-3">
     <div class="flex flex-col gap-2">
       {#if wallet.connected && wallet.actor}
         <Button variant="outline" onclick={onPost}>Post</Button>

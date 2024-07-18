@@ -1,5 +1,10 @@
 <script lang="ts">
+  import { pushState } from "$app/navigation";
+  import { page } from "$app/stores";
   import { handleExchange, type Exchanges } from "$lib/exchange";
+  import { handleInstrumentType } from "$lib/instrumentType";
+  import { keyStore } from "$lib/keystore.svelte";
+  import { pairFromString } from "$lib/pair";
   import {
     Instruments,
     InstrumentType,
@@ -19,17 +24,12 @@
     type InstrumentsRequest,
     type PostOrderRequest,
   } from "$lib/request";
-  import RequestPicker from "./requestPicker.svelte";
-  import { page } from "$app/stores";
-  import { pushState } from "$app/navigation";
-  import RequestForm, { type Fields } from "./requestForm.svelte";
-  import { keyStore } from "$lib/keystore.svelte";
-  import { onMount } from "svelte";
   import { wallet } from "$lib/wallet.svelte";
+  import { onMount } from "svelte";
   import type { Request as BackendRequest } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import RequestForm, { type Fields } from "./requestForm.svelte";
+  import RequestPicker from "./requestPicker.svelte";
   import Button from "./shad/ui/button/button.svelte";
-  import { handleInstrumentType } from "$lib/instrumentType";
-    import { pairFromString, pairToString } from "$lib/pair";
 
   // right now i pass exchange as prop, but it could be store or context
 
@@ -75,7 +75,7 @@
   };
 
   const handleRequestPick = (r: RequestType) => {
-    console.log('picked', request);
+    console.log("picked", request);
     request = getDefaultRequestOfType(r);
 
     pushState("", {

@@ -1,4 +1,4 @@
-import { handleExchange, Exchanges } from "./exchange";
+import { Exchanges, handleExchange } from "./exchange";
 import { keyStore } from "./keystore.svelte";
 import { isBalanceResponse } from "./response";
 import { extractOkValue } from "./result";

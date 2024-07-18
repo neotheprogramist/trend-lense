@@ -1,8 +1,8 @@
 import type {
+  Balance,
   Instrument,
   OrderData,
   Response,
-  Balance,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
 export function isInstrumentsResponse(

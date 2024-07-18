@@ -1,10 +1,7 @@
 <svelte:options runes={false} />
 
 <script lang="ts">
-  import {
-    ColorType,
-    type SeriesDataItemTypeMap,
-  } from "lightweight-charts";
+  import { ColorType, type SeriesDataItemTypeMap } from "lightweight-charts";
   import { CandlestickSeries, Chart } from "svelte-lightweight-charts";
 
   export let candlesData: SeriesDataItemTypeMap["Candlestick"][] = [];

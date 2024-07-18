@@ -1,28 +1,22 @@
 <script lang="ts">
+  import InstrumentsSelect from "$components/instrumentsSelect.svelte";
+  import MultiForm from "$components/multiForm.svelte";
+  import Separator from "$components/shad/ui/separator/separator.svelte";
+  import * as Tabs from "$components/shad/ui/tabs";
+  import TradeForm from "$components/tradeForm.svelte";
   import TradingHeader from "$components/tradingHeader.svelte";
   import TradingView from "$components/tradingView.svelte";
   import { anonymousBackend } from "$lib/canisters";
-  import type { UTCTimestamp } from "lightweight-charts";
-  import type {
-    Pair,
-    Candle,
-  } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
-  import type { SeriesDataItemTypeMap } from "lightweight-charts";
-  import * as Card from "$components/shad/ui/card/index";
   import { Exchanges, handleExchange } from "$lib/exchange";
-  import type { PageData } from "./$types";
-  import { onMount } from "svelte";
-  import { wallet } from "$lib/wallet.svelte";
-  import { extractOkValue } from "$lib/result";
-  import InstrumentsSelect from "$components/instrumentsSelect.svelte";
   import { instrumentsStore } from "$lib/instruments.svelte";
-  import * as Tabs from "$components/shad/ui/tabs";
-  import RequestCreator from "$components/requestCreator.svelte";
-  import Separator from "$components/shad/ui/separator/separator.svelte";
-  import TradeForm from "$components/tradeForm.svelte";
   import { executeRequest, type PostOrderRequest } from "$lib/postOrder.svelte";
-  import { getBalance } from "$lib/getBalance";
-  import MultiForm from "$components/multiForm.svelte";
+  import { extractOkValue } from "$lib/result";
+  import type { SeriesDataItemTypeMap, UTCTimestamp } from "lightweight-charts";
+  import type {
+    Candle,
+    Pair,
+  } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type { PageData } from "./$types";
 
   interface IProps {
     data: PageData;
@@ -150,7 +144,7 @@
 </script>
 
 <div class="mt-2 grid md:grid-cols-2 lg:grid-cols-8">
-  <div class="col-span-8 border-t border-l border-r p-2">
+  <div class="col-span-8 border-l border-r border-t p-2">
     <div class="color-primary">
       <!-- <legend class="-ml-1 px-1 text-sm font-medium"> Settings </legend> -->
       {#if selectedInstrument}
@@ -167,7 +161,7 @@
     />
   </div>
 
-  <div class="col-span-4 border-t border-b">
+  <div class="col-span-4 border-b border-t">
     <div class="p-2">
       <TradingHeader bind:selectedExchanges {availableExchanges} />
     </div>

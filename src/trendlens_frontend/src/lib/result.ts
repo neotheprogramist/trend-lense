@@ -18,7 +18,7 @@ export function extractOkValue(
   if ("Ok" in result) {
     return result.Ok;
   } else if ("Err" in result) {
-    console.log(result.Err)
+    console.log(result.Err);
     // throw new Error(`Err: ${JSON.stringify(result.Err)}`);
   }
 

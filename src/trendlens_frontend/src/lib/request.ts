@@ -1,5 +1,3 @@
-import type { ValueOf } from "./apiAddition";
-
 export enum RequestType {
   Empty = "Empty",
   GetInstruments = "Get instruments",

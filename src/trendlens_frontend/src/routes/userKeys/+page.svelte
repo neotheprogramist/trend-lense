@@ -1,15 +1,13 @@
 <script lang="ts">
   import ApiKeyDialog from "$components/apiKeyDialog.svelte";
   import DataTable from "$components/dataTable.svelte";
-  import { wallet } from "$lib/wallet.svelte";
-  import type { ApiData } from "../../../../declarations/trendlens_backend/trendlens_backend.did";
-  import { handleExchange, type Exchanges } from "$lib/exchange";
-  import { keyStore, type ApiWithSecret } from "$lib/keystore.svelte";
   import {
     ApiRegisterStatus,
     handleApiData,
     type ApiRegisterStatusType,
   } from "$lib/apiAddition";
+  import { keyStore, type ApiWithSecret } from "$lib/keystore.svelte";
+  import { wallet } from "$lib/wallet.svelte";
   import { onMount } from "svelte";
 
   const saveApiData = async (data: ApiWithSecret) => {

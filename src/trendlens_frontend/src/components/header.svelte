@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Navbar from "./navbar.svelte";
-  import ThemeSwitch from "./themeSwitch.svelte";
   import { Button } from "$components/shad/ui/button/index";
   import { wallet } from "$lib/wallet.svelte";
+  import Navbar from "./navbar.svelte";
+  import ThemeSwitch from "./themeSwitch.svelte";
 </script>
 
 <header

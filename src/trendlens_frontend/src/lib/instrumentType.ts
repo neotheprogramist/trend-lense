@@ -1,5 +1,5 @@
-import { InstrumentType } from "./request";
 import type { InstrumentType as BackendInstrumentType } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+import { InstrumentType } from "./request";
 
 export const handleInstrumentType = (
   instrument: InstrumentType,

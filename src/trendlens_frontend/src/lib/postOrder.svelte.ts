@@ -1,17 +1,17 @@
 import type {
+  PositionSide as BackendPositionSide,
   OrderSide,
   OrderType,
   TradeMode,
-  PositionSide as BackendPositionSide,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-import { handleExchange, Exchanges } from "./exchange";
+import { Exchanges, handleExchange } from "./exchange";
 import { keyStore } from "./keystore.svelte";
 import {
-  OrderSideType,
   InstrumentType,
+  OrderSideType,
   OrderTypeType,
-  TradeModeType,
   PositionSideType,
+  TradeModeType,
 } from "./request";
 import { isPostOrderResponse } from "./response";
 import { extractOkValue } from "./result";
