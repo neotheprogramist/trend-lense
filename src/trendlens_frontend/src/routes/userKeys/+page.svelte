@@ -27,6 +27,7 @@
     }
 
     try {
+      keyStore.keys = keyStore.keys.filter(e => e.apiKey !== apiKey);
       await wallet.actor.remove_api_key(apiKey);
       keyStore.remove(apiKey);
     } catch (err) {

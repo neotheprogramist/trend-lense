@@ -6,6 +6,7 @@
   import type {
     Pair,
     Candle,
+    SignableInstruction,
   } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
   import type { SeriesDataItemTypeMap } from "lightweight-charts";
   import * as Card from "$components/shad/ui/card/index";
@@ -23,6 +24,9 @@
   import { executeRequest, type PostOrderRequest } from "$lib/postOrder.svelte";
   import { getBalance } from "$lib/getBalance";
   import MultiForm from "$components/multiForm.svelte";
+  import RequestList from "$components/requestList.svelte";
+  import Button from "$components/shad/ui/button/button.svelte";
+  import TransactionPreview from "$components/transactionPreview.svelte";
 
   interface IProps {
     data: PageData;
@@ -144,9 +148,22 @@
     fetchCandles();
   };
 
-  // onMount(async () => {
-  //   await instrumentsStore.filterByType(data.instrumentType, false);
-  // });
+
+  let requests = $state<SignableInstruction[][]>([]);
+  let selectedRequest = $state<SignableInstruction[] | null>(null);
+  let selectedRequestIndex = $state<number | null>(null);
+
+  const fetchRequests = async () => {
+    if (!wallet.actor) {
+      throw new Error("No actor found");
+    }
+
+    const response = await wallet.actor.get_transactions();
+
+    if (response.length > 0 && response[0]) {
+      requests = response[0];
+    }
+  };
 </script>
 
 <div class="mt-2 grid md:grid-cols-2 lg:grid-cols-8">
@@ -206,5 +223,41 @@
     {/if}
   </div>
 
-  <div class="col-span-2 border"></div>
+  <div class="col-span-2 border">
+    <TransactionPreview
+      transaction={selectedRequest}
+      transactionId={selectedRequestIndex}
+      onTransactionDelete={(id) => {
+        selectedRequest = null;
+        selectedRequestIndex = null;
+        requests.splice(id, 1)
+      }}
+    />
+  </div>
+
+  <div class="col-span-8 border-b border-l border-r p-2">
+    <Tabs.Root value="requests" class="p-2">
+      <div class="flex justify-between">
+        <Tabs.List>
+          <Tabs.Trigger value="requests">Requests</Tabs.Trigger>
+          <Tabs.Trigger value="open_orders">Open orders</Tabs.Trigger>
+          <Tabs.Trigger value="orders_history">Orders History</Tabs.Trigger>
+        </Tabs.List>
+        <Button onclick={fetchRequests}>Refresh</Button>
+      </div>
+
+      <Tabs.Content value="requests">
+        <RequestList
+          {requests}
+          onRequestSelect={(id) => {
+            selectedRequestIndex = id;
+            selectedRequest = requests[id]
+            console.log(selectedRequest)
+          }}
+        />
+      </Tabs.Content>
+      <Tabs.Content value="open_orders">Open orders</Tabs.Content>
+      <Tabs.Content value="orders_history">History</Tabs.Content>
+    </Tabs.Root>
+  </div>
 </div>

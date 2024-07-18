@@ -1,75 +1,90 @@
 <script lang="ts">
   import { Exchanges } from "$lib/exchange";
   import { keyStore } from "$lib/keystore.svelte";
-  import { finishSignature } from "$lib/signature";
   import { wallet } from "$lib/wallet.svelte";
-  import type { Instruction } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type { SignableInstruction } from "../../../declarations/trendlens_backend/trendlens_backend.did";
   import Button from "./shad/ui/button/button.svelte";
+  import {
+    isBalancesRequest,
+    isInstrumentsRequest,
+    isPostOrderRequest,
+  } from "$lib/request";
 
-  // TODO: replace it with some real structure
-  let requests = $state<(Instruction[][] | [])[]>([]);
+  import * as Card from "$components/shad/ui/card/index";
 
-  const fetchRequests = async () => {
-    const fetchedRequests = await wallet.actor?.get_requests();
+  interface IProps {
+    requests: SignableInstruction[][];
+    onRequestSelect: (id: number) => void;
+  }
 
-    console.log(fetchedRequests);
-    if (fetchedRequests) {
-      requests = fetchedRequests;
-    }
-  };
+  let { requests, onRequestSelect }: IProps = $props();
 
-  // TODO: replace those numbers with something more meaningful
-  const deleteRequest = async (id: number) => {
-    await wallet.actor?.delete_transaction(id);
-    requests = requests.filter((_, r_id) => r_id !== id);
-  };
-
-  const runRequest = async (id: number) => {
-    if (!wallet.actor) {
-      throw new Error("No actor found");
-      return;
-    }
-
-    const signatureData = await wallet.actor.get_signatures_metadata(id);
-
-    // get this exchange
-    const key = keyStore.getByExchange(Exchanges.Okx);
-
-    if (!key) {
-      throw new Error("No key found");
-      return;
-    }
-
-    if (!signatureData) {
-      throw new Error("No signature found");
-      return;
-    }
-
-    const timestamp = Math.round(Date.now() / 1000)
-    const timestampUtc = new Date().toISOString();
-
-    // const signature = await finishSignature(
-    //   exc
-    //   signatureData[0],
-    //   key.secretKey,
-    //   timestampUtc,
-    // );
-
-    // const res = await wallet.actor?.run_request(id, signature, timestamp);
-    // console.log(res);
-  };
-
-  $inspect({ requests });
 </script>
 
-<Button onclick={fetchRequests}>Refresh</Button>
+<div class="grid grid-cols-1 lg:grid-cols-2">
+  {#each requests as transaction, id}
+    <Card.Root class="m-5">
+      <Card.Header>
+        <Card.Title>Transaction name</Card.Title>
+        <Card.Description>transaction id: {id}</Card.Description>
+      </Card.Header>
+      <Card.Content class="space-y-6">
+        <h2 class="text-lg">Instructions</h2>
+        <div>
+          {#each transaction as ix}
+            {@const exchange = Object.keys(ix.instruction.exchange)[0]}
+            {@const requestType = Object.keys(ix.instruction.request)[0]}
+            {@const request = ix.instruction.request}
 
-<ul>
-  {#each requests as request, id}
-    <li>
-      <span class="p-2"> {JSON.stringify(request)}</span>
-      <Button on:click={() => runRequest(id)}>Run</Button>
-      <Button on:click={() => deleteRequest(id)}>Delete</Button>
-    </li>
+            <fieldset class="space-y-3 rounded-lg border p-5">
+              <legend class="-ml-1 px-1 text-sm font-medium"
+                >{requestType}</legend
+              >
+              <span class="flex justify-between"
+                >exchange: <span>{exchange}</span></span
+              >
+              <span class="flex justify-between flex-wrap"
+                >api key: <span
+                  >{ix.instruction.api_key.substring(0, 12)}...</span
+                ></span
+              >
+
+              {#if isBalancesRequest(request)}
+                <span class="flex justify-between"
+                  >currency : <span>{request.Balances.currency}</span></span
+                >
+              {:else if isInstrumentsRequest(request)}
+                <span class="flex justify-between"
+                  >instrument: <span>{request.Instruments.instrument_id}</span
+                  ></span
+                >
+                <span class="flex justify-between"
+                  >instrument type: <span
+                    >{request.Instruments.instrument_type}</span
+                  ></span
+                >
+              {:else if isPostOrderRequest(request)}
+                <span class="flex justify-between"
+                  >price: <span>{request.PostOrder.order_price}</span></span
+                >
+                <span class="flex justify-between"
+                  >size: <span>{request.PostOrder.size}</span></span
+                >
+              {/if}
+
+              <span class="flex justify-between"
+                >executed: <span>{ix.executed}</span></span
+              >
+            </fieldset>
+          {/each}
+        </div>
+        <Button
+          variant="outline"
+          class="ml-auto"
+          onclick={() => onRequestSelect(id)}>View</Button
+        >
+      </Card.Content>
+      <Card.Footer></Card.Footer>
+    </Card.Root>
   {/each}
-</ul>
+</div>

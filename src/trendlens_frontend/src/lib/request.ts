@@ -1,3 +1,9 @@
+import type {
+  GeneralBalanceRequest,
+  GeneralInstrumentsRequest,
+  GeneralPostOrderRequest,
+  Request,
+} from "../../../declarations/trendlens_backend/trendlens_backend.did";
 import type { ValueOf } from "./apiAddition";
 
 export enum RequestType {
@@ -236,3 +242,29 @@ export type ExchangeRequest =
   | InstrumentsRequest
   | BalanceRequests
   | PostOrderRequest;
+
+
+export function isInstrumentsRequest(
+  request: Request,
+): request is { Instruments: GeneralInstrumentsRequest } {
+  return (
+    (request as { Instruments: GeneralInstrumentsRequest }).Instruments !==
+    undefined
+  );
+}
+
+export function isPostOrderRequest(
+  request: Request,
+): request is { PostOrder: GeneralPostOrderRequest } {
+  return (
+    (request as { PostOrder: GeneralPostOrderRequest }).PostOrder !== undefined
+  );
+}
+
+export function isBalancesRequest(
+  request: Request,
+): request is { Balances: GeneralBalanceRequest } {
+  return (
+    (request as { Balances: GeneralBalanceRequest }).Balances !== undefined
+  );
+}

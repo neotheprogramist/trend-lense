@@ -125,27 +125,29 @@ export const postRequest = async (
     throw new Error("api key not exist in local storage");
   }
 
-  return await wallet.actor.add_instruction({
-    api_key: key.apiKey,
-    exchange: handleExchange(exchange),
-    request: {
-      PostOrder: {
-        instrument_id: request.instrumentId,
-        trade_mode: handleTradeMode(request.tradeMode!),
-        margin_currency: [],
-        order_price:
-          request.orderPrice.value != undefined
-            ? [request.orderPrice.value]
+  return await wallet.actor.add_transaction([
+    {
+      api_key: key.apiKey,
+      exchange: handleExchange(exchange),
+      request: {
+        PostOrder: {
+          instrument_id: request.instrumentId,
+          trade_mode: handleTradeMode(request.tradeMode!),
+          margin_currency: [],
+          order_price:
+            request.orderPrice.value != undefined
+              ? [request.orderPrice.value]
+              : [],
+          order_type: handleOrderType(request.orderType),
+          side: handleOrderSide(request.orderSide),
+          size: request.size ?? 0,
+          position_side: request.positionSide
+            ? [handlePositionSide(request.positionSide)]
             : [],
-        order_type: handleOrderType(request.orderType),
-        side: handleOrderSide(request.orderSide),
-        size: request.size ?? 0,
-        position_side: request.positionSide
-          ? [handlePositionSide(request.positionSide)]
-          : [],
+        },
       },
     },
-  });
+  ]);
 };
 
 export const executeRequest = async (
@@ -162,19 +164,14 @@ export const executeRequest = async (
     throw new Error("api key not exist in local storage");
   }
 
-  const requestNumber = await postRequest(exchange, request);
-
-  const requestSignatureData =
-    await wallet.actor.get_signatures_metadata(requestNumber);
-
-  console.log(requestSignatureData);
+  const [requestNumber, instructions] = await postRequest(exchange, request);
 
   const timestamp = Math.round(Date.now() / 1000) - 1;
   const isoTimestamp = new Date().toISOString();
 
   const signature = await finishSignature(
     exchange,
-    requestSignatureData[0],
+    instructions[0].signature,
     key.secretKey,
     exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
   );

@@ -24,7 +24,7 @@
   import { keyStore } from "$lib/keystore.svelte";
   import { handleApiData } from "$lib/apiAddition";
   import { extractOkValue } from "$lib/result";
-    import { finishSignature } from "$lib/signature";
+  import { finishSignature } from "$lib/signature";
 
   interface IProps {
     instrument: Pair;
@@ -41,9 +41,7 @@
   let volumeRatio = $state([50]);
 
   let allVolumeRatios = $derived.by(() => {
-    const full = 100;
-
-    return [full - volumeRatio[0], volumeRatio[0]];
+    return [volumeRatio[0] / 100, (100 - volumeRatio[0]) / 100];
   });
 
   let exchangeBalances = $state<ExchangesBalances>({});
@@ -99,16 +97,14 @@
       throw new Error("Wallet not connected");
     }
 
-    const requestNumber = await onPost();
-    const signatureData =
-      await wallet.actor.get_signatures_metadata(requestNumber);
+    const [requestNumber, instructions] = await onPost();
     const timestamp = Math.round(Date.now() / 1000) - 1;
     const isoTimestamp = new Date().toISOString();
 
-    let signatures = []
+    let signatures = [];
 
-    for (let i = 0; i < signatureData.length; i++) {
-      const exchange = exchanges[i]
+    for (let i = 0; i < instructions.length; i++) {
+      const exchange = exchanges[i];
       const key = keyStore.getByExchange(exchange);
 
       if (!key) {
@@ -117,12 +113,12 @@
 
       const signature = await finishSignature(
         exchanges[i],
-        signatureData[i],
+        instructions[i].signature,
         key.secretKey,
         exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
       );
 
-      signatures.push(signature)
+      signatures.push(signature);
     }
 
     const result = await wallet.actor.run_transaction(
@@ -132,7 +128,7 @@
       BigInt(timestamp),
     );
 
-    console.log(result)
+    console.log(result);
   };
 
   //@ts-ignore
@@ -162,6 +158,8 @@
 
     request.changeInstrumentId(pairToString(instrument));
   });
+
+  $inspect(allVolumeRatios)
 </script>
 
 <Tabs.Root bind:value={request.orderType} class="p-2 pb-10 space-y-10">
