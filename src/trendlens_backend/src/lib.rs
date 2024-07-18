@@ -70,14 +70,17 @@ fn remove_api_key(api_key: String) -> Option<ApiData> {
 }
 
 #[ic_cdk::query]
-fn get_signature_string(index: u32) -> String {
+fn get_signatures_metadata(index: u32) -> Vec<String> {
     let identity = ic_cdk::caller();
 
     let tx = TransactionStore::get_transaction(&identity, index).expect("missing tx");
-    let ix = tx.get_instruction(0).expect("missing instruction");
 
-    let exchange_impl = ExchangeImpl::new(ix.exchange);
-    exchange_impl.get_signature_string(ix.request)
+    tx.iter()
+        .map(|i| {
+            let exchange_impl = ExchangeImpl::new(i.exchange);
+            exchange_impl.get_signature_string(&i.request)
+        })
+        .collect()
 }
 
 #[ic_cdk::update]
@@ -130,51 +133,58 @@ fn get_instruments(exchange: Exchange, instrument_type: InstrumentType) -> Vec<P
 async fn get_orderbook(exchange: Exchange, pair: String) -> f64 {
     let exchange_impl = ExchangeImpl::new(exchange);
     let pair = Pair::from_str(&pair).expect("invalid pair");
-    let volume = exchange_impl.get_market_depth(&pair, &OrderSide::Buy, 50).await;
+    let volume = exchange_impl
+        .get_market_depth(&pair, &OrderSide::Buy, 50)
+        .await;
 
     volume
 }
 
 #[ic_cdk::update]
-async fn run_request(
+async fn run_transaction(
     index: u32,
-    signature: String,
+    signature: Vec<String>,
     timestamp_utc: String,
     timestamp: u64,
-) -> Result<Response, ExchangeErrors> {
+) -> Result<Vec<Response>, ExchangeErrors> {
     let identity = ic_cdk::caller();
     let tx = TransactionStore::get_transaction(&identity, index).expect("missing transaction");
-    let ix = tx.get_instruction(0).expect("missing instruction");
-
+   
     ic_cdk::println!("{:?}", tx);
 
-    let api_info = ApiStore::get_by_api(&identity, &ix.api_key).expect("api info not found");
+    let mut responses = vec![];
 
-    let exchange: Box<dyn UserData> = match ix.exchange {
-        Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
-            api_key: ix.api_key,
-            passphrase: api_info.passphrase.unwrap(),
-            timestamp: timestamp_utc,
-            signature,
-        })),
-        Exchange::Coinbase => Box::new(Coinbase::with_auth(CoinbaseAuth {
-            api_key: ix.api_key,
-            passphrase: api_info.passphrase.unwrap(),
-            signature,
-            timestamp,
-        })),
-    };
+    for (i, signature) in tx.iter().zip(signature.iter()) {
+        let api_info = ApiStore::get_by_api(&identity, &i.api_key).expect("api info not found");
 
-    let response = match ix.request {
-        Request::Empty => {
-            panic!()
-        }
-        Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
-        Request::Balances(balance) => exchange.get_balance(balance).await?,
-        Request::PostOrder(order) => exchange.post_order(order).await?,
-    };
+        let exchange: Box<dyn UserData> = match i.exchange {
+            Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
+                api_key: i.api_key.clone(),
+                passphrase: api_info.passphrase.unwrap(),
+                timestamp: timestamp_utc.clone(),
+                signature: signature.clone(),
+            })),
+            Exchange::Coinbase => Box::new(Coinbase::with_auth(CoinbaseAuth {
+                api_key: i.api_key.clone(),
+                passphrase: api_info.passphrase.unwrap(),
+                signature: signature.clone(),
+                timestamp,
+            })),
+        };
 
-    Ok(response)
+        let response = match i.request.clone() {
+            Request::Empty => {
+                panic!("Empty request")
+            }
+            Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
+            Request::Balances(balance) => exchange.get_balance(balance).await?,
+            Request::PostOrder(order) => exchange.post_order(order).await?,
+        };
+
+        responses.push(response);
+    }
+
+    Ok(responses)
 }
 
 #[ic_cdk::init]
@@ -201,6 +211,8 @@ async fn split_transaction(
     order_side: OrderSide,
     size: f64,
     price_limit: u32,
+    volume_ratios: Vec<f64>,
+    ratios_weights: u32,
 ) -> Result<u32, ExchangeErrors> {
     let identity = ic_cdk::caller();
     let pair = Pair::from_str(&pair).expect("invalid pair");
@@ -221,7 +233,11 @@ async fn split_transaction(
 
     let weights = volumes
         .iter()
-        .map(|v| v / volumes.iter().sum::<f64>())
+        .zip(volume_ratios.iter())
+        .map(|(v, r)| {
+            ((v / volumes.iter().sum::<f64>()) + r * ratios_weights as f64)
+                / (1.0 + ratios_weights as f64)
+        })
         .collect::<Vec<_>>();
 
     let trade_cuts = weights.iter().map(|w| w * size).collect::<Vec<_>>();

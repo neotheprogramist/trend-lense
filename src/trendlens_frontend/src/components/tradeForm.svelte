@@ -130,12 +130,13 @@
         {/if}
       </div>
 
-      <div class="flex align-center text-lg"></div>
-      {#if request.orderSide == OrderSideType.Buy}
-        {balances.quote == 0 ? "-" : balances.quote} {instrument.quote}
-      {:else}
-        {balances.base == 0 ? "-" : balances.base} {instrument.base}
-      {/if}
+      <div class="flex align-center text-lg">
+        {#if request.orderSide == OrderSideType.Buy}
+          {balances.quote == 0 ? "-" : balances.quote} {instrument.quote}
+        {:else}
+          {balances.base == 0 ? "-" : balances.base} {instrument.base}
+        {/if}
+      </div>
     </div>
   </Tabs.Root>
 </form>

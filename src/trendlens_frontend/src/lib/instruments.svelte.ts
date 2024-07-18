@@ -11,12 +11,19 @@ import { wallet } from "./wallet.svelte";
 
 export type ExchangeWithInstrumentType = string;
 
+export interface PairWithCount {
+  pair: Pair;
+  count: number;
+}
+
 class InstrumentsStore {
   public globalInstruments = $state<Map<ExchangeWithInstrumentType, Pair[]>>(
     new Map(),
   );
   public loaded = $state<Map<ExchangeWithInstrumentType, boolean>>(new Map());
-  public uniqueInstruments = $state<Map<InstrumentType, Pair[]>>(new Map());
+  public uniqueInstruments = $state<Map<InstrumentType, PairWithCount[]>>(
+    new Map(),
+  );
 
   // public userInstruments = $state<Map<[Exchanges, InstrumentType], Pair[]>>(
   //   new Map(),
@@ -112,19 +119,19 @@ class InstrumentsStore {
   //   }
   // }
 
-  private extractUniqueInstruments(type: InstrumentType): Pair[] {
-    const flatUnique = new Set<Pair>();
+  private extractUniqueInstruments(type: InstrumentType): PairWithCount[] {
+    const flatPairs: Pair[] = [];
 
     Object.keys(Exchanges).forEach((e) => {
       const exchange = e as Exchanges;
       const instruments = this.globalInstruments.get([exchange, type].join());
 
       if (instruments) {
-        instruments.forEach((i) => flatUnique.add(i));
+        instruments.forEach((i) => flatPairs.push(i));
       }
     });
 
-    return Array.from(flatUnique);
+    return this.countExchanges(flatPairs).sort((a, b) => a.count < b.count ? 1: 0);
   }
 
   // public async filterByUser(type: InstrumentType, loaded?: boolean) {
@@ -149,7 +156,27 @@ class InstrumentsStore {
   //   return this.flatInstruments(this.userInstruments, type);
   // }
 
-  public async getUniqueInstruments(type: InstrumentType): Promise<Pair[]> {
+  private countExchanges(pairs: Pair[]): PairWithCount[] {
+    const exchangeCount: Map<string, number> = new Map();
+
+    pairs.forEach((pair) => {
+      const pairString = pair.base + "-" + pair.quote;
+      exchangeCount.set(pairString, (exchangeCount.get(pairString) || 0) + 1);
+    });
+
+    const exchangeCounts: PairWithCount[] = [];
+
+    exchangeCount.forEach((count, key) => {
+      const [base, quote] = key.split("-");
+      exchangeCounts.push({ pair: { quote, base }, count });
+    });
+
+    return exchangeCounts;
+  }
+
+  public async getUniqueInstruments(
+    type: InstrumentType,
+  ): Promise<PairWithCount[]> {
     // if (!this.loaded.values.((v) => v)) {
     await this.loadAllInstruments(type);
     // }

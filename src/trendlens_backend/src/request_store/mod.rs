@@ -21,18 +21,26 @@ pub struct Instruction {
 #[derive(Debug, Deserialize, Serialize, Clone, CandidType)]
 pub struct Transaction(pub Vec<Instruction>);
 
+pub struct TransactionIterator<'a> {
+    instructions: &'a Vec<Instruction>,
+    index: usize,
+}
+
+impl<'a> Iterator for TransactionIterator<'a> {
+    type Item = &'a Instruction;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let instruction = self.instructions.get(self.index);
+        self.index += 1;
+        instruction
+    }
+}
+
 impl Deref for Transaction {
     type Target = Vec<Instruction>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-// clone right now 
-impl Transaction {
-    pub fn get_instruction(&self, index: usize) -> Option<Instruction> {
-        self.get(index).cloned()
     }
 }
 
