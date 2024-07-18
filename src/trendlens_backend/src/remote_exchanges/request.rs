@@ -7,7 +7,7 @@ use crate::pair::Pair;
 
 use super::okx::api::InstrumentType;
 
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, Copy)]
 pub enum OrderSide {
     Buy,
     Sell,
@@ -33,7 +33,7 @@ impl FromStr for OrderSide {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, Copy)]
 pub enum PositionSide {
     Short,
     Long,
@@ -41,7 +41,7 @@ pub enum PositionSide {
 
 // no conditional bounding here, but with
 // adding another exchange this should be hierarchical
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, Copy)]
 pub enum TradeMode {
     // Margin trading
     Cross,
@@ -52,7 +52,7 @@ pub enum TradeMode {
     SpotIsolated,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType, Copy)]
 pub enum OrderType {
     Market,
     Limit,

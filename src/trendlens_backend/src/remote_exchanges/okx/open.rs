@@ -1,8 +1,9 @@
+use super::api::GetOrderBookRequest;
 use super::auth::OkxAuth;
-use super::response::{ApiResponse, CandleStick, ConcreteInstrument};
+use super::response::{ApiResponse, CandleStick, ConcreteInstrument, OrderBook};
 use super::{api::IndexCandleStickRequest, Okx};
 use crate::remote_exchanges::request::GeneralInstrumentsRequest;
-use crate::remote_exchanges::response::Instrument;
+use crate::remote_exchanges::response::{Instrument, OrderBook as GlobalOrderBook};
 use crate::{
     exchange::Candle,
     pair::Pair,
@@ -13,12 +14,13 @@ use crate::{
 impl OpenData for Okx {
     async fn fetch_candles(
         &self,
-        pair: Pair,
+        pair: &Pair,
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors> {
         let index_name = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
 
+        ic_cdk::println!("index_name: {:?}", index_name);
         let candle_request = IndexCandleStickRequest {
             after_timestamp: None,
             before_timestamp: Some(range.start * 1000),
@@ -46,7 +48,7 @@ impl OpenData for Okx {
         request: GeneralInstrumentsRequest,
     ) -> Result<Vec<Instrument>, ExchangeErrors> {
         let okx_request = GetInstrumentsRequestPublic {
-            instrument_id: request.instrument_id.and_then(|p| Okx::instrument_id(p)),
+            instrument_id: request.instrument_id.and_then(|p| Okx::instrument_id(&p)),
             instrument_type: request.instrument_type,
         };
 
@@ -62,5 +64,28 @@ impl OpenData for Okx {
             .into_iter()
             .map(|concrete_instrument| concrete_instrument.into())
             .collect())
+    }
+
+    async fn get_orderbook(&self, pair: &Pair, size: u32) -> Result<GlobalOrderBook, ExchangeErrors> {
+        let instrument_id = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
+
+        let orderbook_request = GetOrderBookRequest {
+            instrument_id,
+            depth: Some(size),
+        };
+
+        let response = self
+            .api_client
+            .call::<ApiResponse<Vec<OrderBook>>, GetOrderBookRequest, OkxAuth>(
+                orderbook_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(response
+            .into_iter()
+            .next()
+            .ok_or(ExchangeErrors::MissingPair)?
+            .into())
     }
 }

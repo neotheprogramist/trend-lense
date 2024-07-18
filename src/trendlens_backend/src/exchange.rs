@@ -13,7 +13,7 @@ use crate::{
             api::{GetBalanceRequest, GetInstrumentsRequest, InstrumentType, PlaceOrderBody},
             Okx,
         },
-        request::{GeneralInstrumentsRequest, OrderType},
+        request::{GeneralInstrumentsRequest, OrderSide},
         response::Instrument,
         ExchangeErrors, OpenData,
     },
@@ -107,9 +107,69 @@ impl ExchangeImpl {
         }
     }
 
+    pub async fn get_market_depth(
+        &self,
+        pair: &Pair,
+        order_side: &OrderSide,
+        price_limit: u32,
+    ) -> f64 {
+        match self {
+            ExchangeImpl::Coinbase(c) => {
+                let orderbook = c
+                    .get_orderbook(pair, 50)
+                    .await
+                    .expect("failed to get orderbook data");
+
+                let orders = match order_side {
+                    OrderSide::Buy => &orderbook.asks,
+                    OrderSide::Sell => &orderbook.bids,
+                };
+
+                let start_price = orders.first().expect("no orders").price;
+                let stop_price = start_price * (1.0 + price_limit as f64 / 100.0);
+
+                orders
+                    .iter()
+                    .filter_map(|order| {
+                        if order.price <= stop_price {
+                            Some(order.size)
+                        } else {
+                            None
+                        }
+                    })
+                    .fold(0.0, |acc, x| acc + x)
+            }
+            ExchangeImpl::Okx(o) => {
+                let orderbook = o
+                    .get_orderbook(pair, 50)
+                    .await
+                    .expect("failed to get orderbook data");
+
+                let orders = match order_side {
+                    OrderSide::Buy => &orderbook.asks,
+                    OrderSide::Sell => &orderbook.bids,
+                };
+
+                let start_price = orders.first().expect("no orders").price;
+                let stop_price = start_price * (1.0 + price_limit as f64 / 100.0);
+
+                orders
+                    .iter()
+                    .filter_map(|order| {
+                        if order.price <= stop_price {
+                            Some(order.size)
+                        } else {
+                            None
+                        }
+                    })
+                    .fold(0.0, |acc, x| acc + x)
+            }
+        }
+    }
+
     // right now for testing purposes used single request, but it should be
     // preconstructed for further use or migrate signature generation to client
-    pub fn get_signature_string(&self, request: Request) -> String {
+    pub fn get_signature_string(&self, request: &Request) -> String {
         match self {
             ExchangeImpl::Coinbase(c) => match request {
                 Request::Balances(_) => {
@@ -119,7 +179,7 @@ impl ExchangeImpl {
                 }
                 Request::PostOrder(request) => {
                     let exchange_request = PostOrderBody {
-                        product_id: request.instrument_id,
+                        product_id: request.instrument_id.clone(),
                         price: request.order_price,
                         side: request.side.into(),
                         funds: None,
@@ -134,14 +194,14 @@ impl ExchangeImpl {
             ExchangeImpl::Okx(o) => match request {
                 Request::Instruments(i) => {
                     let request = GetInstrumentsRequest {
-                        instrument_id: i.instrument_id.and_then(|p| Okx::instrument_id(p)),
+                        instrument_id: i.instrument_id.as_ref().and_then(|p| Okx::instrument_id(&p)),
                         instrument_type: i.instrument_type,
                     };
                     o.get_signature_data(request)
                 }
                 Request::Balances(b) => {
                     let request = GetBalanceRequest {
-                        currencies: b.currency.and_then(|c| Some(c.join(","))),
+                        currencies: b.currency.as_ref().and_then(|c| Some(c.join(","))),
                     };
 
                     o.get_signature_data(request)
@@ -149,7 +209,7 @@ impl ExchangeImpl {
                 Request::PostOrder(request) => {
                     let exchange_request = PlaceOrderBody {
                         side: Okx::side_string(request.side),
-                        instrument_id: request.instrument_id,
+                        instrument_id: request.instrument_id.clone(),
                         order_type: Okx::order_type_string(request.order_type),
                         size: request.size.to_string(),
                         trade_mode: Okx::trade_mode_string(request.trade_mode),
@@ -194,7 +254,7 @@ impl ExchangeImpl {
 
     pub async fn fetch_candles(
         &self,
-        pair: Pair,
+        pair: &Pair,
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, super::ExchangeErrors> {

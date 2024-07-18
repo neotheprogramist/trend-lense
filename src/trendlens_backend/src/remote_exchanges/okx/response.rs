@@ -5,7 +5,7 @@ use crate::{
     exchange::Candle,
     pair::Pair,
     remote_exchanges::{
-        response::{ApiResponseWrapper, Balance, Instrument},
+        response::{ApiResponseWrapper, Balance, Instrument, BidAsk as GlobalBidAsk, OrderBook as GlobalOrderBook},
         ExchangeErrors,
     },
 };
@@ -35,6 +35,49 @@ impl<R: DeserializeOwned> ApiResponseWrapper<R> for ApiResponse<R> {
         Ok(self.data)
     }
 }
+
+#[serde_as]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct BidAsk {
+    #[serde_as(as="DisplayFromStr")]
+    pub price: f64,
+    #[serde_as(as="DisplayFromStr")]
+    pub size: f64,
+    #[serde_as(as="DisplayFromStr")]
+    pub deprecated: u32,
+    #[serde_as(as="DisplayFromStr")]
+    pub orders_count: u32,
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct OrderBook {
+    pub asks: Vec<BidAsk>,
+    pub bids: Vec<BidAsk>,
+    #[serde(rename = "ts")]
+    #[serde_as(as="DisplayFromStr")]
+    pub timestamp: u64,
+}
+
+impl Into<GlobalBidAsk> for BidAsk {
+    fn into(self) -> GlobalBidAsk {
+        GlobalBidAsk {
+            price: self.price,
+            size: self.size,
+        }
+    }
+}
+
+impl Into<GlobalOrderBook> for OrderBook {
+    fn into(self) -> GlobalOrderBook {
+        GlobalOrderBook {
+            asks: self.asks.into_iter().map(|x| x.into()).collect(),
+            bids: self.bids.into_iter().map(|x| x.into()).collect(),
+            sequence: self.timestamp,
+        }
+    }
+}
+
 
 #[serde_as]
 #[derive(Debug, Clone, Deserialize, PartialEq)]

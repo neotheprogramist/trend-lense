@@ -11,6 +11,12 @@ pub struct Pair {
     pub quote: String,
 }
 
+impl ToString for Pair {
+    fn to_string(&self) -> String {
+        format!("{}-{}", self.base, self.quote)
+}
+}
+
 impl Pair {
     fn decode_string(encoded: &[u16]) -> String {
         let decoded: Vec<u16> = encoded.iter().copied().take_while(|&ch| ch != 0).collect();

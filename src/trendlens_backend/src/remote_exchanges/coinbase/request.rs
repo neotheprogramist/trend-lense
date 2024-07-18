@@ -3,7 +3,7 @@ use std::{fmt::Display, str::FromStr};
 use super::response;
 use crate::remote_exchanges::{request::OrderSide, ApiRequest};
 use ic_cdk::api::management_canister::http_request::HttpMethod;
-use serde::{Deserialize, Serialize};
+use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use serde_with::{serde_as, skip_serializing_none, DisplayFromStr};
 
 #[derive(Deserialize, Serialize)]
@@ -54,7 +54,6 @@ pub enum OrderType {
     Stop,
 }
 
-
 impl Display for OrderType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -100,4 +99,43 @@ impl ApiRequest for PostOrderBody {
     const PUBLIC: bool = false;
 
     type Response = response::OrderResponse;
+}
+
+#[derive(Deserialize)]
+pub struct GetOrderbookRequest {
+    pub product_id: String,
+    pub level: u32,
+}
+
+impl Serialize for GetOrderbookRequest {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("GetOrderbookRequest", 2)?;
+        state.serialize_field("level", &self.level)?;
+
+ 
+        if is_json_serializer::<S>() {
+            state.serialize_field("product_id", &self.product_id)?;
+        }
+
+        state.end()
+    }
+}
+
+fn is_json_serializer<S: Serializer>() -> bool {
+    let type_name = std::any::type_name::<S>();
+    type_name.contains("serde_json")
+}
+
+impl ApiRequest for GetOrderbookRequest {
+    const BODY: bool = false;
+    const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "products/{product_id}/book";
+    const PUBLIC: bool = true;
+    const PATH_PARAMS: bool = true;
+
+    type Response = response::OrderBook;
 }

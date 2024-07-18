@@ -1,26 +1,23 @@
-use ic_cdk::api::management_canister::http_request::HttpMethod;
-use request::GetAllPairsRequest;
-use response::CoinbaseResponse;
-
+use super::response::OrderBook as GlobalOrderBook;
+use super::{ApiRequest, ExchangeErrors, OpenData};
 use crate::{
     api_client::ApiClient,
     chain_data::ChainData,
     exchange::{Candle, Exchange, ExchangeId},
+    pair::Pair,
 };
-
-use super::{ApiRequest, OpenData};
-use response::ConcreteInstrument;
-
+use ic_cdk::api::management_canister::http_request::HttpMethod;
 pub use request::GetProfileAccountsRequest;
-pub use request::PostOrderBody;
 pub use request::OrderType as CoinbaseOrderType;
+pub use request::PostOrderBody;
+use request::{GetAllPairsRequest, GetOrderbookRequest};
+use response::{CoinbaseResponse, ConcreteInstrument, OrderBook};
+pub use auth::CoinbaseAuth;
 
 mod auth;
 mod request;
 mod response;
 mod user;
-
-pub use auth::CoinbaseAuth;
 
 #[derive(Default)]
 pub struct Coinbase {
@@ -60,7 +57,7 @@ impl Coinbase {
 impl OpenData for Coinbase {
     async fn fetch_candles(
         &self,
-        _pair: crate::pair::Pair,
+        _pair: &Pair,
         _range: std::ops::Range<u64>,
         _interval: u32,
     ) -> Result<Vec<Candle>, super::ExchangeErrors> {
@@ -82,6 +79,27 @@ impl OpenData for Coinbase {
             .await?;
 
         Ok(response.into_iter().map(Into::into).collect())
+    }
+
+    async fn get_orderbook(
+        &self,
+        pair: &Pair,
+        _size: u32,
+    ) -> Result<GlobalOrderBook, ExchangeErrors> {
+        let orderbook_request = GetOrderbookRequest {
+            product_id: pair.to_string(),
+            level: 1,
+        };
+
+        let response = self
+            .api_client
+            .call::<CoinbaseResponse<OrderBook>, GetOrderbookRequest, CoinbaseAuth>(
+                orderbook_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(response.into())
     }
 }
 
