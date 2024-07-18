@@ -165,7 +165,7 @@ export const executeRequest = async (
   const requestNumber = await postRequest(exchange, request);
 
   const requestSignatureData =
-    await wallet.actor.get_signature_string(requestNumber);
+    await wallet.actor.get_signatures_metadata(requestNumber);
 
   console.log(requestSignatureData);
 
@@ -174,20 +174,20 @@ export const executeRequest = async (
 
   const signature = await finishSignature(
     exchange,
-    requestSignatureData,
+    requestSignatureData[0],
     key.secretKey,
     exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
   );
 
-  const result = await wallet.actor!.run_request(
+  const result = await wallet.actor.run_transaction(
     requestNumber,
-    signature,
+    [signature],
     isoTimestamp,
     BigInt(timestamp),
   );
 
   try {
-    const response = extractOkValue(result);
+    const response = extractOkValue(result)[0];
 
     if (isPostOrderResponse(response)) {
       const order = response.Order;

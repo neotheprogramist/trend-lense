@@ -23,6 +23,8 @@
   import { getBalance } from "$lib/getBalance";
   import { keyStore } from "$lib/keystore.svelte";
   import { handleApiData } from "$lib/apiAddition";
+  import { extractOkValue } from "$lib/result";
+    import { finishSignature } from "$lib/signature";
 
   interface IProps {
     instrument: Pair;
@@ -66,12 +68,9 @@
     request.tradeMode = tradeMode;
   };
 
-  const onExecute = async () => {
-    console.log(request);
-
+  const onPost = async () => {
     if (!wallet || !wallet.actor) {
-      console.error("Wallet not connected");
-      return;
+      throw new Error("Wallet not connected");
     }
 
     const keys = exchanges
@@ -79,8 +78,7 @@
       .filter((i) => i !== null);
 
     if (keys.length != exchanges.length) {
-      console.error("Missing keys");
-      return;
+      throw new Error("Not all keys are present");
     }
 
     const response = await wallet.actor.split_transaction(
@@ -93,7 +91,48 @@
       1,
     );
 
-    console.log(response);
+    return extractOkValue(response);
+  };
+
+  const onExecute = async () => {
+    if (!wallet || !wallet.actor) {
+      throw new Error("Wallet not connected");
+    }
+
+    const requestNumber = await onPost();
+    const signatureData =
+      await wallet.actor.get_signatures_metadata(requestNumber);
+    const timestamp = Math.round(Date.now() / 1000) - 1;
+    const isoTimestamp = new Date().toISOString();
+
+    let signatures = []
+
+    for (let i = 0; i < signatureData.length; i++) {
+      const exchange = exchanges[i]
+      const key = keyStore.getByExchange(exchange);
+
+      if (!key) {
+        throw new Error("Key not found");
+      }
+
+      const signature = await finishSignature(
+        exchanges[i],
+        signatureData[i],
+        key.secretKey,
+        exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
+      );
+
+      signatures.push(signature)
+    }
+
+    const result = await wallet.actor.run_transaction(
+      requestNumber,
+      signatures,
+      isoTimestamp,
+      BigInt(timestamp),
+    );
+
+    console.log(result)
   };
 
   //@ts-ignore
@@ -178,7 +217,15 @@
     </Tabs.Content>
   </div>
   <div class="w-full gap-3 ml-auto inline-flex justify-evenly items-center">
-    <div>
+    <div class="flex flex-col gap-2">
+      {#if wallet.connected && wallet.actor}
+        <Button variant="outline" onclick={onPost}>Post</Button>
+      {:else}
+        <Button variant="outline" onclick={wallet.connect}
+          >Connect wallet</Button
+        >
+      {/if}
+
       {#if wallet.connected && wallet.actor}
         <Button onclick={onExecute}>Execute</Button>
       {:else}

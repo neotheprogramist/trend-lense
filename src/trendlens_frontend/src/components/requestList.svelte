@@ -25,7 +25,12 @@
   };
 
   const runRequest = async (id: number) => {
-    const signatureData = await wallet.actor?.get_signature_string(id);
+    if (!wallet.actor) {
+      throw new Error("No actor found");
+      return;
+    }
+
+    const signatureData = await wallet.actor.get_signatures_metadata(id);
 
     // get this exchange
     const key = keyStore.getByExchange(Exchanges.Okx);
@@ -40,17 +45,18 @@
       return;
     }
 
-    const now = new Date();
-    const timestamp = now.toISOString();
+    const timestamp = Math.round(Date.now() / 1000)
+    const timestampUtc = new Date().toISOString();
 
-    const signature = await finishSignature(
-      signatureData,
-      key.secretKey,
-      timestamp,
-    );
+    // const signature = await finishSignature(
+    //   exc
+    //   signatureData[0],
+    //   key.secretKey,
+    //   timestampUtc,
+    // );
 
-    const res = await wallet.actor?.run_request(id, signature, timestamp);
-    console.log(res);
+    // const res = await wallet.actor?.run_request(id, signature, timestamp);
+    // console.log(res);
   };
 
   $inspect({ requests });

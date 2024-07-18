@@ -169,7 +169,7 @@ impl ExchangeImpl {
 
     // right now for testing purposes used single request, but it should be
     // preconstructed for further use or migrate signature generation to client
-    pub fn get_signature_string(&self, request: Request) -> String {
+    pub fn get_signature_string(&self, request: &Request) -> String {
         match self {
             ExchangeImpl::Coinbase(c) => match request {
                 Request::Balances(_) => {
@@ -179,7 +179,7 @@ impl ExchangeImpl {
                 }
                 Request::PostOrder(request) => {
                     let exchange_request = PostOrderBody {
-                        product_id: request.instrument_id,
+                        product_id: request.instrument_id.clone(),
                         price: request.order_price,
                         side: request.side.into(),
                         funds: None,
@@ -194,14 +194,14 @@ impl ExchangeImpl {
             ExchangeImpl::Okx(o) => match request {
                 Request::Instruments(i) => {
                     let request = GetInstrumentsRequest {
-                        instrument_id: i.instrument_id.and_then(|p| Okx::instrument_id(&p)),
+                        instrument_id: i.instrument_id.as_ref().and_then(|p| Okx::instrument_id(&p)),
                         instrument_type: i.instrument_type,
                     };
                     o.get_signature_data(request)
                 }
                 Request::Balances(b) => {
                     let request = GetBalanceRequest {
-                        currencies: b.currency.and_then(|c| Some(c.join(","))),
+                        currencies: b.currency.as_ref().and_then(|c| Some(c.join(","))),
                     };
 
                     o.get_signature_data(request)
@@ -209,7 +209,7 @@ impl ExchangeImpl {
                 Request::PostOrder(request) => {
                     let exchange_request = PlaceOrderBody {
                         side: Okx::side_string(request.side),
-                        instrument_id: request.instrument_id,
+                        instrument_id: request.instrument_id.clone(),
                         order_type: Okx::order_type_string(request.order_type),
                         size: request.size.to_string(),
                         trade_mode: Okx::trade_mode_string(request.trade_mode),

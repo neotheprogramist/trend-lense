@@ -70,14 +70,17 @@ fn remove_api_key(api_key: String) -> Option<ApiData> {
 }
 
 #[ic_cdk::query]
-fn get_signature_string(index: u32) -> String {
+fn get_signatures_metadata(index: u32) -> Vec<String> {
     let identity = ic_cdk::caller();
 
     let tx = TransactionStore::get_transaction(&identity, index).expect("missing tx");
-    let ix = tx.get_instruction(0).expect("missing instruction");
 
-    let exchange_impl = ExchangeImpl::new(ix.exchange);
-    exchange_impl.get_signature_string(ix.request)
+    tx.iter()
+        .map(|i| {
+            let exchange_impl = ExchangeImpl::new(i.exchange);
+            exchange_impl.get_signature_string(&i.request)
+        })
+        .collect()
 }
 
 #[ic_cdk::update]
@@ -138,45 +141,50 @@ async fn get_orderbook(exchange: Exchange, pair: String) -> f64 {
 }
 
 #[ic_cdk::update]
-async fn run_request(
+async fn run_transaction(
     index: u32,
-    signature: String,
+    signature: Vec<String>,
     timestamp_utc: String,
     timestamp: u64,
-) -> Result<Response, ExchangeErrors> {
+) -> Result<Vec<Response>, ExchangeErrors> {
     let identity = ic_cdk::caller();
     let tx = TransactionStore::get_transaction(&identity, index).expect("missing transaction");
-    let ix = tx.get_instruction(0).expect("missing instruction");
-
+   
     ic_cdk::println!("{:?}", tx);
 
-    let api_info = ApiStore::get_by_api(&identity, &ix.api_key).expect("api info not found");
+    let mut responses = vec![];
 
-    let exchange: Box<dyn UserData> = match ix.exchange {
-        Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
-            api_key: ix.api_key,
-            passphrase: api_info.passphrase.unwrap(),
-            timestamp: timestamp_utc,
-            signature,
-        })),
-        Exchange::Coinbase => Box::new(Coinbase::with_auth(CoinbaseAuth {
-            api_key: ix.api_key,
-            passphrase: api_info.passphrase.unwrap(),
-            signature,
-            timestamp,
-        })),
-    };
+    for (i, signature) in tx.iter().zip(signature.iter()) {
+        let api_info = ApiStore::get_by_api(&identity, &i.api_key).expect("api info not found");
 
-    let response = match ix.request {
-        Request::Empty => {
-            panic!()
-        }
-        Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
-        Request::Balances(balance) => exchange.get_balance(balance).await?,
-        Request::PostOrder(order) => exchange.post_order(order).await?,
-    };
+        let exchange: Box<dyn UserData> = match i.exchange {
+            Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
+                api_key: i.api_key.clone(),
+                passphrase: api_info.passphrase.unwrap(),
+                timestamp: timestamp_utc.clone(),
+                signature: signature.clone(),
+            })),
+            Exchange::Coinbase => Box::new(Coinbase::with_auth(CoinbaseAuth {
+                api_key: i.api_key.clone(),
+                passphrase: api_info.passphrase.unwrap(),
+                signature: signature.clone(),
+                timestamp,
+            })),
+        };
 
-    Ok(response)
+        let response = match i.request.clone() {
+            Request::Empty => {
+                panic!("Empty request")
+            }
+            Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
+            Request::Balances(balance) => exchange.get_balance(balance).await?,
+            Request::PostOrder(order) => exchange.post_order(order).await?,
+        };
+
+        responses.push(response);
+    }
+
+    Ok(responses)
 }
 
 #[ic_cdk::init]

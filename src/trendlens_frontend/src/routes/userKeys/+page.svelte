@@ -10,7 +10,7 @@
     handleApiData,
     type ApiRegisterStatusType,
   } from "$lib/apiAddition";
-    import { onMount } from "svelte";
+  import { onMount } from "svelte";
 
   const saveApiData = async (data: ApiWithSecret) => {
     if (!wallet.connected || !wallet.actor) {
@@ -51,9 +51,9 @@
     }
   };
 
-	onMount(() => {
-		keyStore.load()
-	})
+  onMount(() => {
+    keyStore.load();
+  });
 </script>
 
 <div class="container mx-auto py-10">
