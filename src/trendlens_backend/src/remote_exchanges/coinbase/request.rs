@@ -101,6 +101,26 @@ impl ApiRequest for PostOrderBody {
     type Response = response::OrderResponse;
 }
 
+
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Deserialize, Serialize)]
+pub struct PendingOrdersRequest {
+    pub product_id: Option<String>,
+    pub market_type: Option<String>
+}
+
+impl ApiRequest for PendingOrdersRequest {
+    const BODY: bool = true;
+    const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
+    const METHOD: HttpMethod = HttpMethod::POST;
+    const URI: &'static str = "orders";
+    const PUBLIC: bool = false;
+
+    type Response = Vec<response::Order>;
+}
+
+
 #[derive(Deserialize)]
 pub struct GetOrderbookRequest {
     pub product_id: String,

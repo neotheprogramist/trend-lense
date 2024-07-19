@@ -1,9 +1,10 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use crate::{
     pair::Pair,
     remote_exchanges::{
         okx::api::InstrumentType,
+        request::OrderSide,
         response::{
             ApiResponseWrapper, Balance, BidAsk as GlobalBidAsk, Instrument,
             OrderBook as GlobalOrderBook, OrderData,
@@ -156,9 +157,9 @@ impl Into<Balance> for Account {
 #[serde_as]
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct BidAsk {
-    #[serde_as(as="DisplayFromStr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub price: f64,
-    #[serde_as(as="DisplayFromStr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub size: f64,
     pub orders_count: u32,
 }
@@ -189,4 +190,84 @@ impl Into<GlobalOrderBook> for OrderBook {
             sequence: self.sequence,
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub enum OrderStatus {
+    Open,
+    Pending,
+    Rejected,
+    Done,
+    Active,
+    Received,
+    All,
+}
+
+impl FromStr for OrderStatus {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "open" => Ok(OrderStatus::Open),
+            "pending" => Ok(OrderStatus::Pending),
+            "rejected" => Ok(OrderStatus::Rejected),
+            "done" => Ok(OrderStatus::Done),
+            "active" => Ok(OrderStatus::Active),
+            "received" => Ok(OrderStatus::Received),
+            "all" => Ok(OrderStatus::All),
+            _ => Err(format!("Unknown order status: {}", s)),
+        }
+    }
+}
+
+impl Display for OrderStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            OrderStatus::Open => write!(f, "open"),
+            OrderStatus::Pending => write!(f, "pending"),
+            OrderStatus::Rejected => write!(f, "rejected"),
+            OrderStatus::Done => write!(f, "done"),
+            OrderStatus::Active => write!(f, "active"),
+            OrderStatus::Received => write!(f, "received"),
+            OrderStatus::All => write!(f, "all"),
+        }
+    }
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Deserialize)]
+pub struct Order {
+    pub id: String,
+    pub price: Option<f64>,
+    pub size: Option<f64>,
+    pub funds: Option<f64>,
+    pub specified_funds: Option<f64>,
+    pub expire_time: Option<String>,
+    pub done_at: Option<String>,
+    pub done_reason: Option<String>,
+    pub reject_reason: Option<String>,
+    pub stop: Option<String>,
+    pub stop_price: Option<f64>,
+    pub funding_amount: Option<f64>,
+    pub client_oid: Option<String>,
+    pub market_type: Option<String>,
+    pub product_id: String,
+    pub secondary_order_id: Option<String>,
+    pub stop_limit_price: Option<f64>,
+    pub profile_id: Option<String>,
+    #[serde_as(as = "DisplayFromStr")]
+    pub side: OrderSide,
+    #[serde(rename = "type")]
+    pub order_type: Option<String>,
+    pub time_in_force: Option<String>,
+    pub post_only: bool,
+    pub max_floor: Option<u32>,
+    pub created_at: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub fill_fees: f64,
+    #[serde_as(as = "DisplayFromStr")]
+    pub filled_size: f64,
+    pub executed_value: Option<f64>,
+    #[serde_as(as = "DisplayFromStr")]
+    pub status: OrderStatus,
+    pub settled: bool,
 }

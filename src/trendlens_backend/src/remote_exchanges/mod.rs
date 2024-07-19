@@ -4,7 +4,7 @@ use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod};
-use request::{GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest};
+use request::{GeneralBalanceRequest, GeneralGetPendingOrdersRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest};
 use response::OrderBook;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -47,8 +47,7 @@ pub trait OpenData {
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors>;
 
-    async fn get_orderbook(&self, pair: &Pair, size: u32)
-        -> Result<OrderBook, ExchangeErrors>;
+    async fn get_orderbook(&self, pair: &Pair, size: u32) -> Result<OrderBook, ExchangeErrors>;
 }
 
 #[async_trait::async_trait]
@@ -64,6 +63,11 @@ pub trait UserData {
     async fn post_order(
         &self,
         request: GeneralPostOrderRequest,
+    ) -> Result<Response, ExchangeErrors>;
+
+    async fn get_pending_orders(
+        &self,
+        request: GeneralGetPendingOrdersRequest,
     ) -> Result<Response, ExchangeErrors>;
 }
 

@@ -184,6 +184,9 @@ async fn run_transaction(
             Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
             Request::Balances(balance) => exchange.get_balance(balance).await?,
             Request::PostOrder(order) => exchange.post_order(order).await?,
+            Request::PendingOrders(pending_orders) => {
+                exchange.get_pending_orders(pending_orders).await?
+            }
         };
 
         let done_ix = SignableInstruction {
@@ -266,7 +269,7 @@ async fn split_transaction(
                 api_key: k.api_key.clone(),
                 exchange: k.exchange,
                 request: Request::PostOrder(GeneralPostOrderRequest {
-                    instrument_id: pair.to_string(),
+                    instrument_id: pair.clone(),
                     order_type: OrderType::Market,
                     side: order_side.clone(),
                     size: *c,

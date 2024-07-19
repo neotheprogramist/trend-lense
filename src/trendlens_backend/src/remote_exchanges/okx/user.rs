@@ -1,13 +1,16 @@
 use super::{
-    api::{GetBalanceRequest, GetInstrumentsRequest, PlaceOrderBody},
+    api::{GetBalanceRequest, GetInstrumentsRequest, PendingOrdersRequest, PlaceOrderBody},
     auth::OkxAuth,
-    response::{AccountInfo, ApiResponse, ConcreteInstrument, PlaceOrderResponse},
+    response::{AccountInfo, ApiResponse, ConcreteInstrument, PendingOrder, PlaceOrderResponse},
     Okx,
 };
 use crate::{
     remote_exchanges::{
-        request::{GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest},
-        response::{Balance, Instrument, OrderData},
+        request::{
+            GeneralBalanceRequest, GeneralGetPendingOrdersRequest, GeneralInstrumentsRequest,
+            GeneralPostOrderRequest,
+        },
+        response::{Balance, GlobalPendingOrder, Instrument, OrderData},
         ExchangeErrors, UserData,
     },
     request_store::request::Response,
@@ -72,7 +75,7 @@ impl UserData for Okx {
     ) -> Result<Response, ExchangeErrors> {
         let exchange_request = PlaceOrderBody {
             side: Self::side_string(request.side),
-            instrument_id: request.instrument_id,
+            instrument_id: request.instrument_id.to_string(),
             order_type: Self::order_type_string(request.order_type),
             size: request.size.to_string(),
             trade_mode: Self::trade_mode_string(request.trade_mode),
@@ -90,5 +93,40 @@ impl UserData for Okx {
         Ok(Response::Order(OrderData {
             code: order_response[0].code.clone(),
         }))
+    }
+
+    async fn get_pending_orders(
+        &self,
+        request: GeneralGetPendingOrdersRequest,
+    ) -> Result<Response, ExchangeErrors> {
+        let exchange_request = PendingOrdersRequest {
+            instrument_id: Some(request.instrument_id.to_string()),
+            instrument_type: Some(request.instrument_type),
+        };
+
+        let order_response = self
+            .api_client
+            .call::<ApiResponse<Vec<PendingOrder>>, PendingOrdersRequest, OkxAuth>(
+                exchange_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(Response::PendingOrders(
+            order_response
+                .into_iter()
+                .map(|o| GlobalPendingOrder {
+                    instrument_type: o.instrument_type.to_string(),
+                    instrument_id: o.instrument_id,
+                    order_id: o.order_id,
+                    price: o.price,
+                    size: o.size,
+                    side: o.side.to_string(),
+                    order_type: o.order_type.to_string(),
+                    trade_mode: o.trade_mode.to_string(),
+                    accumulated_fill_quantity: o.accumulated_fill_quantity,
+                })
+                .collect(),
+        ))
     }
 }

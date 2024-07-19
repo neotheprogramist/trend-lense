@@ -1,6 +1,6 @@
 use crate::remote_exchanges::{
     request,
-    response::{Balance, Instrument, OrderData},
+    response::{Balance, GlobalPendingOrder, Instrument, OrderData},
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -14,6 +14,7 @@ pub enum Request {
     Instruments(request::GeneralInstrumentsRequest),
     Balances(request::GeneralBalanceRequest),
     PostOrder(request::GeneralPostOrderRequest),
+    PendingOrders(request::GeneralGetPendingOrdersRequest),
 }
 
 #[derive(Debug, Clone, Deserialize, CandidType)]
@@ -21,4 +22,5 @@ pub enum Response {
     Instruments(Vec<Instrument>),
     Balances(Vec<Balance>),
     Order(OrderData),
+    PendingOrders(Vec<GlobalPendingOrder>),
 }

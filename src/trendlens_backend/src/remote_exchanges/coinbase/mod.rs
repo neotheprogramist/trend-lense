@@ -9,6 +9,7 @@ use crate::{
 use ic_cdk::api::management_canister::http_request::HttpMethod;
 pub use request::GetProfileAccountsRequest;
 pub use request::OrderType as CoinbaseOrderType;
+pub use request::PendingOrdersRequest as CoinbasePendingOrdersRequest;
 pub use request::PostOrderBody;
 use request::{GetAllPairsRequest, GetOrderbookRequest};
 use response::{CoinbaseResponse, ConcreteInstrument, OrderBook};

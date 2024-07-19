@@ -1,12 +1,16 @@
 use crate::{
-    remote_exchanges::{request::GeneralInstrumentsRequest, ExchangeErrors, UserData},
+    remote_exchanges::{
+        request::{GeneralGetPendingOrdersRequest, GeneralInstrumentsRequest},
+        response::GlobalPendingOrder,
+        ExchangeErrors, UserData,
+    },
     request_store::request::Response,
 };
 
 use super::{
     auth::CoinbaseAuth,
-    request::{GetProfileAccountsRequest, OrderType, PostOrderBody},
-    response::{self, CoinbaseResponse},
+    request::{GetProfileAccountsRequest, OrderType, PendingOrdersRequest, PostOrderBody, },
+    response::{self, CoinbaseResponse, OrderStatus},
     Coinbase,
 };
 
@@ -46,7 +50,7 @@ impl UserData for Coinbase {
             side: request.side.into(),
             funds: None,
             price: None,
-            product_id: request.instrument_id,
+            product_id: request.instrument_id.to_string(),
         };
 
         let order = self
@@ -58,5 +62,46 @@ impl UserData for Coinbase {
             .await?;
 
         Ok(Response::Order(order.into()))
+    }
+
+    async fn get_pending_orders(
+        &self,
+        request: GeneralGetPendingOrdersRequest,
+    ) -> Result<Response, ExchangeErrors> {
+        let exchange_request = PendingOrdersRequest {
+            market_type: Some(request.instrument_type.to_string()),
+            product_id: Some(request.instrument_id.to_string()),
+        };
+
+        let order_response = self
+            .api_client
+            .call::<CoinbaseResponse<Vec<response::Order>>, PendingOrdersRequest, CoinbaseAuth>(
+                exchange_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(Response::PendingOrders(
+            order_response
+                .into_iter()
+                .filter_map(|o| match o.status {
+                    OrderStatus::Pending
+                    | OrderStatus::Active
+                    | OrderStatus::Received
+                    | OrderStatus::Open => Some(GlobalPendingOrder {
+                        instrument_type: request.instrument_type.to_string(),
+                        instrument_id: o.product_id,
+                        order_id: o.id,
+                        price: o.price.unwrap_or(0.0),
+                        size: o.size.unwrap_or(0.0),
+                        side: o.side.to_string(),
+                        order_type: o.order_type.unwrap_or("".to_string()),
+                        trade_mode: o.time_in_force.unwrap_or("".to_string()),
+                        accumulated_fill_quantity: o.filled_size,
+                    }),
+                    _ => None,
+                })
+                .collect(),
+        ))
     }
 }

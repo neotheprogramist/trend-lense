@@ -5,8 +5,7 @@ use crate::{
     exchange::Candle,
     pair::Pair,
     remote_exchanges::{
-        response::{ApiResponseWrapper, Balance, Instrument, BidAsk as GlobalBidAsk, OrderBook as GlobalOrderBook},
-        ExchangeErrors,
+        request::{OrderSide, OrderType, TradeMode}, response::{ApiResponseWrapper, Balance, BidAsk as GlobalBidAsk, Instrument, OrderBook as GlobalOrderBook}, ExchangeErrors
     },
 };
 use candid::{CandidType, Nat};
@@ -134,6 +133,40 @@ pub struct PlaceOrderResponse {
     pub data: Vec<PlaceOrderDetails>,
     pub in_time: String,
     pub out_time: String,
+}
+
+#[serde_as]
+#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+pub struct PendingOrder {
+    #[serde(rename = "instType")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub instrument_type: InstrumentType,
+    #[serde(rename = "instId")]
+    pub instrument_id: String,
+    #[serde(rename = "tgtCcy")]
+    pub order_quantity_currency: String,
+    #[serde(rename = "ordId")]
+    pub order_id: String,
+    #[serde(rename = "px")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub price: f64,
+    #[serde(rename = "sz")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub size: f64,
+    #[serde_as(as = "DisplayFromStr")]
+    pub side: OrderSide,
+    #[serde(rename = "ordType")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub order_type: OrderType,
+    #[serde(rename = "tdMode")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub trade_mode: TradeMode,
+    #[serde(rename = "accFillSz")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub accumulated_fill_quantity: f64,
+    #[serde(rename = "avgPx")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub average_filled_price: f64,
 }
 
 #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
