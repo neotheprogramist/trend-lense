@@ -202,6 +202,7 @@
     const timestamp = Math.round(Date.now() / 1000) - 1;
     const isoTimestamp = new Date().toISOString();
     let signatures = [];
+    let newOrders: GlobalPendingOrder[] = [];
 
     for (let i = 0; i < selectedExchanges.length; i++) {
       const exchange = selectedExchanges[i];
@@ -234,7 +235,7 @@
       for (let i = 0; i < responses.length; i++) {
         const response = responses[i];
         if (isPendingOrdersResponse(response)) {
-          orders = [...orders, ...response.PendingOrders];
+          newOrders = [...newOrders, ...response.PendingOrders];
         } else {
           throw new Error("Response returned not type of order");
         }
@@ -242,6 +243,8 @@
     } catch (err) {
       throw new Error("Not type of response" + err);
     }
+
+    orders = newOrders;
   };
 
   const handleRefreshClick = () => {

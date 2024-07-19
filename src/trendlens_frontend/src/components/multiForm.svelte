@@ -198,7 +198,7 @@
   <div class="mt-4 w-3/4 mx-auto space-y-5">
     <Tabs.Content value={request.orderType} class="space-y-5">
       {#if request.orderType == OrderTypeType.Market}
-        {#if request.orderPrice.required}
+        {#if request.orderPriceRequired}
           <Input type="number" placeholder="price" />
         {/if}
 

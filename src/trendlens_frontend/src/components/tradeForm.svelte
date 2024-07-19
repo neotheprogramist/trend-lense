@@ -16,6 +16,7 @@
   import { pairToString } from "$lib/pair";
   import { getBalance } from "$lib/getBalance";
   import { wallet } from "$lib/wallet.svelte";
+  import { untrack } from "svelte";
 
   interface IProps {
     exchange: Exchanges;
@@ -50,7 +51,9 @@
       }
     }
 
-    request.changeInstrumentId(pairToString(instrument));
+    untrack(() => {
+      request.changeInstrumentId(pairToString(instrument));
+    });
   });
 
   const request = new PostOrderRequest(
