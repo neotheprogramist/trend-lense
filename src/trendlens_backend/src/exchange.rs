@@ -197,7 +197,7 @@ impl ExchangeImpl {
                         side: request.side.into(),
                         funds: None,
                         size: Some(request.size.to_string()),
-                        order_type: crate::remote_exchanges::coinbase::CoinbaseOrderType::Market,
+                        order_type: request.order_type.into(),
                     };
 
                     c.get_signature_data(exchange_request)
@@ -207,8 +207,8 @@ impl ExchangeImpl {
             ExchangeImpl::Okx(o) => match request {
                 Request::PendingOrders(i) => {
                     let request = OxkPendingOrdersRequest {
-                        instrument_id: Some(i.instrument_id.to_string()),
-                        instrument_type: Some(i.instrument_type),
+                        instrument_id: None,   //Some(i.instrument_id.to_string()),
+                        instrument_type: None, //Some(i.instrument_type),
                     };
 
                     o.get_signature_data(request)
@@ -236,6 +236,7 @@ impl ExchangeImpl {
                         instrument_id: request.instrument_id.to_string(),
                         order_type: Okx::order_type_string(request.order_type),
                         size: request.size.to_string(),
+                        order_price: request.order_price.map(|p| p.to_string()),
                         trade_mode: Okx::trade_mode_string(request.trade_mode),
                         ..Default::default()
                     };

@@ -45,11 +45,11 @@ impl UserData for Coinbase {
         request: crate::remote_exchanges::request::GeneralPostOrderRequest,
     ) -> Result<Response, ExchangeErrors> {
         let request_coinbase = PostOrderBody {
-            order_type: OrderType::Market,
+            order_type: request.order_type.into(),
             size: Some(request.size.to_string()),
             side: request.side.into(),
             funds: None,
-            price: None,
+            price: request.order_price,
             product_id: request.instrument_id.to_string(),
         };
 

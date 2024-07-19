@@ -7,6 +7,7 @@
     Pair,
     Candle,
     SignableInstruction,
+    GlobalPendingOrder,
   } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
   import type { SeriesDataItemTypeMap } from "lightweight-charts";
   import * as Card from "$components/shad/ui/card/index";
@@ -27,6 +28,12 @@
   import RequestList from "$components/requestList.svelte";
   import Button from "$components/shad/ui/button/button.svelte";
   import TransactionPreview from "$components/transactionPreview.svelte";
+  import OrdersList from "$components/ordersList.svelte";
+  import { keyStore } from "$lib/keystore.svelte";
+  import { pairFromString, pairToString } from "$lib/pair";
+  import { handleInstrumentType } from "$lib/instrumentType";
+  import { finishSignature } from "$lib/signature";
+  import { isPendingOrdersResponse } from "$lib/response";
 
   interface IProps {
     data: PageData;
@@ -148,10 +155,11 @@
     fetchCandles();
   };
 
-
   let requests = $state<SignableInstruction[][]>([]);
+  let orders = $state<GlobalPendingOrder[]>([]);
   let selectedRequest = $state<SignableInstruction[] | null>(null);
   let selectedRequestIndex = $state<number | null>(null);
+  let selectedInfoBar = $state<string | undefined>("requests");
 
   const fetchRequests = async () => {
     if (!wallet.actor) {
@@ -164,12 +172,90 @@
       requests = response[0];
     }
   };
+
+  const fetchOrders = async () => {
+    if (!wallet.actor) {
+      throw new Error("No actor found");
+    }
+
+    const [requestNumber, instructions] = await wallet.actor.add_transaction(
+      selectedExchanges.map((e) => {
+        const key = keyStore.getByExchange(e);
+
+        if (!key) {
+          throw new Error("No key found");
+        }
+
+        return {
+          api_key: key.apiKey,
+          exchange: handleExchange(e),
+          request: {
+            PendingOrders: {
+              instrument_id: selectedInstrument!,
+              instrument_type: handleInstrumentType(data.instrumentType),
+            },
+          },
+        };
+      }),
+    );
+
+    const timestamp = Math.round(Date.now() / 1000) - 1;
+    const isoTimestamp = new Date().toISOString();
+    let signatures = [];
+
+    for (let i = 0; i < selectedExchanges.length; i++) {
+      const exchange = selectedExchanges[i];
+      const key = keyStore.getByExchange(exchange);
+
+      if (!key) {
+        throw new Error("No key found");
+      }
+
+      const signature = await finishSignature(
+        exchange,
+        instructions[i].signature,
+        key.secretKey,
+        exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
+      );
+
+      signatures.push(signature);
+    }
+
+    const result = await wallet.actor.run_transaction(
+      requestNumber,
+      signatures,
+      isoTimestamp,
+      BigInt(timestamp),
+    );
+
+    try {
+      const responses = extractOkValue(result);
+
+      for (let i = 0; i < responses.length; i++) {
+        const response = responses[i];
+        if (isPendingOrdersResponse(response)) {
+          orders = [...orders, ...response.PendingOrders];
+        } else {
+          throw new Error("Response returned not type of order");
+        }
+      }
+    } catch (err) {
+      throw new Error("Not type of response" + err);
+    }
+  };
+
+  const handleRefreshClick = () => {
+    if (selectedInfoBar === "requests") {
+      fetchRequests();
+    } else if (selectedInfoBar === "open_orders") {
+      fetchOrders();
+    }
+  };
 </script>
 
 <div class="mt-2 grid md:grid-cols-2 lg:grid-cols-8">
   <div class="col-span-8 border-t border-l border-r p-2">
     <div class="color-primary">
-      <!-- <legend class="-ml-1 px-1 text-sm font-medium"> Settings </legend> -->
       {#if selectedInstrument}
         {selectedInstrument.base + "/" + selectedInstrument.quote}
       {:else}
@@ -230,20 +316,20 @@
       onTransactionDelete={(id) => {
         selectedRequest = null;
         selectedRequestIndex = null;
-        requests.splice(id, 1)
+        requests.splice(id, 1);
       }}
     />
   </div>
 
   <div class="col-span-8 border-b border-l border-r p-2">
-    <Tabs.Root value="requests" class="p-2">
+    <Tabs.Root bind:value={selectedInfoBar} class="p-2">
       <div class="flex justify-between">
         <Tabs.List>
           <Tabs.Trigger value="requests">Requests</Tabs.Trigger>
           <Tabs.Trigger value="open_orders">Open orders</Tabs.Trigger>
           <Tabs.Trigger value="orders_history">Orders History</Tabs.Trigger>
         </Tabs.List>
-        <Button onclick={fetchRequests}>Refresh</Button>
+        <Button onclick={handleRefreshClick}>Refresh</Button>
       </div>
 
       <Tabs.Content value="requests">
@@ -251,12 +337,14 @@
           {requests}
           onRequestSelect={(id) => {
             selectedRequestIndex = id;
-            selectedRequest = requests[id]
-            console.log(selectedRequest)
+            selectedRequest = requests[id];
+            console.log(selectedRequest);
           }}
         />
       </Tabs.Content>
-      <Tabs.Content value="open_orders">Open orders</Tabs.Content>
+      <Tabs.Content value="open_orders">
+        <OrdersList {orders} />
+      </Tabs.Content>
       <Tabs.Content value="orders_history">History</Tabs.Content>
     </Tabs.Root>
   </div>

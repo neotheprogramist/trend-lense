@@ -1,7 +1,10 @@
 use std::{fmt::Display, str::FromStr};
 
 use super::response;
-use crate::remote_exchanges::{request::OrderSide, ApiRequest};
+use crate::remote_exchanges::{
+    request::{OrderSide, OrderType as GlobalOrderType},
+    ApiRequest,
+};
 use ic_cdk::api::management_canister::http_request::HttpMethod;
 use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use serde_with::{serde_as, skip_serializing_none, DisplayFromStr};
@@ -54,6 +57,16 @@ pub enum OrderType {
     Stop,
 }
 
+impl From<GlobalOrderType> for OrderType {
+    fn from(value: GlobalOrderType) -> Self {
+        match value {
+            GlobalOrderType::Limit => OrderType::Limit,
+            GlobalOrderType::Market => OrderType::Market,
+            _ => unimplemented!()
+        }
+    }
+}
+
 impl Display for OrderType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -101,25 +114,23 @@ impl ApiRequest for PostOrderBody {
     type Response = response::OrderResponse;
 }
 
-
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Deserialize, Serialize)]
 pub struct PendingOrdersRequest {
     pub product_id: Option<String>,
-    pub market_type: Option<String>
+    pub market_type: Option<String>,
 }
 
 impl ApiRequest for PendingOrdersRequest {
-    const BODY: bool = true;
+    const BODY: bool = false;
     const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
-    const METHOD: HttpMethod = HttpMethod::POST;
+    const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "orders";
     const PUBLIC: bool = false;
 
     type Response = Vec<response::Order>;
 }
-
 
 #[derive(Deserialize)]
 pub struct GetOrderbookRequest {
@@ -135,7 +146,6 @@ impl Serialize for GetOrderbookRequest {
         let mut state = serializer.serialize_struct("GetOrderbookRequest", 2)?;
         state.serialize_field("level", &self.level)?;
 
- 
         if is_json_serializer::<S>() {
             state.serialize_field("product_id", &self.product_id)?;
         }

@@ -110,8 +110,12 @@
 
     <div class="mt-4 w-3/4 mx-auto space-y-5">
       <Tabs.Content value={request.orderType} class="space-y-2">
-        {#if request.orderPrice.required}
-          <Input type="number" placeholder="price" />
+        {#if request.orderPriceRequired}
+          <Input
+            type="number"
+            placeholder="price"
+            bind:value={request.orderPrice}
+          />
         {/if}
 
         <Input type="number" placeholder="amount" bind:value={request.size} />

@@ -31,6 +31,10 @@ type ExchangeErrors = variant {
   UnsupportedPairFormat;
 };
 type GeneralBalanceRequest = record { currency : opt vec text };
+type GeneralGetPendingOrdersRequest = record {
+  instrument_id : Pair;
+  instrument_type : InstrumentType;
+};
 type GeneralInstrumentsRequest = record {
   instrument_id : opt Pair;
   instrument_type : InstrumentType;
@@ -41,9 +45,20 @@ type GeneralPostOrderRequest = record {
   size : float64;
   trade_mode : TradeMode;
   order_type : OrderType;
-  instrument_id : text;
+  instrument_id : Pair;
   order_price : opt float64;
   position_side : opt PositionSide;
+};
+type GlobalPendingOrder = record {
+  side : text;
+  size : float64;
+  trade_mode : text;
+  accumulated_fill_quantity : float64;
+  order_type : text;
+  instrument_id : text;
+  order_id : text;
+  instrument_type : text;
+  price : float64;
 };
 type Instruction = record {
   api_key : text;
@@ -72,11 +87,13 @@ type RejectionCode = variant {
 type Request = variant {
   Empty;
   Instruments : GeneralInstrumentsRequest;
+  PendingOrders : Instrument;
   PostOrder : GeneralPostOrderRequest;
   Balances : GeneralBalanceRequest;
 };
 type Response = variant {
   Instruments : vec Instrument;
+  PendingOrders : vec GlobalPendingOrder;
   Order : OrderData;
   Balances : vec Balance;
 };

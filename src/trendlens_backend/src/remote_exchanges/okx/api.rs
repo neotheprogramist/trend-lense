@@ -217,12 +217,14 @@ impl ApiRequest for IndexCandleStickRequest {
 
 
 
+#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PendingOrdersRequest {
     #[serde(rename = "instId")]
     pub instrument_id: Option<String>,
     #[serde(rename = "instType")]
+    #[serde_as(as = "Option<DisplayFromStr>")]
     pub instrument_type: Option<InstrumentType>,
 }
 

@@ -78,6 +78,7 @@ impl UserData for Okx {
             instrument_id: request.instrument_id.to_string(),
             order_type: Self::order_type_string(request.order_type),
             size: request.size.to_string(),
+            order_price: request.order_price.map(|p| p.to_string()),
             trade_mode: Self::trade_mode_string(request.trade_mode),
             ..Default::default()
         };
@@ -100,8 +101,8 @@ impl UserData for Okx {
         request: GeneralGetPendingOrdersRequest,
     ) -> Result<Response, ExchangeErrors> {
         let exchange_request = PendingOrdersRequest {
-            instrument_id: Some(request.instrument_id.to_string()),
-            instrument_type: Some(request.instrument_type),
+            instrument_id: None,   //Some(request.instrument_id.to_string()),
+            instrument_type: None, //Some(request.instrument_type),
         };
 
         let order_response = self

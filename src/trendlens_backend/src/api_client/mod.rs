@@ -102,6 +102,8 @@ impl ApiClient {
 
         let body = R::BODY.then(|| request.to_body());
 
+        ic_cdk::println!("{:?}", body);
+
         let request = CanisterHttpRequestArgument {
             url: api_url,
             method: R::METHOD,

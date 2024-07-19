@@ -1,11 +1,8 @@
-use std::{fmt::Display, str::FromStr};
-
+use super::okx::api::InstrumentType;
+use crate::pair::Pair;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-
-use crate::pair::Pair;
-
-use super::okx::api::InstrumentType;
+use std::{fmt::Display, str::FromStr};
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, Copy)]
 pub enum OrderSide {
@@ -85,6 +82,7 @@ pub enum OrderType {
     Ioc,
     // there are more
 }
+
 
 impl Display for OrderType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {

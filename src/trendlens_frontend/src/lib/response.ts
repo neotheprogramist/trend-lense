@@ -3,6 +3,7 @@ import type {
   OrderData,
   Response,
   Balance,
+  GlobalPendingOrder,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
 export function isInstrumentsResponse(
@@ -23,4 +24,13 @@ export function isBalanceResponse(
   response: Response,
 ): response is { Balances: Array<Balance> } {
   return (response as { Balances: Array<Balance> }).Balances !== undefined;
+}
+
+export function isPendingOrdersResponse(
+  response: Response,
+): response is { PendingOrders: Array<GlobalPendingOrder> } {
+  return (
+    (response as { PendingOrders: Array<GlobalPendingOrder> }).PendingOrders !==
+    undefined
+  );
 }

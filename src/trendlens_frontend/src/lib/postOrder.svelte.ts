@@ -6,6 +6,7 @@ import type {
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 import { handleExchange, Exchanges } from "./exchange";
 import { keyStore } from "./keystore.svelte";
+import { pairFromString } from "./pair";
 import {
   OrderSideType,
   InstrumentType,
@@ -30,9 +31,9 @@ export class PostOrderRequest {
   orderSide = $state<OrderSideType>(OrderSideType.Buy);
   orderType = $state<OrderTypeType>(OrderTypeType.Market);
 
-  orderPrice: { value?: number; required: boolean } = $derived.by(() => {
-    const required = this.orderType != OrderTypeType.Market;
-    return { value: undefined, required };
+  orderPrice = $state<number | undefined>(undefined);
+  orderPriceRequired = $derived.by(() => {
+    return this.orderType != OrderTypeType.Market;
   });
 
   constructor(tradeModes: TradeModeType[], instrumentId: string) {
@@ -131,13 +132,11 @@ export const postRequest = async (
       exchange: handleExchange(exchange),
       request: {
         PostOrder: {
-          instrument_id: request.instrumentId,
+          instrument_id: pairFromString(request.instrumentId),
           trade_mode: handleTradeMode(request.tradeMode!),
           margin_currency: [],
           order_price:
-            request.orderPrice.value != undefined
-              ? [request.orderPrice.value]
-              : [],
+            request.orderPrice != undefined ? [request.orderPrice] : [],
           order_type: handleOrderType(request.orderType),
           side: handleOrderSide(request.orderSide),
           size: request.size ?? 0,
