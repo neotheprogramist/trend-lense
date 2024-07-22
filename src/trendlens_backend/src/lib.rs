@@ -3,7 +3,8 @@ use std::str::FromStr;
 use crate::pair::Pair;
 use api_store::{ApiData, ApiStore};
 use chain_data::{ExchangeData, TimestampBased};
-use exchange::{Candle, Exchange, ExchangeImpl};
+use exchange::{Candle, Exchange, ExchangeImpl, TimeVolume};
+use ic_cdk::{query, update};
 use instruments::save_instruments;
 use remote_exchanges::{
     coinbase::{Coinbase, CoinbaseAuth},
@@ -16,6 +17,7 @@ use request_store::{
     Instruction, SignableInstruction, Transaction, TransactionStore,
 };
 use storable_wrapper::StorableWrapper;
+use volume_store::{VolumesStore, VOLUME_STORE};
 
 mod api_client;
 mod api_store;
@@ -27,6 +29,7 @@ mod pair;
 mod remote_exchanges;
 mod request_store;
 mod storable_wrapper;
+mod volume_store;
 
 #[ic_cdk::query]
 fn __get_candid_interface_tmp_hack() -> String {
@@ -345,6 +348,79 @@ async fn pull_candles(
         .into_iter()
         .chain(stored_candles.into_iter())
         .collect::<Vec<_>>())
+}
+
+#[query]
+fn get_volumes(exchange: Exchange, pair: String, start: u64) -> Option<Vec<TimeVolume>> {
+    let pair = Pair::from_str(&pair).expect("invalid pair");
+
+    VOLUME_STORE.with_borrow(|v| {
+        let store = v.get(&(exchange, pair))?;
+
+        Some(store.get_between(start..std::u64::MAX))
+    })
+}
+
+#[update]
+fn initialize_volume_store(exchange: Exchange, pair: String, timestamp: u64) {
+    let pair = Pair::from_str(&pair).expect("invalid pair");
+
+    VOLUME_STORE.with_borrow_mut(|v| {
+        let mut store = v.get(&(exchange, pair.clone())).unwrap_or_else(|| {
+            let store = VolumesStore::default();
+            v.insert((exchange, pair.clone()), StorableWrapper(store));
+            v.get(&(exchange, pair.clone())).unwrap()
+        });
+
+        store.insert(
+            timestamp,
+            TimeVolume {
+                timestamp,
+                volume: 0.0,
+            },
+        );
+
+        v.insert((exchange, pair), store);
+    });
+}
+
+#[update]
+async fn pull_volumes(
+    exchange: Exchange,
+    pair: String,
+    end: u64,
+) -> Result<Vec<TimeVolume>, ExchangeErrors> {
+    let pair = Pair::from_str(&pair).expect("invalid pair");
+
+    let timestamp = VOLUME_STORE.with_borrow(|v| -> Result<u64, ExchangeErrors> {
+        let store = v
+            .get(&(exchange, pair.clone()))
+            .ok_or(ExchangeErrors::MissingPair)?;
+
+        store
+            .last_timestamp()
+            .ok_or(ExchangeErrors::MissingTimestamp)
+    })?;
+
+    let range_to_fetch = get_range_to_fetch(end, timestamp);
+
+    let fetched_volumes = match range_to_fetch {
+        Some(ref range) => {
+            let exchange_impl = ExchangeImpl::new(exchange);
+            exchange_impl.get_taker_volume(&pair, range.clone()).await?
+        }
+        None => vec![],
+    };
+
+    VOLUME_STORE.with_borrow_mut(|v| {
+        let mut store = v.get(&(exchange, pair.clone())).unwrap();
+
+        store.insert_many(fetched_volumes.clone());
+
+        v.insert((exchange, pair), store);
+    });
+
+    Ok(fetched_volumes)
 }
 
 ic_cdk::export_candid!();

@@ -1,19 +1,20 @@
 use super::response::OrderBook as GlobalOrderBook;
 use super::{ApiRequest, ExchangeErrors, OpenData};
+use crate::exchange::TimeVolume;
 use crate::{
     api_client::ApiClient,
     chain_data::ChainData,
     exchange::{Candle, Exchange, ExchangeId},
     pair::Pair,
 };
+pub use auth::CoinbaseAuth;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
 pub use request::GetProfileAccountsRequest;
 pub use request::OrdersRequest as CoinbaseOrdersRequest;
 pub use request::PostOrderBody;
-use request::{GetAllPairsRequest, GetOrderbookRequest};
-use response::{CoinbaseResponse, ConcreteInstrument, OrderBook};
-pub use auth::CoinbaseAuth;
 pub use request::Statuses;
+use request::{GetAllPairsRequest, GetOrderbookRequest, GetProductCandles};
+use response::{CoinbaseCandle, CoinbaseResponse, ConcreteInstrument, OrderBook};
 
 mod auth;
 mod request;
@@ -58,11 +59,58 @@ impl Coinbase {
 impl OpenData for Coinbase {
     async fn fetch_candles(
         &self,
-        _pair: &Pair,
-        _range: std::ops::Range<u64>,
-        _interval: u32,
+        pair: &Pair,
+        range: std::ops::Range<u64>,
+        interval: u32,
     ) -> Result<Vec<Candle>, super::ExchangeErrors> {
-        Ok(vec![])
+        let candle_request = GetProductCandles {
+            product_id: pair.to_string(),
+            granularity: Some(interval.to_string()),
+            start: Some(range.start.to_string()),
+            end: Some(range.end.to_string()),
+        };
+
+        let candle_response = self
+            .api_client
+            .call::<CoinbaseResponse<Vec<CoinbaseCandle>>, GetProductCandles, CoinbaseAuth>(
+                candle_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(candle_response
+            .into_iter()
+            .map(|concrete_candle| concrete_candle.into())
+            .collect())
+    }
+
+    async fn get_taker_volume(
+        &self,
+        pair: &Pair,
+        range: std::ops::Range<u64>,
+    ) -> Result<Vec<TimeVolume>, ExchangeErrors> {
+        let candle_request = GetProductCandles {
+            product_id: pair.to_string(),
+            granularity: None,
+            start: Some(range.start.to_string()),
+            end: Some(range.end.to_string()),
+        };
+
+        let candle_response = self
+            .api_client
+            .call::<CoinbaseResponse<Vec<CoinbaseCandle>>, GetProductCandles, CoinbaseAuth>(
+                candle_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(candle_response
+            .into_iter()
+            .map(|candle| TimeVolume {
+                timestamp: candle.time,
+                volume: candle.volume,
+            })
+            .collect())
     }
 
     async fn get_public_instruments(

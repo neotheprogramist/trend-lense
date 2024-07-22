@@ -20,7 +20,7 @@ use crate::{
         },
         request::{GeneralInstrumentsRequest, OrderSide},
         response::Instrument,
-        ApiRequest, ExchangeErrors, OpenData,
+        ExchangeErrors, OpenData,
     },
     request_store::request::Request,
     storable_wrapper::StorableWrapper,
@@ -270,6 +270,17 @@ impl ExchangeImpl {
         }
     }
 
+    pub async fn get_taker_volume(
+        &self,
+        pair: &Pair,
+        range: std::ops::Range<u64>,
+    ) -> Result<Vec<TimeVolume>, ExchangeErrors> {
+        match self {
+            ExchangeImpl::Coinbase(c) => c.get_taker_volume(pair, range).await,
+            ExchangeImpl::Okx(o) => o.get_taker_volume(pair, range).await,
+        }
+    }
+
     pub fn set_data(&self, pair: Pair, data: StorableWrapper<ExchangeData>) {
         match self {
             ExchangeImpl::Coinbase(c) => c.set_data(pair, data),
@@ -312,4 +323,10 @@ pub struct Candle {
     pub highest_price: f64,
     pub lowest_price: f64,
     pub close_price: f64,
+}
+
+#[derive(Deserialize, CandidType, Serialize, Clone, PartialEq, Debug)]
+pub struct TimeVolume {
+    pub timestamp: u64,
+    pub volume: f64,
 }

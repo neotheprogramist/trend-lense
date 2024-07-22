@@ -1,4 +1,4 @@
-use crate::exchange::Candle;
+use crate::exchange::{Candle, TimeVolume};
 use crate::remote_exchanges::response::Instrument;
 use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
@@ -34,6 +34,8 @@ pub enum ExchangeErrors {
     DeserializationFailed { message: String },
     #[error("api key not found")]
     MissingApiKey,
+    #[error("pair is not initialized")]
+    MissingTimestamp
 }
 
 #[async_trait::async_trait]
@@ -49,6 +51,12 @@ pub trait OpenData {
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors>;
+
+    async fn get_taker_volume(
+        &self,
+        pair: &Pair,
+        range: std::ops::Range<u64>,
+    ) -> Result<Vec<TimeVolume>, ExchangeErrors>;
 
     async fn get_orderbook(&self, pair: &Pair, size: u32) -> Result<OrderBook, ExchangeErrors>;
 }

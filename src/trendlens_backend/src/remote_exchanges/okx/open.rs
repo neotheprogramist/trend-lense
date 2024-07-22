@@ -1,7 +1,8 @@
-use super::api::GetOrderBookRequest;
+use super::api::{GetOrderBookRequest, InstrumentType, TakerVolumeRequest};
 use super::auth::OkxAuth;
-use super::response::{ApiResponse, CandleStick, ConcreteInstrument, OrderBook};
+use super::response::{ApiResponse, CandleStick, ConcreteInstrument, OrderBook, TakerVolume};
 use super::{api::IndexCandleStickRequest, Okx};
+use crate::exchange::TimeVolume;
 use crate::remote_exchanges::request::GeneralInstrumentsRequest;
 use crate::remote_exchanges::response::{Instrument, OrderBook as GlobalOrderBook};
 use crate::{
@@ -43,6 +44,36 @@ impl OpenData for Okx {
             .collect())
     }
 
+    async fn get_taker_volume(
+        &self,
+        pair: &Pair,
+        range: std::ops::Range<u64>,
+    ) -> Result<Vec<TimeVolume>, ExchangeErrors> {
+        let request = TakerVolumeRequest {
+            begin: Some(range.start),
+            end: Some(range.end),
+            period: None,
+            currency: pair.base.clone(),
+            instrument_type: Some(InstrumentType::Spot),
+        };
+
+        let response = self
+            .api_client
+            .call::<ApiResponse<Vec<TakerVolume>>, TakerVolumeRequest, OkxAuth>(
+                request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(response
+            .into_iter()
+            .map(|taker_volume| TimeVolume {
+                timestamp: taker_volume.timestamp,
+                volume: taker_volume.sell_volume + taker_volume.buy_volume,
+            })
+            .collect())
+    }
+
     async fn get_public_instruments(
         &self,
         request: GeneralInstrumentsRequest,
@@ -66,7 +97,11 @@ impl OpenData for Okx {
             .collect())
     }
 
-    async fn get_orderbook(&self, pair: &Pair, size: u32) -> Result<GlobalOrderBook, ExchangeErrors> {
+    async fn get_orderbook(
+        &self,
+        pair: &Pair,
+        size: u32,
+    ) -> Result<GlobalOrderBook, ExchangeErrors> {
         let instrument_id = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
 
         let orderbook_request = GetOrderBookRequest {

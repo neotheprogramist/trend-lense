@@ -1,6 +1,6 @@
-use std::{fmt::Display, str::FromStr};
-use serde_this_or_that::as_u64;
 use serde_this_or_that::as_f64;
+use serde_this_or_that::as_u64;
+use std::{fmt::Display, str::FromStr};
 
 use crate::{
     api_client::ApiClientErrors,
@@ -141,8 +141,6 @@ pub struct PlaceOrderResponse {
     pub out_time: String,
 }
 
-
-
 #[serde_as]
 #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
 pub struct Order {
@@ -187,7 +185,7 @@ pub enum OrderState {
     Filled,
     MmpCanceled,
     Live,
-    PartiallyFilled
+    PartiallyFilled,
 }
 
 impl FromStr for OrderState {
@@ -486,4 +484,18 @@ mod tests {
         assert_eq!(response.data[0].close_price, 1.0);
         assert_eq!(response.data[0].confirm, 1);
     }
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct TakerVolume {
+    #[serde(rename = "ts")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub timestamp: u64,
+    #[serde(rename = "buyVol")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub buy_volume: f64,
+    #[serde(rename = "sellVol")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub sell_volume: f64,
 }
