@@ -1781,10 +1781,10 @@ lru-cache@^10.2.0:
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-10.3.0.tgz#4a4aaf10c84658ab70f79a85a9a3f1e1fb11196b"
   integrity sha512-CQl19J/g+Hbjbv4Y3mFNNXFEL/5t/KCg8POCuUqd4rMKjGG+j1ybER83hxV58zL+dFI1PTkt3GNFSHRt+d8qEQ==
 
-lucide-svelte@^0.408.0:
-  version "0.408.0"
-  resolved "https://registry.yarnpkg.com/lucide-svelte/-/lucide-svelte-0.408.0.tgz#9cd3ab7cd9b373c61d5454c6e50e4a1fde8369d6"
-  integrity sha512-5rJvcnHvE+K/2ebff/tKvG1FmIut01hDUaibMk6pG2Je+82TCPflVvhMvgCjP0fkM0ztj5t/ma1s5WYyketOSA==
+lucide-svelte@^0.414.0:
+  version "0.414.0"
+  resolved "https://registry.yarnpkg.com/lucide-svelte/-/lucide-svelte-0.414.0.tgz#96eb5f965c6df0c339f3155c6c410ce633fcf5fd"
+  integrity sha512-LTEzcm5rix345H2rLxH0nBNZRaFx4I2yL48yDgiIkM9jtUb4LZ629e0MuUmeosS35dGnLFmnGeGNDOt9SKouDA==
 
 magic-string@^0.30.10, magic-string@^0.30.5:
   version "0.30.10"
