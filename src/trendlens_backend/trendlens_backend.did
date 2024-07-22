@@ -31,12 +31,13 @@ type ExchangeErrors = variant {
   UnsupportedPairFormat;
 };
 type GeneralBalanceRequest = record { currency : opt vec text };
-type GeneralGetPendingOrdersRequest = record {
-  instrument_id : Pair;
-  instrument_type : InstrumentType;
-};
 type GeneralInstrumentsRequest = record {
   instrument_id : opt Pair;
+  instrument_type : InstrumentType;
+};
+type GeneralOrdersListRequest = record {
+  pending : bool;
+  instrument_id : Pair;
   instrument_type : InstrumentType;
 };
 type GeneralPostOrderRequest = record {
@@ -49,17 +50,6 @@ type GeneralPostOrderRequest = record {
   order_price : opt float64;
   position_side : opt PositionSide;
 };
-type GlobalPendingOrder = record {
-  side : text;
-  size : float64;
-  trade_mode : text;
-  accumulated_fill_quantity : float64;
-  order_type : text;
-  instrument_id : text;
-  order_id : text;
-  instrument_type : text;
-  price : float64;
-};
 type Instruction = record {
   api_key : text;
   request : Request;
@@ -70,6 +60,17 @@ type Instrument = record {
   instrument_type : InstrumentType;
 };
 type InstrumentType = variant { Spot; Swap; Futures; Option; Margin };
+type Order = record {
+  side : text;
+  size : float64;
+  trade_mode : text;
+  accumulated_fill_quantity : float64;
+  order_type : text;
+  instrument_id : text;
+  order_id : text;
+  instrument_type : text;
+  price : float64;
+};
 type OrderData = record { code : text };
 type OrderSide = variant { Buy; Sell };
 type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
@@ -86,14 +87,15 @@ type RejectionCode = variant {
 };
 type Request = variant {
   Empty;
+  OrdersList : GeneralOrdersListRequest;
   Instruments : GeneralInstrumentsRequest;
-  PendingOrders : Instrument;
   PostOrder : GeneralPostOrderRequest;
   Balances : GeneralBalanceRequest;
 };
 type Response = variant {
+  DoneOrders : vec Order;
   Instruments : vec Instrument;
-  PendingOrders : vec GlobalPendingOrder;
+  PendingOrders : vec Order;
   Order : OrderData;
   Balances : vec Balance;
 };

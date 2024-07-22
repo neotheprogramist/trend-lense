@@ -134,7 +134,8 @@ pub struct GeneralBalanceRequest {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
-pub struct GeneralGetPendingOrdersRequest {
+pub struct GeneralOrdersListRequest {
     pub instrument_type: InstrumentType,
     pub instrument_id: Pair,
+    pub pending: bool,
 }

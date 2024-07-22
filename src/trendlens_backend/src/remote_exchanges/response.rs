@@ -40,7 +40,7 @@ pub struct OrderBook {
 }
 
 #[derive(Deserialize, Debug, Clone, CandidType, Serialize)]
-pub struct GlobalPendingOrder {
+pub struct Order {
     pub instrument_type: String,
     pub instrument_id: String,
     pub order_id: String,

@@ -9,7 +9,7 @@ use crate::{
     pair::Pair,
     remote_exchanges::{
         coinbase::{
-            Coinbase, CoinbasePendingOrdersRequest, GetProfileAccountsRequest, PostOrderBody,
+            Coinbase, CoinbaseOrdersRequest, GetProfileAccountsRequest, PostOrderBody, Statuses,
         },
         okx::{
             api::{
@@ -177,10 +177,15 @@ impl ExchangeImpl {
     pub fn get_signature_string(&self, request: &Request) -> String {
         match self {
             ExchangeImpl::Coinbase(c) => match request {
-                Request::PendingOrders(i) => {
-                    let request = CoinbasePendingOrdersRequest {
+                Request::OrdersList(i) => {
+                    let request = CoinbaseOrdersRequest {
                         product_id: Some(i.instrument_id.to_string()),
                         market_type: Some(i.instrument_type.to_string()),
+                        limit: 100,
+                        status: match i.pending {
+                            true => Statuses(vec!["open".to_string(), "pending".to_string()]),
+                            false => Statuses(vec!["done".to_string(), "rejected".to_string()]),
+                        },
                     };
 
                     c.get_signature_data(request)
@@ -205,10 +210,10 @@ impl ExchangeImpl {
                 _ => "".to_string(),
             },
             ExchangeImpl::Okx(o) => match request {
-                Request::PendingOrders(i) => {
+                Request::OrdersList(i) => {
                     let request = OxkPendingOrdersRequest {
-                        instrument_id: None,   //Some(i.instrument_id.to_string()),
-                        instrument_type: None, //Some(i.instrument_type),
+                        instrument_id: Some(i.instrument_id.to_string()),
+                        instrument_type: Some(i.instrument_type),
                     };
 
                     o.get_signature_data(request)

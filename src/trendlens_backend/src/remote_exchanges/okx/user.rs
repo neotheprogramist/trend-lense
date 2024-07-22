@@ -7,10 +7,10 @@ use super::{
 use crate::{
     remote_exchanges::{
         request::{
-            GeneralBalanceRequest, GeneralGetPendingOrdersRequest, GeneralInstrumentsRequest,
+            GeneralBalanceRequest, GeneralOrdersListRequest, GeneralInstrumentsRequest,
             GeneralPostOrderRequest,
         },
-        response::{Balance, GlobalPendingOrder, Instrument, OrderData},
+        response::{Balance, Order, Instrument, OrderData},
         ExchangeErrors, UserData,
     },
     request_store::request::Response,
@@ -98,7 +98,7 @@ impl UserData for Okx {
 
     async fn get_pending_orders(
         &self,
-        request: GeneralGetPendingOrdersRequest,
+        request: GeneralOrdersListRequest,
     ) -> Result<Response, ExchangeErrors> {
         let exchange_request = PendingOrdersRequest {
             instrument_id: None,   //Some(request.instrument_id.to_string()),
@@ -116,7 +116,42 @@ impl UserData for Okx {
         Ok(Response::PendingOrders(
             order_response
                 .into_iter()
-                .map(|o| GlobalPendingOrder {
+                .map(|o| Order {
+                    instrument_type: o.instrument_type.to_string(),
+                    instrument_id: o.instrument_id,
+                    order_id: o.order_id,
+                    price: o.price,
+                    size: o.size,
+                    side: o.side.to_string(),
+                    order_type: o.order_type.to_string(),
+                    trade_mode: o.trade_mode.to_string(),
+                    accumulated_fill_quantity: o.accumulated_fill_quantity,
+                })
+                .collect(),
+        ))
+    }
+
+    async fn get_done_orders(
+        &self,
+        request: GeneralOrdersListRequest,
+    ) -> Result<Response, ExchangeErrors> {
+        let exchange_request = PendingOrdersRequest {
+            instrument_id: None,   //Some(request.instrument_id.to_string()),
+            instrument_type: None, //Some(request.instrument_type),
+        };
+
+        let order_response = self
+            .api_client
+            .call::<ApiResponse<Vec<PendingOrder>>, PendingOrdersRequest, OkxAuth>(
+                exchange_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(Response::DoneOrders(
+            order_response
+                .into_iter()
+                .map(|o| Order {
                     instrument_type: o.instrument_type.to_string(),
                     instrument_id: o.instrument_id,
                     order_id: o.order_id,

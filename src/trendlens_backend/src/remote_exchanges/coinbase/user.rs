@@ -1,7 +1,7 @@
 use crate::{
     remote_exchanges::{
-        request::{GeneralGetPendingOrdersRequest, GeneralInstrumentsRequest},
-        response::GlobalPendingOrder,
+        request::{GeneralInstrumentsRequest, GeneralOrdersListRequest},
+        response::Order,
         ExchangeErrors, UserData,
     },
     request_store::request::Response,
@@ -9,7 +9,7 @@ use crate::{
 
 use super::{
     auth::CoinbaseAuth,
-    request::{GetProfileAccountsRequest, OrderType, PendingOrdersRequest, PostOrderBody, },
+    request::{GetProfileAccountsRequest, OrdersRequest, PostOrderBody, Statuses},
     response::{self, CoinbaseResponse, OrderStatus},
     Coinbase,
 };
@@ -66,16 +66,21 @@ impl UserData for Coinbase {
 
     async fn get_pending_orders(
         &self,
-        request: GeneralGetPendingOrdersRequest,
+        request: GeneralOrdersListRequest,
     ) -> Result<Response, ExchangeErrors> {
-        let exchange_request = PendingOrdersRequest {
+        let exchange_request = OrdersRequest {
             market_type: Some(request.instrument_type.to_string()),
             product_id: Some(request.instrument_id.to_string()),
+            limit: 100,
+            status: Statuses(vec![
+                OrderStatus::Done.to_string(),
+                OrderStatus::Rejected.to_string(),
+            ]),
         };
 
         let order_response = self
             .api_client
-            .call::<CoinbaseResponse<Vec<response::Order>>, PendingOrdersRequest, CoinbaseAuth>(
+            .call::<CoinbaseResponse<Vec<response::Order>>, OrdersRequest, CoinbaseAuth>(
                 exchange_request,
                 self.auth.as_ref(),
             )
@@ -85,10 +90,47 @@ impl UserData for Coinbase {
             order_response
                 .into_iter()
                 .filter_map(|o| match o.status {
-                    OrderStatus::Pending
-                    | OrderStatus::Active
-                    | OrderStatus::Received
-                    | OrderStatus::Open => Some(GlobalPendingOrder {
+                    OrderStatus::Done | OrderStatus::Rejected => Some(Order {
+                        instrument_type: request.instrument_type.to_string(),
+                        instrument_id: o.product_id,
+                        order_id: o.id,
+                        price: o.price.unwrap_or(0.0),
+                        size: o.size.unwrap_or(0.0),
+                        side: o.side.to_string(),
+                        order_type: o.order_type.unwrap_or("".to_string()),
+                        trade_mode: o.time_in_force.unwrap_or("".to_string()),
+                        accumulated_fill_quantity: o.filled_size,
+                    }),
+                    _ => None,
+                })
+                .collect(),
+        ))
+    }
+
+    async fn get_done_orders(
+        &self,
+        request: GeneralOrdersListRequest,
+    ) -> Result<Response, ExchangeErrors> {
+        let exchange_request = OrdersRequest {
+            market_type: Some(request.instrument_type.to_string()),
+            product_id: Some(request.instrument_id.to_string()),
+            limit: 100,
+            status: Statuses(vec!["done".to_string()]),
+        };
+
+        let order_response = self
+            .api_client
+            .call::<CoinbaseResponse<Vec<response::Order>>, OrdersRequest, CoinbaseAuth>(
+                exchange_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(Response::DoneOrders(
+            order_response
+                .into_iter()
+                .filter_map(|o| match o.status {
+                    OrderStatus::Done => Some(Order {
                         instrument_type: request.instrument_type.to_string(),
                         instrument_id: o.product_id,
                         order_id: o.id,
