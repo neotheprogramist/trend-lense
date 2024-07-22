@@ -186,6 +186,8 @@ async fn run_transaction(
             },
         };
 
+        ic_cdk::println!("{:?}", response);
+
         let done_ix = SignableInstruction {
             instruction: i.instruction.clone(),
             signature: i.signature.clone(),

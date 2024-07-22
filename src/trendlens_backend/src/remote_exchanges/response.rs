@@ -44,6 +44,7 @@ pub struct Order {
     pub instrument_type: String,
     pub instrument_id: String,
     pub order_id: String,
+    pub state: String,
     pub price: f64,
     pub size: f64,
     pub side: String,

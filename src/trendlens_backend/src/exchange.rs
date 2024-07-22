@@ -13,14 +13,14 @@ use crate::{
         },
         okx::{
             api::{
-                GetBalanceRequest, GetInstrumentsRequest, InstrumentType,
+                GetBalanceRequest, GetInstrumentsRequest, InstrumentType, OrdersHistoryRequest,
                 PendingOrdersRequest as OxkPendingOrdersRequest, PlaceOrderBody,
             },
             Okx,
         },
         request::{GeneralInstrumentsRequest, OrderSide},
         response::Instrument,
-        ExchangeErrors, OpenData,
+        ApiRequest, ExchangeErrors, OpenData,
     },
     request_store::request::Request,
     storable_wrapper::StorableWrapper,
@@ -182,10 +182,10 @@ impl ExchangeImpl {
                         product_id: Some(i.instrument_id.to_string()),
                         market_type: Some(i.instrument_type.to_string()),
                         limit: 100,
-                        status: match i.pending {
+                        status: Some(match i.pending {
                             true => Statuses(vec!["open".to_string(), "pending".to_string()]),
                             false => Statuses(vec!["done".to_string(), "rejected".to_string()]),
-                        },
+                        }),
                     };
 
                     c.get_signature_data(request)
@@ -210,14 +210,24 @@ impl ExchangeImpl {
                 _ => "".to_string(),
             },
             ExchangeImpl::Okx(o) => match request {
-                Request::OrdersList(i) => {
-                    let request = OxkPendingOrdersRequest {
-                        instrument_id: Some(i.instrument_id.to_string()),
-                        instrument_type: Some(i.instrument_type),
-                    };
+                Request::OrdersList(i) => match i.pending {
+                    true => {
+                        let r = OxkPendingOrdersRequest {
+                            instrument_id: Some(i.instrument_id.to_string()),
+                            instrument_type: Some(i.instrument_type),
+                        };
 
-                    o.get_signature_data(request)
-                }
+                        o.get_signature_data(r)
+                    }
+                    false => {
+                        let r = OrdersHistoryRequest {
+                            instrument_id: Some(i.instrument_id.to_string()),
+                            instrument_type: i.instrument_type,
+                        };
+
+                        o.get_signature_data(r)
+                    }
+                },
                 Request::Instruments(i) => {
                     let request = GetInstrumentsRequest {
                         instrument_id: i

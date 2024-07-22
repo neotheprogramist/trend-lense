@@ -26,11 +26,11 @@ export function isBalanceResponse(
   return (response as { Balances: Array<Balance> }).Balances !== undefined;
 }
 
-export function isPendingOrdersResponse(
+export function isOrdersResponse(
   response: Response,
-): response is { PendingOrders: Array<Order> } {
+): response is { OrdersInfo: Array<Order> } {
   return (
-    (response as { PendingOrders: Array<Order> }).PendingOrders !==
+    (response as { OrdersInfo: Array<Order> }).OrdersInfo !==
     undefined
   );
 }

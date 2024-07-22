@@ -72,10 +72,10 @@ impl UserData for Coinbase {
             market_type: Some(request.instrument_type.to_string()),
             product_id: Some(request.instrument_id.to_string()),
             limit: 100,
-            status: Statuses(vec![
-                OrderStatus::Done.to_string(),
-                OrderStatus::Rejected.to_string(),
-            ]),
+            status: Some(Statuses(vec![
+                OrderStatus::Open.to_string(),
+                OrderStatus::Pending.to_string(),
+            ])),
         };
 
         let order_response = self
@@ -86,11 +86,11 @@ impl UserData for Coinbase {
             )
             .await?;
 
-        Ok(Response::PendingOrders(
+        Ok(Response::OrdersInfo(
             order_response
                 .into_iter()
                 .filter_map(|o| match o.status {
-                    OrderStatus::Done | OrderStatus::Rejected => Some(Order {
+                    OrderStatus::Open | OrderStatus::Pending => Some(Order {
                         instrument_type: request.instrument_type.to_string(),
                         instrument_id: o.product_id,
                         order_id: o.id,
@@ -100,6 +100,7 @@ impl UserData for Coinbase {
                         order_type: o.order_type.unwrap_or("".to_string()),
                         trade_mode: o.time_in_force.unwrap_or("".to_string()),
                         accumulated_fill_quantity: o.filled_size,
+                        state: o.status.to_string()
                     }),
                     _ => None,
                 })
@@ -115,7 +116,10 @@ impl UserData for Coinbase {
             market_type: Some(request.instrument_type.to_string()),
             product_id: Some(request.instrument_id.to_string()),
             limit: 100,
-            status: Statuses(vec!["done".to_string()]),
+            status: Some(Statuses(vec![
+                OrderStatus::Done.to_string(),
+                OrderStatus::Rejected.to_string(),
+            ])),
         };
 
         let order_response = self
@@ -126,11 +130,11 @@ impl UserData for Coinbase {
             )
             .await?;
 
-        Ok(Response::DoneOrders(
+        Ok(Response::OrdersInfo(
             order_response
                 .into_iter()
                 .filter_map(|o| match o.status {
-                    OrderStatus::Done => Some(Order {
+                    OrderStatus::Done | OrderStatus::Rejected => Some(Order {
                         instrument_type: request.instrument_type.to_string(),
                         instrument_id: o.product_id,
                         order_id: o.id,
@@ -140,6 +144,7 @@ impl UserData for Coinbase {
                         order_type: o.order_type.unwrap_or("".to_string()),
                         trade_mode: o.time_in_force.unwrap_or("".to_string()),
                         accumulated_fill_quantity: o.filled_size,
+                        state: o.status.to_string()
                     }),
                     _ => None,
                 })

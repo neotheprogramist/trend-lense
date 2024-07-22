@@ -142,6 +142,19 @@ mod test {
       
         assert_eq!(serialized, "status=open&status=pending");
     }
+
+    #[test]
+    fn test_serialize_statuses_empty() {
+        let order_list_request = OrdersRequest {
+            product_id: None,
+            market_type: None,
+            limit: 10,
+            status: Some(Statuses(vec!["open".to_string(), "pending".to_string()])),
+        };
+
+        let serialized = serde_qs::to_string(&order_list_request).unwrap();
+        assert_eq!(serialized, "limit=10&status=open&status=pending");
+    }
 }
 
 #[serde_as]
@@ -151,8 +164,11 @@ pub struct OrdersRequest {
     pub product_id: Option<String>,
     pub market_type: Option<String>,
     pub limit: u64,
-    pub status: Statuses
+    #[serde(flatten)]
+    pub status: Option<Statuses>
 }
+
+
 
 impl ApiRequest for OrdersRequest {
     const BODY: bool = false;

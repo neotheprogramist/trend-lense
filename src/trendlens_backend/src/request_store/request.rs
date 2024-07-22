@@ -22,6 +22,5 @@ pub enum Response {
     Instruments(Vec<Instrument>),
     Balances(Vec<Balance>),
     Order(OrderData),
-    PendingOrders(Vec<Order>),
-    DoneOrders(Vec<Order>),
+    OrdersInfo(Vec<Order>),
 }

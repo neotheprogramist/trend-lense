@@ -65,6 +65,7 @@ type Order = record {
   size : float64;
   trade_mode : text;
   accumulated_fill_quantity : float64;
+  state : text;
   order_type : text;
   instrument_id : text;
   order_id : text;
@@ -93,9 +94,8 @@ type Request = variant {
   Balances : GeneralBalanceRequest;
 };
 type Response = variant {
-  DoneOrders : vec Order;
+  OrdersInfo : vec Order;
   Instruments : vec Instrument;
-  PendingOrders : vec Order;
   Order : OrderData;
   Balances : vec Balance;
 };
