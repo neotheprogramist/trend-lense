@@ -13,7 +13,11 @@
   import { instrumentsStore } from "$lib/instruments.svelte";
   import { handleInstrumentType } from "$lib/instrumentType";
   import { keyStore } from "$lib/keystore.svelte";
-  import { executeRequest, type PostOrderRequest } from "$lib/postOrder.svelte";
+  import {
+    executeRequest,
+    postRequest,
+    type PostOrderRequest,
+  } from "$lib/postOrder.svelte";
   import { isPendingOrdersResponse } from "$lib/response";
   import { extractOkValue } from "$lib/result";
   import { finishSignature } from "$lib/signature";
@@ -115,8 +119,8 @@
     }
   };
 
-  const handlePost = (request: PostOrderRequest) => {
-    throw new Error("Not implemented");
+  const handlePost = async (request: PostOrderRequest) => {
+    await postRequest(selectedExchanges[0], request);
   };
 
   const handleExecute = async (request: PostOrderRequest) => {
@@ -324,14 +328,7 @@
       </Tabs.Content>
 
       <Tabs.Content value="requests">
-        <RequestList
-          {requests}
-          onRequestSelect={(id) => {
-            selectedRequestIndex = id;
-            selectedRequest = requests[id];
-            console.log(selectedRequest);
-          }}
-        />
+        <RequestList {requests} />
       </Tabs.Content>
 
       <Tabs.Content value="orders_history"></Tabs.Content>

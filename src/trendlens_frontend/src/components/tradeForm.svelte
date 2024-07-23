@@ -79,6 +79,12 @@
   const handleTradeModeChange = (tradeMode: TradeModeType) => {
     request.tradeMode = tradeMode;
   };
+
+  const getFixedAmount = (amount: number) => {
+    if (amount == 0) return "-";
+    if (amount < 1) return amount.toFixed(6);
+    return amount.toFixed(2);
+  };
 </script>
 
 <form class="flex flex-col items-center justify-start h-full">
@@ -163,13 +169,31 @@
         {/if}
 
         <div>
-          <label
-            for="total"
-            class={cn(
-              "text-xs",
-              $mode == "dark" ? "text-neutral-300" : "text-neutral-600",
-            )}>Total value</label
-          >
+          <div class="flex justify-between">
+            <label
+              for="total"
+              class={cn(
+                "text-xs",
+                $mode == "dark" ? "text-neutral-300" : "text-neutral-600",
+              )}>Total value</label
+            >
+            {#if request.orderSide == OrderSideType.Buy}
+              <button
+                class="text-xs mr-2"
+                onclick={() => (request.size = balances.quote.toString())}
+              >
+                Max: {getFixedAmount(balances.quote)}
+              </button>
+            {:else}
+              <button
+                class="text-xs mr-2"
+                onclick={() => (request.size = balances.base.toString())}
+              >
+                Max: {getFixedAmount(balances.base)}
+              </button>
+            {/if}
+          </div>
+
           <div id="total" class="flex border rounded-md px-3 py-2.5 outline-1">
             <input
               type="text"
