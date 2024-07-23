@@ -130,6 +130,12 @@
     );
   };
 
+  const getFixedAmount = (amount: number) => {
+    if (amount == 0) return "-";
+    if (amount < 1) return amount.toFixed(6);
+    return amount.toFixed(2);
+  };
+
   //@ts-ignore
   $effect(async () => {
     await Promise.all(
@@ -262,20 +268,24 @@
     </Tabs.Content>
 
     <fieldset class="grid gap-6 rounded-lg border p-4">
-      <div class="flex gap-5">
-        <div class="flex flex-col">
-          {#each exchanges as e}
-            {@const balance = exchangeBalances[e]}
-            <div class="flex justify-between">
-              <span class="font-bold">{e}</span>
-              <span class="ml-5">
-                {balance ? balance.base : "-"}
-                {instrument.base} / {balance ? balance.quote : "-"}
+      <div class="flex flex-col">
+        {#each exchanges as e}
+          {@const balance = exchangeBalances[e]}
+          <div class="flex justify-between items-center">
+            <div class="font-bold">{e}</div>
+            <div class="ml-5 flex-col text-sm">
+              <p>
+                {getFixedAmount(balance ? balance.base : 0)}
+                {instrument.base}
+              </p>
+
+              <p>
+                {getFixedAmount(balance ? balance.quote : 0)}
                 {instrument.quote}
-              </span>
+              </p>
             </div>
-          {/each}
-        </div>
+          </div>
+        {/each}
       </div>
     </fieldset>
 

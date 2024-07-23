@@ -84,7 +84,7 @@ pub struct TransactionStore;
 impl TransactionStore {
     fn insert_instruction(instruction: SignableInstruction) -> InstructionId {
         INSTRUCTIONS.with_borrow_mut(|k| {
-            let instruction_id = k.len() as InstructionId;
+            let instruction_id = k.last_key_value().and_then(|(k, _v)| Some(k + 1)).unwrap_or(0) as InstructionId;
             k.insert(instruction_id, StorableWrapper(instruction));
             instruction_id
         })
@@ -92,7 +92,7 @@ impl TransactionStore {
 
     fn insert_transaction(instructions: Vec<SignableInstruction>) -> TransactionId {
         TRANSACTIONS.with_borrow_mut(|k| {
-            let transaction_id = k.len() as TransactionId;
+            let transaction_id = k.last_key_value().and_then(|(k, _v)| Some(k + 1)).unwrap_or(0) as TransactionId;
 
             let instructions_ids: Vec<InstructionId> = instructions
                 .into_iter()

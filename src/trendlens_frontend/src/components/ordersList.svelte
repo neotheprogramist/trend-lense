@@ -14,8 +14,8 @@
   <table class="w-full">
     <thead>
       <tr>
-        <th></th>
-        <th class="py-4">Instrument</th>
+        <th class="py-4"></th>
+        <th>Instrument</th>
         <th>Instrument Type</th>
         <th>Order Total</th>
         <th>Order Price</th>
@@ -26,13 +26,11 @@
       </tr>
     </thead>
     <tbody>
-      {#each [...orders, ...orders] as order}
+      {#each orders as order}
         <tr class="text-center">
           <td>
             {#if order.side == "buy"}
-              <p class="text-green-400 bg-green-900 rounded-xl px-1 py-0.5">
-                Buy
-              </p>
+              <p class="text-green-400 bg-green-900 rounded-xl py-0.5">Buy</p>
             {:else}
               <p class="text-red-400 bg-red-900 rounded-xl py-0.5">Sell</p>
             {/if}
