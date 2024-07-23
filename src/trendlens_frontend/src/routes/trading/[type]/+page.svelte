@@ -34,6 +34,7 @@
   import { handleInstrumentType } from "$lib/instrumentType";
   import { finishSignature } from "$lib/signature";
   import { isOrdersResponse } from "$lib/response";
+  import VolumeChart from "$components/volumeChart.svelte";
 
   interface IProps {
     data: PageData;
@@ -180,7 +181,7 @@
       throw new Error("No actor found");
     }
 
-    console.log('fetching orders')
+    console.log("fetching orders");
 
     const [requestNumber, instructions] = await wallet.actor.add_transaction(
       selectedExchanges.map((e) => {
@@ -296,7 +297,16 @@
       <Tabs.Content value="trading">
         <TradingView candlesData={candlesFromBackend} />
       </Tabs.Content>
-      <Tabs.Content value="charts">Change your password here.</Tabs.Content>
+      <Tabs.Content value="charts">
+        {#if selectedInstrument}
+          <VolumeChart
+            instrument={selectedInstrument}
+            exchanges={selectedExchanges}
+          />
+        {:else}
+          Select instrument to view volume chart
+        {/if}
+      </Tabs.Content>
       <Tabs.Content value="info">Change your password here.</Tabs.Content>
     </Tabs.Root>
 
