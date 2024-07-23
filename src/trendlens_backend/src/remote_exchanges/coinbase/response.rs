@@ -241,43 +241,42 @@ pub struct Order {
     pub price: Option<f64>,
     #[serde_as(as = "Option<DisplayFromStr>")]
     pub size: Option<f64>,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub funds: Option<f64>,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub specified_funds: Option<f64>,
-    pub expire_time: Option<String>,
-    pub done_at: Option<String>,
-    pub done_reason: Option<String>,
-    pub reject_reason: Option<String>,
-    pub stop: Option<String>,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub stop_price: Option<f64>,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub funding_amount: Option<f64>,
-    pub client_oid: Option<String>,
-    pub market_type: Option<String>,
+    // #[serde_as(as = "Option<DisplayFromStr>")]
+    // pub funds: Option<f64>,
+    // #[serde_as(as = "Option<DisplayFromStr>")]
+    // pub specified_funds: Option<f64>,
+    // pub expire_time: Option<String>,
+    // pub done_at: Option<String>,
+    // pub done_reason: Option<String>,
+    // pub reject_reason: Option<String>,
+    // pub stop: Option<String>,
+    // #[serde_as(as = "Option<DisplayFromStr>")]
+    // pub stop_price: Option<f64>,
+    // #[serde_as(as = "Option<DisplayFromStr>")]
+    // pub funding_amount: Option<f64>,
+    // pub client_oid: Option<String>,
+    // pub market_type: Option<String>,
     pub product_id: String,
-    pub secondary_order_id: Option<String>,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub stop_limit_price: Option<f64>,
-    pub profile_id: Option<String>,
+    // pub secondary_order_id: Option<String>,
+    // #[serde_as(as = "Option<DisplayFromStr>")]
+    // pub stop_limit_price: Option<f64>,
+    // pub profile_id: Option<String>,
     #[serde_as(as = "DisplayFromStr")]
     pub side: OrderSide,
     #[serde(rename = "type")]
     pub order_type: Option<String>,
     pub time_in_force: Option<String>,
-    pub post_only: bool,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub max_floor: Option<u32>,
-    pub created_at: String,
-    #[serde_as(as = "DisplayFromStr")]
-    pub fill_fees: f64,
+    // pub post_only: bool,
+    // #[serde_as(as = "Option<DisplayFromStr>")]
+    // pub max_floor: Option<u32>,
+    // pub created_at: String,
+    // #[serde_as(as = "DisplayFromStr")]
+    // pub fill_fees: f64,
     #[serde_as(as = "DisplayFromStr")]
     pub filled_size: f64,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-
-    pub executed_value: Option<f64>,
+    // #[serde_as(as = "Option<DisplayFromStr>")]
+    // pub executed_value: Option<f64>,
     #[serde_as(as = "DisplayFromStr")]
     pub status: OrderStatus,
-    pub settled: bool,
+    // pub settled: bool,
 }
