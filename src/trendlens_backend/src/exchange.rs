@@ -201,7 +201,7 @@ impl ExchangeImpl {
                         price: request.order_price,
                         side: request.side.into(),
                         funds: None,
-                        size: Some(request.size.to_string()),
+                        size: Some(request.size),
                         order_type: request.order_type.into(),
                     };
 
