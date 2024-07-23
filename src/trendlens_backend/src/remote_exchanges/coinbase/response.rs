@@ -300,6 +300,7 @@ impl Into<Candle> for CoinbaseCandle {
             highest_price: self.high,
             open_price: self.open,
             close_price: self.close,
+            volume: self.volume,
         }
     }
 }

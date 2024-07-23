@@ -89,28 +89,15 @@ impl OpenData for Coinbase {
         pair: &Pair,
         range: std::ops::Range<u64>,
     ) -> Result<Vec<TimeVolume>, ExchangeErrors> {
-        let candle_request = GetProductCandles {
-            product_id: pair.to_string(),
-            granularity: None,
-            start: Some(range.start.to_string()),
-            end: Some(range.end.to_string()),
-        };
-
-        let candle_response = self
-            .api_client
-            .call::<CoinbaseResponse<Vec<CoinbaseCandle>>, GetProductCandles, CoinbaseAuth>(
-                candle_request,
-                self.auth.as_ref(),
-            )
-            .await?;
-
-        Ok(candle_response
-            .into_iter()
-            .map(|candle| TimeVolume {
-                timestamp: candle.time,
-                volume: candle.volume,
-            })
-            .collect())
+        self.fetch_candles(pair, range, 300).await.map(|candles| {
+            candles
+                .into_iter()
+                .map(|candle| TimeVolume {
+                    timestamp: candle.timestamp,
+                    volume: candle.volume,
+                })
+                .collect()
+        })
     }
 
     async fn get_public_instruments(

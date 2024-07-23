@@ -1,7 +1,7 @@
-use super::api::{GetOrderBookRequest, InstrumentType, TakerVolumeRequest};
+use super::api::{GetOrderBookRequest, SpotCandleStickRequest};
 use super::auth::OkxAuth;
-use super::response::{ApiResponse, CandleStick, ConcreteInstrument, OrderBook, TakerVolume};
-use super::{api::IndexCandleStickRequest, Okx};
+use super::response::{ApiResponse, CandleStick, ConcreteInstrument, OrderBook};
+use super::Okx;
 use crate::exchange::TimeVolume;
 use crate::remote_exchanges::request::GeneralInstrumentsRequest;
 use crate::remote_exchanges::response::{Instrument, OrderBook as GlobalOrderBook};
@@ -19,26 +19,23 @@ impl OpenData for Okx {
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors> {
-        let index_name = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
-
-        ic_cdk::println!("index_name: {:?}", index_name);
-        let candle_request = IndexCandleStickRequest {
-            after_timestamp: None,
-            before_timestamp: Some(range.start * 1000),
+        let request = SpotCandleStickRequest {
+            end: Some(range.end * 1000),
+            begin: Some(range.start * 1000),
             bar_size: Some(Okx::interval_string(interval)),
-            index_name,
+            index_name: Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?,
             results_limit: None,
         };
 
-        let candle_response = self
+        let response = self
             .api_client
-            .call::<ApiResponse<Vec<CandleStick>>, IndexCandleStickRequest, OkxAuth>(
-                candle_request,
+            .call::<ApiResponse<Vec<CandleStick>>, SpotCandleStickRequest, OkxAuth>(
+                request,
                 self.auth.as_ref(),
             )
             .await?;
 
-        Ok(candle_response
+        Ok(response
             .into_iter()
             .map(|concrete_candle| concrete_candle.into())
             .collect())
@@ -49,27 +46,13 @@ impl OpenData for Okx {
         pair: &Pair,
         range: std::ops::Range<u64>,
     ) -> Result<Vec<TimeVolume>, ExchangeErrors> {
-        let request = TakerVolumeRequest {
-            begin: Some(range.start),
-            end: Some(range.end),
-            period: None,
-            currency: pair.base.clone(),
-            instrument_type: Some(InstrumentType::Spot),
-        };
+        let candles = self.fetch_candles(pair, range, 5).await.unwrap();
 
-        let response = self
-            .api_client
-            .call::<ApiResponse<Vec<TakerVolume>>, TakerVolumeRequest, OkxAuth>(
-                request,
-                self.auth.as_ref(),
-            )
-            .await?;
-
-        Ok(response
+        Ok(candles
             .into_iter()
-            .map(|taker_volume| TimeVolume {
-                timestamp: taker_volume.timestamp,
-                volume: taker_volume.sell_volume + taker_volume.buy_volume,
+            .map(|candle| TimeVolume {
+                timestamp: candle.timestamp,
+                volume: candle.volume,
             })
             .collect())
     }
