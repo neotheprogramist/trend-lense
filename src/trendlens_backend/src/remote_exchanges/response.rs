@@ -38,3 +38,17 @@ pub struct OrderBook {
     pub bids: Vec<BidAsk>,
     pub asks: Vec<BidAsk>,
 }
+
+#[derive(Deserialize, Debug, Clone, CandidType, Serialize)]
+pub struct Order {
+    pub instrument_type: String,
+    pub instrument_id: String,
+    pub order_id: String,
+    pub state: String,
+    pub price: f64,
+    pub size: f64,
+    pub side: String,
+    pub order_type: String,
+    pub trade_mode: String,
+    pub accumulated_fill_quantity: f64,
+}

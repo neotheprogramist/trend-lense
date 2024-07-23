@@ -1,11 +1,17 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
+use serde_this_or_that::as_u64;
+use serde_this_or_that::as_f64;
 
 use crate::{
     api_client::ApiClientErrors,
     exchange::Candle,
     pair::Pair,
     remote_exchanges::{
-        response::{ApiResponseWrapper, Balance, Instrument, BidAsk as GlobalBidAsk, OrderBook as GlobalOrderBook},
+        request::{OrderSide, OrderType, TradeMode},
+        response::{
+            ApiResponseWrapper, Balance, BidAsk as GlobalBidAsk, Instrument,
+            OrderBook as GlobalOrderBook,
+        },
         ExchangeErrors,
     },
 };
@@ -18,8 +24,8 @@ use super::api::InstrumentType;
 #[serde_as]
 #[derive(Debug, Deserialize, Serialize, PartialEq, Default)]
 pub struct ApiResponse<T> {
-    #[serde_as(as = "DisplayFromStr")]
-    pub code: u32,
+    #[serde(deserialize_with = "as_u64")]
+    pub code: u64,
     pub msg: String,
     pub data: T,
 }
@@ -39,13 +45,13 @@ impl<R: DeserializeOwned> ApiResponseWrapper<R> for ApiResponse<R> {
 #[serde_as]
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct BidAsk {
-    #[serde_as(as="DisplayFromStr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub price: f64,
-    #[serde_as(as="DisplayFromStr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub size: f64,
-    #[serde_as(as="DisplayFromStr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub deprecated: u32,
-    #[serde_as(as="DisplayFromStr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub orders_count: u32,
 }
 
@@ -55,7 +61,7 @@ pub struct OrderBook {
     pub asks: Vec<BidAsk>,
     pub bids: Vec<BidAsk>,
     #[serde(rename = "ts")]
-    #[serde_as(as="DisplayFromStr")]
+    #[serde_as(as = "DisplayFromStr")]
     pub timestamp: u64,
 }
 
@@ -77,7 +83,6 @@ impl Into<GlobalOrderBook> for OrderBook {
         }
     }
 }
-
 
 #[serde_as]
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -134,6 +139,88 @@ pub struct PlaceOrderResponse {
     pub data: Vec<PlaceOrderDetails>,
     pub in_time: String,
     pub out_time: String,
+}
+
+
+
+#[serde_as]
+#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+pub struct Order {
+    #[serde(rename = "instType")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub instrument_type: InstrumentType,
+    #[serde(rename = "instId")]
+    pub instrument_id: String,
+    #[serde(rename = "tgtCcy")]
+    pub order_quantity_currency: String,
+    #[serde(rename = "ordId")]
+    pub order_id: String,
+    #[serde(rename = "px")]
+    #[serde(deserialize_with = "as_f64")]
+    pub price: f64,
+    #[serde(rename = "sz")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub size: f64,
+    #[serde_as(as = "DisplayFromStr")]
+    pub side: OrderSide,
+    #[serde(rename = "ordType")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub order_type: OrderType,
+    #[serde(rename = "tdMode")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub trade_mode: TradeMode,
+    #[serde(rename = "accFillSz")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub accumulated_fill_quantity: f64,
+    #[serde(rename = "avgPx")]
+    #[serde(deserialize_with = "as_f64")]
+    pub average_filled_price: f64,
+    #[serde_as(as = "DisplayFromStr")]
+    pub state: OrderState,
+}
+
+#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+pub enum OrderState {
+    Pending,
+    Done,
+    Canceled,
+    Filled,
+    MmpCanceled,
+    Live,
+    PartiallyFilled
+}
+
+impl FromStr for OrderState {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "pending" => Ok(OrderState::Pending),
+            "done" => Ok(OrderState::Done),
+            "canceled" => Ok(OrderState::Canceled),
+            "filled" => Ok(OrderState::Filled),
+            "mmp_canceled" => Ok(OrderState::MmpCanceled),
+            "live" => Ok(OrderState::Live),
+            "partially_filled" => Ok(OrderState::PartiallyFilled),
+            _ => Err("Unknown order state".to_string()),
+        }
+    }
+}
+
+impl Display for OrderState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let state = match self {
+            OrderState::Pending => "pending",
+            OrderState::Done => "done",
+            OrderState::Canceled => "canceled",
+            OrderState::Filled => "filled",
+            OrderState::MmpCanceled => "mmp_canceled",
+            OrderState::Live => "live",
+            OrderState::PartiallyFilled => "partially_filled",
+        };
+
+        write!(f, "{}", state)
+    }
 }
 
 #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]

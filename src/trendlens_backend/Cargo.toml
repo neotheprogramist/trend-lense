@@ -19,6 +19,7 @@ ic-cdk-timers = "0.7" # Feel free to remove this dependency if you don't need ti
 ic-stable-structures = "0.6.5"
 regex = "1.10.5"
 serde = { version = "1.0.203", features = ["derive"] }
+serde-this-or-that = "0.4.2"
 serde_json = "1.0.117"
 serde_qs = "0.13.0"
 serde_with = "3.8.1"

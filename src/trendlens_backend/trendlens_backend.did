@@ -35,13 +35,18 @@ type GeneralInstrumentsRequest = record {
   instrument_id : opt Pair;
   instrument_type : InstrumentType;
 };
+type GeneralOrdersListRequest = record {
+  pending : bool;
+  instrument_id : Pair;
+  instrument_type : InstrumentType;
+};
 type GeneralPostOrderRequest = record {
   margin_currency : opt text;
   side : OrderSide;
   size : float64;
   trade_mode : TradeMode;
   order_type : OrderType;
-  instrument_id : text;
+  instrument_id : Pair;
   order_price : opt float64;
   position_side : opt PositionSide;
 };
@@ -55,6 +60,18 @@ type Instrument = record {
   instrument_type : InstrumentType;
 };
 type InstrumentType = variant { Spot; Swap; Futures; Option; Margin };
+type Order = record {
+  side : text;
+  size : float64;
+  trade_mode : text;
+  accumulated_fill_quantity : float64;
+  state : text;
+  order_type : text;
+  instrument_id : text;
+  order_id : text;
+  instrument_type : text;
+  price : float64;
+};
 type OrderData = record { code : text };
 type OrderSide = variant { Buy; Sell };
 type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
@@ -71,11 +88,13 @@ type RejectionCode = variant {
 };
 type Request = variant {
   Empty;
+  OrdersList : GeneralOrdersListRequest;
   Instruments : GeneralInstrumentsRequest;
   PostOrder : GeneralPostOrderRequest;
   Balances : GeneralBalanceRequest;
 };
 type Response = variant {
+  OrdersInfo : vec Order;
   Instruments : vec Instrument;
   Order : OrderData;
   Balances : vec Balance;

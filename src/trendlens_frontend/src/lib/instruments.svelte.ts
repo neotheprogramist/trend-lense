@@ -2,12 +2,7 @@ import type { Pair } from "../../../declarations/trendlens_backend/trendlens_bac
 import { anonymousBackend } from "./canisters";
 import { Exchanges, handleExchange } from "./exchange";
 import { handleInstrumentType } from "./instrumentType";
-import { keyStore } from "./keystore.svelte";
 import type { InstrumentType } from "./request";
-import { isInstrumentsResponse } from "./response";
-import { extractOkValue } from "./result";
-import { finishSignature } from "./signature";
-import { wallet } from "./wallet.svelte";
 
 export type ExchangeWithInstrumentType = string;
 
@@ -131,7 +126,9 @@ class InstrumentsStore {
       }
     });
 
-    return this.countExchanges(flatPairs).sort((a, b) => a.count < b.count ? 1: 0);
+    return this.countExchanges(flatPairs).sort((a, b) =>
+      a.count < b.count ? 1 : 0,
+    );
   }
 
   // public async filterByUser(type: InstrumentType, loaded?: boolean) {

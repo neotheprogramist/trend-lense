@@ -1,17 +1,18 @@
 import type {
+  PositionSide as BackendPositionSide,
   OrderSide,
   OrderType,
   TradeMode,
-  PositionSide as BackendPositionSide,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-import { handleExchange, Exchanges } from "./exchange";
+import { Exchanges, handleExchange } from "./exchange";
 import { keyStore } from "./keystore.svelte";
+import { pairFromString } from "./pair";
 import {
-  OrderSideType,
   InstrumentType,
+  OrderSideType,
   OrderTypeType,
-  TradeModeType,
   PositionSideType,
+  TradeModeType,
 } from "./request";
 import { isPostOrderResponse } from "./response";
 import { extractOkValue } from "./result";
@@ -26,13 +27,13 @@ export class PostOrderRequest {
   // marginCurrency: string;
   tradeMode = $state<TradeModeType | null>(null);
   positionSide = $state<PositionSideType | null>(null);
-  size = $state<number | undefined>(undefined);
+  size = $state<string | undefined>(undefined);
   orderSide = $state<OrderSideType>(OrderSideType.Buy);
   orderType = $state<OrderTypeType>(OrderTypeType.Market);
 
-  orderPrice: { value?: number; required: boolean } = $derived.by(() => {
-    const required = this.orderType != OrderTypeType.Market;
-    return { value: undefined, required };
+  orderPrice = $state<string | undefined>(undefined);
+  orderPriceRequired = $derived.by(() => {
+    return this.orderType != OrderTypeType.Market;
   });
 
   constructor(tradeModes: TradeModeType[], instrumentId: string) {
@@ -131,16 +132,14 @@ export const postRequest = async (
       exchange: handleExchange(exchange),
       request: {
         PostOrder: {
-          instrument_id: request.instrumentId,
+          instrument_id: pairFromString(request.instrumentId),
           trade_mode: handleTradeMode(request.tradeMode!),
           margin_currency: [],
           order_price:
-            request.orderPrice.value != undefined
-              ? [request.orderPrice.value]
-              : [],
+            request.orderPrice != undefined ? [Number(request.orderPrice)] : [],
           order_type: handleOrderType(request.orderType),
           side: handleOrderSide(request.orderSide),
-          size: request.size ?? 0,
+          size: request.size ? Number(request.size) : 0,
           position_side: request.positionSide
             ? [handlePositionSide(request.positionSide)]
             : [],
