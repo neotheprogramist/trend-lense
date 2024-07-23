@@ -8,7 +8,7 @@
   import type { SignableInstruction } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
   interface IProps {
-    requests: SignableInstruction[][];
+    requests: [number, SignableInstruction[]][];
   }
 
   let { requests }: IProps = $props();
@@ -68,8 +68,8 @@
     );
   };
 
-  function filterRequests(requests: SignableInstruction[][]) {
-    return requests.filter((transaction) => {
+  function filterRequests(requests: [number, SignableInstruction[]][]) {
+    return requests.filter(([id, transaction]) => {
       if (
         isPostOrderRequest(transaction[0].instruction.request) &&
         !transaction[0].executed
@@ -96,7 +96,7 @@
       </tr>
     </thead>
     <tbody>
-      {#each filterRequests(requests) as transaction, id}
+      {#each filterRequests(requests) as [id, transaction]}
         {#if isPostOrderRequest(transaction[0].instruction.request)}
           {@const side = Object.keys(
             transaction[0].instruction.request.PostOrder.side,

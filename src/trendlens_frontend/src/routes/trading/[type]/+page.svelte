@@ -131,7 +131,7 @@
     selectedInstrument = i;
   };
 
-  let requests = $state<SignableInstruction[][]>([]);
+  let requests = $state<[number, SignableInstruction[]][]>([]);
   let orders = $state<Order[]>([]);
   let done_orders = $state<Order[]>([]);
 

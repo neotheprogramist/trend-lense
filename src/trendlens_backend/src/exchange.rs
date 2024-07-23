@@ -20,7 +20,7 @@ use crate::{
         },
         request::{GeneralInstrumentsRequest, OrderSide},
         response::Instrument,
-        ApiRequest, ExchangeErrors, OpenData,
+        ExchangeErrors, OpenData,
     },
     request_store::request::Request,
     storable_wrapper::StorableWrapper,
