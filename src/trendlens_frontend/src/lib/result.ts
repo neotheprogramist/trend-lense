@@ -6,19 +6,26 @@ import type {
   Result_1,
   Result_2,
   Result_3,
+  SignableInstruction,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
 export function extractOkValue(result: Result): Array<Candle>;
 export function extractOkValue(result: Result_1): boolean;
 export function extractOkValue(result: Result_2): Array<Response>;
-export function extractOkValue(result: Result_3): number;
+export function extractOkValue(
+  result: Result_3,
+): [number, Array<SignableInstruction>];
 export function extractOkValue(
   result: Result | Result_1 | Result_2 | Result_3,
-): Array<Candle> | Array<Response> | boolean | number {
+):
+  | Array<Candle>
+  | Array<Response>
+  | boolean
+  | [number, Array<SignableInstruction>] {
   if ("Ok" in result) {
     return result.Ok;
   } else if ("Err" in result) {
-    console.log(result.Err)
+    console.log(result.Err);
     // throw new Error(`Err: ${JSON.stringify(result.Err)}`);
   }
 

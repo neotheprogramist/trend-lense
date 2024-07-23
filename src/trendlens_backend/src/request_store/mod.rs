@@ -12,6 +12,13 @@ use std::{cell::RefCell, ops::Deref};
 pub mod request;
 
 #[derive(Debug, Deserialize, Serialize, Clone, CandidType)]
+pub struct SignableInstruction {
+    pub instruction: Instruction,
+    pub signature: String,
+    pub executed: bool
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, CandidType)]
 pub struct Instruction {
     pub exchange: Exchange,
     pub api_key: String,
@@ -19,7 +26,7 @@ pub struct Instruction {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, CandidType)]
-pub struct Transaction(pub Vec<Instruction>);
+pub struct Transaction(pub Vec<SignableInstruction>);
 
 pub struct TransactionIterator<'a> {
     instructions: &'a Vec<Instruction>,
@@ -37,7 +44,7 @@ impl<'a> Iterator for TransactionIterator<'a> {
 }
 
 impl Deref for Transaction {
-    type Target = Vec<Instruction>;
+    type Target = Vec<SignableInstruction>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -45,7 +52,7 @@ impl Deref for Transaction {
 }
 
 type InstructionId = u32;
-type InstructionsTable = StableBTreeMap<InstructionId, StorableWrapper<Instruction>, Memory>;
+type InstructionsTable = StableBTreeMap<InstructionId, StorableWrapper<SignableInstruction>, Memory>;
 type TransactionId = u32;
 type TransactionsTable = StableBTreeMap<TransactionId, StorableWrapper<Vec<InstructionId>>, Memory>;
 type UserTransactionsTable = StableBTreeMap<Principal, StorableWrapper<Vec<TransactionId>>, Memory>;
@@ -75,17 +82,17 @@ thread_local! {
 pub struct TransactionStore;
 
 impl TransactionStore {
-    fn insert_instruction(instruction: Instruction) -> InstructionId {
+    fn insert_instruction(instruction: SignableInstruction) -> InstructionId {
         INSTRUCTIONS.with_borrow_mut(|k| {
-            let instruction_id = k.len() as InstructionId;
+            let instruction_id = k.last_key_value().and_then(|(k, _v)| Some(k + 1)).unwrap_or(0) as InstructionId;
             k.insert(instruction_id, StorableWrapper(instruction));
             instruction_id
         })
     }
 
-    fn insert_transaction(instructions: Vec<Instruction>) -> TransactionId {
+    fn insert_transaction(instructions: Vec<SignableInstruction>) -> TransactionId {
         TRANSACTIONS.with_borrow_mut(|k| {
-            let transaction_id = k.len() as TransactionId;
+            let transaction_id = k.last_key_value().and_then(|(k, _v)| Some(k + 1)).unwrap_or(0) as TransactionId;
 
             let instructions_ids: Vec<InstructionId> = instructions
                 .into_iter()
@@ -98,7 +105,7 @@ impl TransactionStore {
         })
     }
 
-    pub fn add_transaction(identity: &Principal, instructions: Vec<Instruction>) -> TransactionId {
+    pub fn add_transaction(identity: &Principal, instructions: Vec<SignableInstruction>) -> TransactionId {
         let transaction_id = Self::insert_transaction(instructions);
 
         USER_TRANSACTIONS.with_borrow_mut(|k| {
@@ -148,7 +155,7 @@ impl TransactionStore {
     pub fn delete_transaction(
         identity: &Principal,
         transaction_id: TransactionId,
-    ) -> Option<Vec<StorableWrapper<Instruction>>> {
+    ) -> Option<Vec<StorableWrapper<SignableInstruction>>> {
         USER_TRANSACTIONS.with_borrow_mut(|k| {
             let mut before = k.get(identity).unwrap_or_default();
             before.retain(|x| *x != transaction_id);

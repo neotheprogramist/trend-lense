@@ -13,7 +13,7 @@ use remote_exchanges::{
 };
 use request_store::{
     request::{Request, Response},
-    Instruction, Transaction, TransactionStore,
+    Instruction, SignableInstruction, Transaction, TransactionStore,
 };
 use storable_wrapper::StorableWrapper;
 
@@ -35,11 +35,7 @@ fn __get_candid_interface_tmp_hack() -> String {
 
 /// considering that stop > start
 fn get_range_to_fetch(stop: u64, current: u64) -> Option<std::ops::Range<u64>> {
-    if stop <= current {
-        return None;
-    }
-
-    Some(current..stop)
+    (stop > current).then_some(current..stop)
 }
 
 // TODO: rename or get rid off
@@ -69,25 +65,28 @@ fn remove_api_key(api_key: String) -> Option<ApiData> {
     ApiStore::remove_key(&principal, &api_key)
 }
 
-#[ic_cdk::query]
-fn get_signatures_metadata(index: u32) -> Vec<String> {
+#[ic_cdk::update]
+fn add_transaction(instruction: Vec<Instruction>) -> (u32, Transaction) {
     let identity = ic_cdk::caller();
 
-    let tx = TransactionStore::get_transaction(&identity, index).expect("missing tx");
-
-    tx.iter()
+    let instructions = instruction
+        .into_iter()
         .map(|i| {
             let exchange_impl = ExchangeImpl::new(i.exchange);
-            exchange_impl.get_signature_string(&i.request)
+            let signature = exchange_impl.get_signature_string(&i.request);
+
+            SignableInstruction {
+                instruction: i,
+                signature,
+                executed: false,
+            }
         })
-        .collect()
-}
+        .collect::<Vec<_>>();
 
-#[ic_cdk::update]
-fn add_instruction(instruction: Instruction) -> u32 {
-    let identity = ic_cdk::caller();
+    let index = TransactionStore::add_transaction(&identity, instructions);
+    let tx = TransactionStore::get_transaction(&identity, index).expect("missing tx");
 
-    TransactionStore::add_transaction(&identity, vec![instruction])
+    (index, tx)
 }
 
 #[ic_cdk::update]
@@ -105,7 +104,7 @@ fn get_transaction(index: u32) -> Option<Transaction> {
 }
 
 #[ic_cdk::query]
-fn get_requests() -> Option<Vec<Transaction>> {
+fn get_transactions() -> Option<Vec<Transaction>> {
     let identity = ic_cdk::caller();
 
     TransactionStore::get_transactions(&identity)
@@ -149,40 +148,57 @@ async fn run_transaction(
 ) -> Result<Vec<Response>, ExchangeErrors> {
     let identity = ic_cdk::caller();
     let tx = TransactionStore::get_transaction(&identity, index).expect("missing transaction");
-   
+
     ic_cdk::println!("{:?}", tx);
 
     let mut responses = vec![];
+    let mut done_instructions = vec![];
 
     for (i, signature) in tx.iter().zip(signature.iter()) {
-        let api_info = ApiStore::get_by_api(&identity, &i.api_key).expect("api info not found");
+        let api_info =
+            ApiStore::get_by_api(&identity, &i.instruction.api_key).expect("api info not found");
 
-        let exchange: Box<dyn UserData> = match i.exchange {
+        let exchange: Box<dyn UserData> = match i.instruction.exchange {
             Exchange::Okx => Box::new(Okx::with_auth(OkxAuth {
-                api_key: i.api_key.clone(),
+                api_key: i.instruction.api_key.clone(),
                 passphrase: api_info.passphrase.unwrap(),
                 timestamp: timestamp_utc.clone(),
                 signature: signature.clone(),
             })),
             Exchange::Coinbase => Box::new(Coinbase::with_auth(CoinbaseAuth {
-                api_key: i.api_key.clone(),
+                api_key: i.instruction.api_key.clone(),
                 passphrase: api_info.passphrase.unwrap(),
                 signature: signature.clone(),
                 timestamp,
             })),
         };
 
-        let response = match i.request.clone() {
+        let response = match i.instruction.request.clone() {
             Request::Empty => {
                 panic!("Empty request")
             }
             Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
             Request::Balances(balance) => exchange.get_balance(balance).await?,
             Request::PostOrder(order) => exchange.post_order(order).await?,
+            Request::OrdersList(orders_request) => match orders_request.pending {
+                true => exchange.get_pending_orders(orders_request).await?,
+                false => exchange.get_done_orders(orders_request).await?,
+            },
         };
 
+        ic_cdk::println!("{:?}", response);
+
+        let done_ix = SignableInstruction {
+            instruction: i.instruction.clone(),
+            signature: i.signature.clone(),
+            executed: true,
+        };
+        done_instructions.push(done_ix);
         responses.push(response);
     }
+
+    TransactionStore::delete_transaction(&identity, index);
+    TransactionStore::add_transaction(&identity, done_instructions);
 
     Ok(responses)
 }
@@ -213,7 +229,7 @@ async fn split_transaction(
     price_limit: u32,
     volume_ratios: Vec<f64>,
     ratios_weights: u32,
-) -> Result<u32, ExchangeErrors> {
+) -> Result<(u32, Transaction), ExchangeErrors> {
     let identity = ic_cdk::caller();
     let pair = Pair::from_str(&pair).expect("invalid pair");
 
@@ -242,6 +258,8 @@ async fn split_transaction(
 
     let trade_cuts = weights.iter().map(|w| w * size).collect::<Vec<_>>();
 
+    ic_cdk::println!("Trade cuts: {:?}", trade_cuts);
+
     let instructions: Vec<Result<Instruction, ExchangeErrors>> = keys
         .iter()
         .zip(trade_cuts.iter())
@@ -250,7 +268,7 @@ async fn split_transaction(
                 api_key: k.api_key.clone(),
                 exchange: k.exchange,
                 request: Request::PostOrder(GeneralPostOrderRequest {
-                    instrument_id: Okx::instrument_id(&pair).ok_or(ExchangeErrors::MissingIndex)?,
+                    instrument_id: pair.clone(),
                     order_type: OrderType::Market,
                     side: order_side.clone(),
                     size: *c,
@@ -265,9 +283,7 @@ async fn split_transaction(
 
     let instructions = instructions.into_iter().collect::<Result<Vec<_>, _>>()?;
 
-    Ok(TransactionStore::add_transaction(&identity, instructions))
-
-    // let volumes;
+    Ok(add_transaction(instructions))
 }
 
 // TODO: split this function into smaller ones

@@ -1,7 +1,10 @@
 use std::{fmt::Display, str::FromStr};
 
 use super::response;
-use crate::remote_exchanges::{request::OrderSide, ApiRequest};
+use crate::remote_exchanges::{
+    request::{OrderSide, OrderType as GlobalOrderType},
+    ApiRequest,
+};
 use ic_cdk::api::management_canister::http_request::HttpMethod;
 use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use serde_with::{serde_as, skip_serializing_none, DisplayFromStr};
@@ -54,6 +57,16 @@ pub enum OrderType {
     Stop,
 }
 
+impl From<GlobalOrderType> for OrderType {
+    fn from(value: GlobalOrderType) -> Self {
+        match value {
+            GlobalOrderType::Limit => OrderType::Limit,
+            GlobalOrderType::Market => OrderType::Market,
+            _ => unimplemented!()
+        }
+    }
+}
+
 impl Display for OrderType {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
@@ -101,6 +114,72 @@ impl ApiRequest for PostOrderBody {
     type Response = response::OrderResponse;
 }
 
+pub struct Statuses(pub Vec<String>);
+
+impl Serialize for Statuses {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("Statuses", 1)?;
+
+        for status in &self.0 {
+            state.serialize_field("status", status)?;
+        }
+
+        state.end()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_serialize_statuses() {
+        let statuses = Statuses(vec!["open".to_string(), "pending".to_string()]);
+        let serialized = serde_qs::to_string(&statuses).unwrap();
+      
+        assert_eq!(serialized, "status=open&status=pending");
+    }
+
+    #[test]
+    fn test_serialize_statuses_empty() {
+        let order_list_request = OrdersRequest {
+            product_id: None,
+            market_type: None,
+            limit: 10,
+            status: Some(Statuses(vec!["open".to_string(), "pending".to_string()])),
+        };
+
+        let serialized = serde_qs::to_string(&order_list_request).unwrap();
+        assert_eq!(serialized, "limit=10&status=open&status=pending");
+    }
+}
+
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Serialize)]
+pub struct OrdersRequest {
+    pub product_id: Option<String>,
+    pub market_type: Option<String>,
+    pub limit: u64,
+    #[serde(flatten)]
+    pub status: Option<Statuses>
+}
+
+
+
+impl ApiRequest for OrdersRequest {
+    const BODY: bool = false;
+    const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "orders";
+    const PUBLIC: bool = false;
+
+    type Response = Vec<response::Order>;
+}
+
 #[derive(Deserialize)]
 pub struct GetOrderbookRequest {
     pub product_id: String,
@@ -115,7 +194,6 @@ impl Serialize for GetOrderbookRequest {
         let mut state = serializer.serialize_struct("GetOrderbookRequest", 2)?;
         state.serialize_field("level", &self.level)?;
 
- 
         if is_json_serializer::<S>() {
             state.serialize_field("product_id", &self.product_id)?;
         }

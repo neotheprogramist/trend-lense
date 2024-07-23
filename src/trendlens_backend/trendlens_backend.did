@@ -35,13 +35,18 @@ type GeneralInstrumentsRequest = record {
   instrument_id : opt Pair;
   instrument_type : InstrumentType;
 };
+type GeneralOrdersListRequest = record {
+  pending : bool;
+  instrument_id : Pair;
+  instrument_type : InstrumentType;
+};
 type GeneralPostOrderRequest = record {
   margin_currency : opt text;
   side : OrderSide;
   size : float64;
   trade_mode : TradeMode;
   order_type : OrderType;
-  instrument_id : text;
+  instrument_id : Pair;
   order_price : opt float64;
   position_side : opt PositionSide;
 };
@@ -55,6 +60,18 @@ type Instrument = record {
   instrument_type : InstrumentType;
 };
 type InstrumentType = variant { Spot; Swap; Futures; Option; Margin };
+type Order = record {
+  side : text;
+  size : float64;
+  trade_mode : text;
+  accumulated_fill_quantity : float64;
+  state : text;
+  order_type : text;
+  instrument_id : text;
+  order_id : text;
+  instrument_type : text;
+  price : float64;
+};
 type OrderData = record { code : text };
 type OrderSide = variant { Buy; Sell };
 type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
@@ -71,11 +88,13 @@ type RejectionCode = variant {
 };
 type Request = variant {
   Empty;
+  OrdersList : GeneralOrdersListRequest;
   Instruments : GeneralInstrumentsRequest;
   PostOrder : GeneralPostOrderRequest;
   Balances : GeneralBalanceRequest;
 };
 type Response = variant {
+  OrdersInfo : vec Order;
   Instruments : vec Instrument;
   Order : OrderData;
   Balances : vec Balance;
@@ -83,18 +102,25 @@ type Response = variant {
 type Result = variant { Ok : vec Candle; Err : ExchangeErrors };
 type Result_1 = variant { Ok : bool; Err : ExchangeErrors };
 type Result_2 = variant { Ok : vec Response; Err : ExchangeErrors };
-type Result_3 = variant { Ok : nat32; Err : ExchangeErrors };
+type Result_3 = variant {
+  Ok : record { nat32; vec SignableInstruction };
+  Err : ExchangeErrors;
+};
+type SignableInstruction = record {
+  signature : text;
+  executed : bool;
+  instruction : Instruction;
+};
 type TradeMode = variant { Cash; SpotIsolated; Isolated; Cross };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
-  add_instruction : (Instruction) -> (nat32);
+  add_transaction : (vec Instruction) -> (nat32, vec SignableInstruction);
   delete_transaction : (nat32) -> ();
   get_instruments : (Exchange, InstrumentType) -> (vec Pair) query;
   get_last_timestamp : (Exchange, text) -> (opt nat64) query;
   get_orderbook : (Exchange, text) -> (float64);
-  get_requests : () -> (opt vec vec Instruction) query;
-  get_signatures_metadata : (nat32) -> (vec text) query;
-  get_transaction : (nat32) -> (opt vec Instruction) query;
+  get_transaction : (nat32) -> (opt vec SignableInstruction) query;
+  get_transactions : () -> (opt vec vec SignableInstruction) query;
   initialize_pair : (text, Exchange) -> ();
   pull_candles : (text, Exchange, nat64, nat64) -> (Result);
   refresh_instruments : (Exchange, InstrumentType) -> (Result_1);

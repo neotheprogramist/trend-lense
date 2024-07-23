@@ -8,14 +8,19 @@ use crate::{
     instruments::get_instruments,
     pair::Pair,
     remote_exchanges::{
-        coinbase::{Coinbase, GetProfileAccountsRequest, PostOrderBody},
+        coinbase::{
+            Coinbase, CoinbaseOrdersRequest, GetProfileAccountsRequest, PostOrderBody, Statuses,
+        },
         okx::{
-            api::{GetBalanceRequest, GetInstrumentsRequest, InstrumentType, PlaceOrderBody},
+            api::{
+                GetBalanceRequest, GetInstrumentsRequest, InstrumentType, OrdersHistoryRequest,
+                PendingOrdersRequest as OxkPendingOrdersRequest, PlaceOrderBody,
+            },
             Okx,
         },
         request::{GeneralInstrumentsRequest, OrderSide},
         response::Instrument,
-        ExchangeErrors, OpenData,
+        ApiRequest, ExchangeErrors, OpenData,
     },
     request_store::request::Request,
     storable_wrapper::StorableWrapper,
@@ -172,6 +177,19 @@ impl ExchangeImpl {
     pub fn get_signature_string(&self, request: &Request) -> String {
         match self {
             ExchangeImpl::Coinbase(c) => match request {
+                Request::OrdersList(i) => {
+                    let request = CoinbaseOrdersRequest {
+                        product_id: Some(i.instrument_id.to_string()),
+                        market_type: Some(i.instrument_type.to_string()),
+                        limit: 100,
+                        status: Some(match i.pending {
+                            true => Statuses(vec!["open".to_string(), "pending".to_string()]),
+                            false => Statuses(vec!["done".to_string(), "rejected".to_string()]),
+                        }),
+                    };
+
+                    c.get_signature_data(request)
+                }
                 Request::Balances(_) => {
                     let request = GetProfileAccountsRequest {};
 
@@ -179,12 +197,12 @@ impl ExchangeImpl {
                 }
                 Request::PostOrder(request) => {
                     let exchange_request = PostOrderBody {
-                        product_id: request.instrument_id.clone(),
+                        product_id: request.instrument_id.to_string(),
                         price: request.order_price,
                         side: request.side.into(),
                         funds: None,
                         size: Some(request.size.to_string()),
-                        order_type: crate::remote_exchanges::coinbase::CoinbaseOrderType::Market,
+                        order_type: request.order_type.into(),
                     };
 
                     c.get_signature_data(exchange_request)
@@ -192,9 +210,30 @@ impl ExchangeImpl {
                 _ => "".to_string(),
             },
             ExchangeImpl::Okx(o) => match request {
+                Request::OrdersList(i) => match i.pending {
+                    true => {
+                        let r = OxkPendingOrdersRequest {
+                            instrument_id: Some(i.instrument_id.to_string()),
+                            instrument_type: Some(i.instrument_type),
+                        };
+
+                        o.get_signature_data(r)
+                    }
+                    false => {
+                        let r = OrdersHistoryRequest {
+                            instrument_id: Some(i.instrument_id.to_string()),
+                            instrument_type: i.instrument_type,
+                        };
+
+                        o.get_signature_data(r)
+                    }
+                },
                 Request::Instruments(i) => {
                     let request = GetInstrumentsRequest {
-                        instrument_id: i.instrument_id.as_ref().and_then(|p| Okx::instrument_id(&p)),
+                        instrument_id: i
+                            .instrument_id
+                            .as_ref()
+                            .and_then(|p| Okx::instrument_id(&p)),
                         instrument_type: i.instrument_type,
                     };
                     o.get_signature_data(request)
@@ -209,9 +248,10 @@ impl ExchangeImpl {
                 Request::PostOrder(request) => {
                     let exchange_request = PlaceOrderBody {
                         side: Okx::side_string(request.side),
-                        instrument_id: request.instrument_id.clone(),
+                        instrument_id: request.instrument_id.to_string(),
                         order_type: Okx::order_type_string(request.order_type),
                         size: request.size.to_string(),
+                        order_price: request.order_price.map(|p| p.to_string()),
                         trade_mode: Okx::trade_mode_string(request.trade_mode),
                         ..Default::default()
                     };

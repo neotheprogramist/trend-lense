@@ -23,3 +23,9 @@ export const handleExchange = (exchange: Exchanges): Exchange => {
       return { Coinbase: null };
   }
 };
+
+export const toExchanges = (exchange: Exchange): Exchanges => {
+  if (Object.keys(exchange)[0] == "Okx") return Exchanges.Okx;
+  if (Object.keys(exchange)[0] == "Coinbase") return Exchanges.Coinbase;
+  throw new Error("Invalid exchange");
+};

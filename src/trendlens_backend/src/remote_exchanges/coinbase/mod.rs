@@ -8,11 +8,12 @@ use crate::{
 };
 use ic_cdk::api::management_canister::http_request::HttpMethod;
 pub use request::GetProfileAccountsRequest;
-pub use request::OrderType as CoinbaseOrderType;
+pub use request::OrdersRequest as CoinbaseOrdersRequest;
 pub use request::PostOrderBody;
 use request::{GetAllPairsRequest, GetOrderbookRequest};
 use response::{CoinbaseResponse, ConcreteInstrument, OrderBook};
 pub use auth::CoinbaseAuth;
+pub use request::Statuses;
 
 mod auth;
 mod request;

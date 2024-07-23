@@ -1,11 +1,8 @@
-use std::{fmt::Display, str::FromStr};
-
+use super::okx::api::InstrumentType;
+use crate::pair::Pair;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-
-use crate::pair::Pair;
-
-use super::okx::api::InstrumentType;
+use std::{fmt::Display, str::FromStr};
 
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, Copy)]
 pub enum OrderSide {
@@ -52,6 +49,30 @@ pub enum TradeMode {
     SpotIsolated,
 }
 
+impl Display for TradeMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            TradeMode::Cross => write!(f, "cross"),
+            TradeMode::Isolated => write!(f, "isolated"),
+            TradeMode::Cash => write!(f, "cash"),
+            TradeMode::SpotIsolated => write!(f, "spot_isolated"),
+        }
+    }
+}
+
+impl FromStr for TradeMode {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "cross" => Ok(TradeMode::Cross),
+            "isolated" => Ok(TradeMode::Isolated),
+            "cash" => Ok(TradeMode::Cash),
+            "spot_isolated" => Ok(TradeMode::SpotIsolated),
+            _ => Err(format!("Unknown trade mode: {}", s)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType, Copy)]
 pub enum OrderType {
     Market,
@@ -62,9 +83,36 @@ pub enum OrderType {
     // there are more
 }
 
+
+impl Display for OrderType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            OrderType::Market => write!(f, "market"),
+            OrderType::Limit => write!(f, "limit"),
+            OrderType::PostOnly => write!(f, "post_only"),
+            OrderType::Fok => write!(f, "fok"),
+            OrderType::Ioc => write!(f, "ioc"),
+        }
+    }
+}
+
+impl FromStr for OrderType {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "market" => Ok(OrderType::Market),
+            "limit" => Ok(OrderType::Limit),
+            "post_only" => Ok(OrderType::PostOnly),
+            "fok" => Ok(OrderType::Fok),
+            "ioc" => Ok(OrderType::Ioc),
+            _ => Err(format!("Unknown order type: {}", s)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GeneralPostOrderRequest {
-    pub instrument_id: String,
+    pub instrument_id: Pair,
     pub trade_mode: TradeMode,
     pub side: OrderSide,
     pub margin_currency: Option<String>,
@@ -83,4 +131,11 @@ pub struct GeneralInstrumentsRequest {
 #[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
 pub struct GeneralBalanceRequest {
     pub currency: Option<Vec<String>>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, CandidType)]
+pub struct GeneralOrdersListRequest {
+    pub instrument_type: InstrumentType,
+    pub instrument_id: Pair,
+    pub pending: bool,
 }

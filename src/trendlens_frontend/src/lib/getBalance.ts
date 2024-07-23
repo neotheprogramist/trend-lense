@@ -1,4 +1,4 @@
-import { handleExchange, Exchanges } from "./exchange";
+import { Exchanges, handleExchange } from "./exchange";
 import { keyStore } from "./keystore.svelte";
 import { isBalanceResponse } from "./response";
 import { extractOkValue } from "./result";
@@ -24,27 +24,24 @@ export const getBalance = async (
     currenciesList = [currencies];
   }
 
-  const requestNumber = await wallet.actor.add_instruction({
-    api_key: key.apiKey,
-    exchange: handleExchange(exchange),
-    request: {
-      Balances: {
-        currency: currenciesList,
+  const [requestNumber, instructions] = await wallet.actor.add_transaction([
+    {
+      api_key: key.apiKey,
+      exchange: handleExchange(exchange),
+      request: {
+        Balances: {
+          currency: currenciesList,
+        },
       },
     },
-  });
+  ]);
 
-  const requestSignatureData =
-    await wallet.actor.get_signatures_metadata(requestNumber);
-
-  console.log(requestSignatureData);
-
-  const timestamp = Math.round(Date.now() / 1000) - 1;
+  const timestamp = Math.round(Date.now() / 1000) - 4;
   const isoTimestamp = new Date().toISOString();
 
   const signature = await finishSignature(
     exchange,
-    requestSignatureData[0],
+    instructions[0].signature,
     key.secretKey,
     exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
   );

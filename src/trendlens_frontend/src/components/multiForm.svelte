@@ -1,38 +1,41 @@
 <script lang="ts">
+  import { handleApiData } from "$lib/apiAddition";
   import { Exchanges } from "$lib/exchange";
-  import * as Tabs from "./shad/ui/tabs/index";
-  import Toggle from "./shad/ui/toggle/toggle.svelte";
-  import Badge from "./shad/ui/badge/badge.svelte";
-  import Input from "./shad/ui/input/input.svelte";
+  import { getBalance } from "$lib/getBalance";
+  import { keyStore } from "$lib/keystore.svelte";
+  import { pairToString } from "$lib/pair";
+  import {
+    handleOrderSide,
+    inferTradeModes,
+    PostOrderRequest,
+  } from "$lib/postOrder.svelte";
   import {
     InstrumentType,
     OrderSideType,
     OrderTypeType,
     TradeModeType,
   } from "$lib/request";
-  import {
-    handleOrderSide,
-    inferTradeModes,
-    PostOrderRequest,
-  } from "$lib/postOrder.svelte";
-  import { pairToString } from "$lib/pair";
-  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-  import Slider from "./shad/ui/slider/slider.svelte";
-  import { wallet } from "$lib/wallet.svelte";
-  import Button from "./shad/ui/button/button.svelte";
-  import { getBalance } from "$lib/getBalance";
-  import { keyStore } from "$lib/keystore.svelte";
-  import { handleApiData } from "$lib/apiAddition";
   import { extractOkValue } from "$lib/result";
-    import { finishSignature } from "$lib/signature";
+  import { finishSignature } from "$lib/signature";
+  import { wallet } from "$lib/wallet.svelte";
+  import { mode } from "mode-watcher";
+  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import Badge from "./shad/ui/badge/badge.svelte";
+  import Button from "./shad/ui/button/button.svelte";
+  import Input from "./shad/ui/input/input.svelte";
+  import Slider from "./shad/ui/slider/slider.svelte";
+  import * as Tabs from "./shad/ui/tabs/index";
+  import { cn } from "./utils";
 
   interface IProps {
     instrument: Pair;
+    currentPrice: number;
     instrumentType: InstrumentType;
     exchanges: Exchanges[];
   }
 
-  let { exchanges, instrument, instrumentType }: IProps = $props();
+  let { exchanges, instrument, instrumentType, currentPrice }: IProps =
+    $props();
 
   type ExchangesBalances = {
     [key: string]: { base: number; quote: number };
@@ -41,9 +44,7 @@
   let volumeRatio = $state([50]);
 
   let allVolumeRatios = $derived.by(() => {
-    const full = 100;
-
-    return [full - volumeRatio[0], volumeRatio[0]];
+    return [volumeRatio[0] / 100, (100 - volumeRatio[0]) / 100];
   });
 
   let exchangeBalances = $state<ExchangesBalances>({});
@@ -57,11 +58,9 @@
     pairToString(instrument),
   );
 
-  const handleOrderSideChange = () => {
-    request.orderSide =
-      request.orderSide == OrderSideType.Buy
-        ? OrderSideType.Sell
-        : OrderSideType.Buy;
+  const handleOrderSideChange = (orderSite: OrderSideType) => {
+    if (orderSite == request.orderSide) return;
+    request.orderSide = orderSite;
   };
 
   const handleTradeModeChange = (tradeMode: TradeModeType) => {
@@ -85,7 +84,7 @@
       keys.map((e) => handleApiData(e)),
       pairToString(instrument),
       handleOrderSide(request.orderSide),
-      request.size!,
+      Number(request.size!),
       20,
       allVolumeRatios,
       1,
@@ -99,16 +98,14 @@
       throw new Error("Wallet not connected");
     }
 
-    const requestNumber = await onPost();
-    const signatureData =
-      await wallet.actor.get_signatures_metadata(requestNumber);
+    const [requestNumber, instructions] = await onPost();
     const timestamp = Math.round(Date.now() / 1000) - 1;
     const isoTimestamp = new Date().toISOString();
 
-    let signatures = []
+    let signatures = [];
 
-    for (let i = 0; i < signatureData.length; i++) {
-      const exchange = exchanges[i]
+    for (let i = 0; i < instructions.length; i++) {
+      const exchange = exchanges[i];
       const key = keyStore.getByExchange(exchange);
 
       if (!key) {
@@ -117,22 +114,26 @@
 
       const signature = await finishSignature(
         exchanges[i],
-        signatureData[i],
+        instructions[i].signature,
         key.secretKey,
         exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
       );
 
-      signatures.push(signature)
+      signatures.push(signature);
     }
 
-    const result = await wallet.actor.run_transaction(
+    await wallet.actor.run_transaction(
       requestNumber,
       signatures,
       isoTimestamp,
       BigInt(timestamp),
     );
+  };
 
-    console.log(result)
+  const getFixedAmount = (amount: number) => {
+    if (amount == 0) return "-";
+    if (amount < 1) return amount.toFixed(6);
+    return amount.toFixed(2);
   };
 
   //@ts-ignore
@@ -164,94 +165,133 @@
   });
 </script>
 
-<Tabs.Root bind:value={request.orderType} class="p-2 pb-10 space-y-10">
-  <div class="flex justify-between">
-    <Tabs.List>
-      {#each orderTypes as orderType}
-        <Tabs.Trigger value={orderType}>{orderType}</Tabs.Trigger>
-      {/each}
-    </Tabs.List>
-
-    <div>
-      <Toggle
-        class="font-bold"
-        onPressedChange={handleOrderSideChange}
-        pressed={request.orderSide == OrderSideType.Buy}>BUY</Toggle
+<form class="flex flex-col items-center justify-start h-full">
+  <Tabs.Root bind:value={request.orderType} class="space-y-8">
+    <div class="w-full mt-6 flex justify-between items-center">
+      <span
+        class={cn(
+          "flex-1 flex rounded-md p-1 text-sm",
+          $mode == "dark" ? "bg-[#292524]" : "bg-[#f5f5f4]",
+        )}
       >
-
-      <Toggle
-        class="font-bold"
-        onPressedChange={handleOrderSideChange}
-        pressed={request.orderSide == OrderSideType.Sell}>SELL</Toggle
-      >
-    </div>
-  </div>
-  <div class="space-x-2">
-    {#if request.tradeModes.length > 1}
-      {#each request.tradeModes as tradeMode}
-        <Badge
-          variant={!(request.tradeMode == tradeMode) ? "outline" : undefined}
-          onclick={() => handleTradeModeChange(tradeMode)}>{tradeMode}</Badge
+        <button
+          class={cn(
+            "rounded-md flex-1 text-center py-1",
+            request.orderSide == OrderSideType.Buy
+              ? "bg-green-500"
+              : "bg-transparent",
+          )}
+          onclick={() => handleOrderSideChange(OrderSideType.Buy)}>BUY</button
         >
-      {/each}
-    {/if}
-  </div>
+        <button
+          class={cn(
+            "rounded-md flex-1 text-center py-1",
+            request.orderSide == OrderSideType.Sell
+              ? "bg-red-500"
+              : "bg-transparent",
+          )}
+          onclick={() => handleOrderSideChange(OrderSideType.Sell)}>SELL</button
+        >
+      </span>
+    </div>
 
-  <div class="mt-4 w-3/4 mx-auto space-y-5">
-    <Tabs.Content value={request.orderType} class="space-y-5">
+    <div class="flex justify-between">
+      <Tabs.List>
+        {#each orderTypes as orderType}
+          <Tabs.Trigger value={orderType}
+            >{orderType == "PostOnly" ? "Post" : orderType}</Tabs.Trigger
+          >
+        {/each}
+      </Tabs.List>
+    </div>
+
+    <div class="space-x-2">
+      {#if request.tradeModes.length > 1}
+        {#each request.tradeModes as tradeMode}
+          <Badge
+            variant={!(request.tradeMode == tradeMode) ? "outline" : undefined}
+            onclick={() => handleTradeModeChange(tradeMode)}>{tradeMode}</Badge
+          >
+        {/each}
+      {/if}
+    </div>
+
+    <div class="w-1/3 text-center space-y-1">
+      <p class="text-sm">Market price</p>
+      <p class="text- font-bold">{currentPrice.toFixed(2)}</p>
+    </div>
+
+    <Tabs.Content value={request.orderType} class="space-y-8">
       {#if request.orderType == OrderTypeType.Market}
-        {#if request.orderPrice.required}
+        {#if request.orderPriceRequired}
           <Input type="number" placeholder="price" />
         {/if}
 
-        <div class="flex justify-between">
-          <span>{exchanges[0]}</span>
-          <span>{exchanges[1]}</span>
+        <div class="px-3">
+          <div class="flex justify-between">
+            <span>{exchanges[0]}</span>
+            <span>{exchanges[1]}</span>
+          </div>
+
+          <Slider bind:value={volumeRatio} max={100} step={1} class="w-full" />
         </div>
 
-        <Slider bind:value={volumeRatio} max={100} step={1} class="w-full" />
-        <Input type="number" placeholder="amount" bind:value={request.size} />
+        <div>
+          <label
+            for="total"
+            class={cn(
+              "text-xs",
+              $mode == "dark" ? "text-neutral-300" : "text-neutral-600",
+            )}>Total value</label
+          >
+          <div id="total" class="flex border rounded-md px-3 py-2.5 outline-1">
+            <input
+              type="text"
+              class="flex-1 outline-none bg-transparent"
+              placeholder="0.0"
+              bind:value={request.size}
+            />
+            <span
+              class={cn(
+                "mx-2",
+                $mode == "dark" ? "text-neutral-300" : "text-neutral-600",
+              )}
+              >{request.orderSide == OrderSideType.Buy
+                ? instrument.quote
+                : instrument.base}</span
+            >
+          </div>
+        </div>
       {:else}
-        Unsupported
+        <p class="text-center">Unsupported</p>
       {/if}
     </Tabs.Content>
-  </div>
-  <div class="w-full gap-3 ml-auto inline-flex justify-evenly items-center">
-    <div class="flex flex-col gap-2">
-      {#if wallet.connected && wallet.actor}
-        <Button variant="outline" onclick={onPost}>Post</Button>
-      {:else}
-        <Button variant="outline" onclick={wallet.connect}
-          >Connect wallet</Button
-        >
-      {/if}
-
-      {#if wallet.connected && wallet.actor}
-        <Button onclick={onExecute}>Execute</Button>
-      {:else}
-        <Button variant="outline" onclick={wallet.connect}
-          >Connect wallet</Button
-        >
-      {/if}
-    </div>
 
     <fieldset class="grid gap-6 rounded-lg border p-4">
-      <legend class="-ml-1 px-1 text-sm font-medium"> Balances </legend>
-      <div class="flex gap-5">
-        <div class="flex flex-col">
-          {#each exchanges as e}
-            {@const balance = exchangeBalances[e]}
-            <div class="flex justify-between">
-              <span class="font-bold">{e}</span>
-              <span class="ml-5">
-                {balance ? balance.base : "-"}
-                {instrument.base} / {balance ? balance.quote : "-"}
+      <div class="flex flex-col">
+        {#each exchanges as e}
+          {@const balance = exchangeBalances[e]}
+          <div class="flex justify-between items-center">
+            <div class="font-bold">{e}</div>
+            <div class="ml-5 flex-col text-sm">
+              <p>
+                {getFixedAmount(balance ? balance.base : 0)}
+                {instrument.base}
+              </p>
+
+              <p>
+                {getFixedAmount(balance ? balance.quote : 0)}
                 {instrument.quote}
-              </span>
+              </p>
             </div>
-          {/each}
-        </div>
+          </div>
+        {/each}
       </div>
     </fieldset>
-  </div>
-</Tabs.Root>
+
+    <div class="flex flex-col w-full space-y-4">
+      <Button onclick={onExecute}>Execute</Button>
+      <Button variant="outline" onclick={onPost}>Post</Button>
+    </div>
+  </Tabs.Root>
+</form>
