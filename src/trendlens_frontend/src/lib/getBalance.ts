@@ -1,4 +1,4 @@
-import { handleExchange, Exchanges } from "./exchange";
+import { Exchanges, handleExchange } from "./exchange";
 import { keyStore } from "./keystore.svelte";
 import { isBalanceResponse } from "./response";
 import { extractOkValue } from "./result";
@@ -36,7 +36,7 @@ export const getBalance = async (
     },
   ]);
 
-  const timestamp = Math.round(Date.now() / 1000) - 1;
+  const timestamp = Math.round(Date.now() / 1000) - 4;
   const isoTimestamp = new Date().toISOString();
 
   const signature = await finishSignature(
