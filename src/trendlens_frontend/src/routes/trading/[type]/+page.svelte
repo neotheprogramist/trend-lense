@@ -18,7 +18,7 @@
     postRequest,
     type PostOrderRequest,
   } from "$lib/postOrder.svelte";
-  import { isPendingOrdersResponse } from "$lib/response";
+  import { isOrdersResponse } from "$lib/response";
   import { extractOkValue } from "$lib/result";
   import { finishSignature } from "$lib/signature";
   import { wallet } from "$lib/wallet.svelte";
@@ -27,7 +27,7 @@
   import { onMount } from "svelte";
   import type {
     Candle,
-    GlobalPendingOrder,
+    Order,
     Pair,
     SignableInstruction,
   } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
@@ -132,7 +132,9 @@
   };
 
   let requests = $state<SignableInstruction[][]>([]);
-  let orders = $state<GlobalPendingOrder[]>([]);
+  let orders = $state<Order[]>([]);
+  let done_orders = $state<Order[]>([]);
+
   let selectedRequest = $state<SignableInstruction[] | null>(null);
   let selectedRequestIndex = $state<number | null>(null);
   let selectedInfoBar = $state<string | undefined>("requests");
@@ -149,10 +151,12 @@
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (pending: boolean) => {
     if (!wallet.actor) {
       throw new Error("No actor found");
     }
+
+    console.log("fetching orders");
 
     const [requestNumber, instructions] = await wallet.actor.add_transaction(
       selectedExchanges.map((e) => {
@@ -166,9 +170,10 @@
           api_key: key.apiKey,
           exchange: handleExchange(e),
           request: {
-            PendingOrders: {
+            OrdersList: {
               instrument_id: selectedInstrument!,
               instrument_type: handleInstrumentType(data.instrumentType),
+              pending,
             },
           },
         };
@@ -178,7 +183,7 @@
     const timestamp = Math.round(Date.now() / 1000) - 10;
     const isoTimestamp = new Date().toISOString();
     let signatures = [];
-    let newOrders: GlobalPendingOrder[] = [];
+    let newOrders: Order[] = [];
 
     for (let i = 0; i < selectedExchanges.length; i++) {
       const exchange = selectedExchanges[i];
@@ -210,8 +215,8 @@
 
       for (let i = 0; i < responses.length; i++) {
         const response = responses[i];
-        if (isPendingOrdersResponse(response)) {
-          newOrders = [...newOrders, ...response.PendingOrders];
+        if (isOrdersResponse(response)) {
+          newOrders = [...newOrders, ...response.OrdersInfo];
         } else {
           throw new Error("Response returned not type of order");
         }
@@ -223,11 +228,15 @@
     orders = newOrders;
   };
 
-  const handleRefreshClick = () => {
+  const handleRefreshClick = async () => {
     if (selectedInfoBar === "requests") {
-      fetchRequests();
+      await fetchRequests();
     } else if (selectedInfoBar === "open_orders") {
-      fetchOrders();
+      orders = [];
+      await fetchOrders(true);
+    } else if (selectedInfoBar === "orders_history") {
+      orders = [];
+      await fetchOrders(false);
     }
   };
 

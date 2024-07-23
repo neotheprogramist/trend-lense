@@ -35,11 +35,7 @@ fn __get_candid_interface_tmp_hack() -> String {
 
 /// considering that stop > start
 fn get_range_to_fetch(stop: u64, current: u64) -> Option<std::ops::Range<u64>> {
-    if stop <= current {
-        return None;
-    }
-
-    Some(current..stop)
+    (stop > current).then_some(current..stop)
 }
 
 // TODO: rename or get rid off
@@ -184,10 +180,13 @@ async fn run_transaction(
             Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
             Request::Balances(balance) => exchange.get_balance(balance).await?,
             Request::PostOrder(order) => exchange.post_order(order).await?,
-            Request::PendingOrders(pending_orders) => {
-                exchange.get_pending_orders(pending_orders).await?
-            }
+            Request::OrdersList(orders_request) => match orders_request.pending {
+                true => exchange.get_pending_orders(orders_request).await?,
+                false => exchange.get_done_orders(orders_request).await?,
+            },
         };
+
+        ic_cdk::println!("{:?}", response);
 
         let done_ix = SignableInstruction {
             instruction: i.instruction.clone(),

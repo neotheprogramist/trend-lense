@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt, mem::size_of, str::FromStr};
 
-use super::response::{AccountInfo, CandleStick, ConcreteInstrument, OrderBook, PendingOrder, PlaceOrderResponse};
+use super::response::{AccountInfo, CandleStick, ConcreteInstrument, OrderBook, Order, PlaceOrderResponse};
 use crate::remote_exchanges::ApiRequest;
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
@@ -235,7 +235,30 @@ impl ApiRequest for PendingOrdersRequest {
     const PUBLIC: bool = false;
     const BODY: bool = false;
 
-    type Response = Vec<PendingOrder>;
+    type Response = Vec<Order>;
+}
+
+
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrdersHistoryRequest {
+    #[serde(rename = "instType")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub instrument_type: InstrumentType,
+    #[serde(rename = "instId")]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub instrument_id: Option<String>,
+}
+
+impl ApiRequest for OrdersHistoryRequest {
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "api/v5/trade/orders-history";
+    const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = false;
+    const BODY: bool = false;
+
+    type Response = Vec<Order>;
 }
 
 #[cfg(test)]

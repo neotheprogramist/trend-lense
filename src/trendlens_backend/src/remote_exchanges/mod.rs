@@ -4,7 +4,10 @@ use crate::request_store::request::Response;
 use crate::{api_client::ApiClientErrors, Pair};
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::{HttpHeader, HttpMethod};
-use request::{GeneralBalanceRequest, GeneralGetPendingOrdersRequest, GeneralInstrumentsRequest, GeneralPostOrderRequest};
+use request::{
+    GeneralBalanceRequest, GeneralInstrumentsRequest, GeneralOrdersListRequest,
+    GeneralPostOrderRequest,
+};
 use response::OrderBook;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -67,7 +70,12 @@ pub trait UserData {
 
     async fn get_pending_orders(
         &self,
-        request: GeneralGetPendingOrdersRequest,
+        request: GeneralOrdersListRequest,
+    ) -> Result<Response, ExchangeErrors>;
+
+    async fn get_done_orders(
+        &self,
+        request: GeneralOrdersListRequest,
     ) -> Result<Response, ExchangeErrors>;
 }
 
