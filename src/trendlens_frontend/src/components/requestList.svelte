@@ -97,26 +97,26 @@
     </thead>
     <tbody>
       {#each filterRequests(requests) as [id, transaction]}
-        {#if isPostOrderRequest(transaction[0].instruction.request)}
-          {@const side = Object.keys(
-            transaction[0].instruction.request.PostOrder.side,
-          )[0]}
-          {@const instrument =
-            transaction[0].instruction.request.PostOrder.instrument_id}
-          {@const exchange = Object.keys(
-            transaction[0].instruction.exchange,
-          )[0]}
-          {@const orderType = Object.keys(
-            transaction[0].instruction.request.PostOrder.order_type,
-          )[0]}
-          {@const tradeMode = Object.keys(
-            transaction[0].instruction.request.PostOrder.trade_mode,
-          )[0]}
-          {@const orderPrice =
-            transaction[0].instruction.request.PostOrder.order_price}
-          {@const size = transaction[0].instruction.request.PostOrder.size}
+        {#if transaction.length == 1}
+          {#if isPostOrderRequest(transaction[0].instruction.request)}
+            {@const side = Object.keys(
+              transaction[0].instruction.request.PostOrder.side,
+            )[0]}
+            {@const instrument =
+              transaction[0].instruction.request.PostOrder.instrument_id}
+            {@const exchange = Object.keys(
+              transaction[0].instruction.exchange,
+            )[0]}
+            {@const orderType = Object.keys(
+              transaction[0].instruction.request.PostOrder.order_type,
+            )[0]}
+            {@const tradeMode = Object.keys(
+              transaction[0].instruction.request.PostOrder.trade_mode,
+            )[0]}
+            {@const orderPrice =
+              transaction[0].instruction.request.PostOrder.order_price}
+            {@const size = transaction[0].instruction.request.PostOrder.size}
 
-          <!-- {#if transaction.length == 1} -->
             <tr class="text-center">
               <td>
                 {#if side == "Buy"}
@@ -148,7 +148,63 @@
               </td>
             </tr>
           {/if}
-        <!-- {/if} -->
+        {:else if transaction.length == 2}
+          {#if isPostOrderRequest(transaction[0].instruction.request) && isPostOrderRequest(transaction[1].instruction.request)}
+            {@const side = Object.keys(
+              transaction[0].instruction.request.PostOrder.side,
+            )[0]}
+            {@const instrument =
+              transaction[0].instruction.request.PostOrder.instrument_id}
+            {@const exchange = Object.keys(
+              transaction[0].instruction.exchange,
+            )[0]}
+            {@const orderType = Object.keys(
+              transaction[0].instruction.request.PostOrder.order_type,
+            )[0]}
+            {@const tradeMode = Object.keys(
+              transaction[0].instruction.request.PostOrder.trade_mode,
+            )[0]}
+            {@const orderPrice =
+              transaction[0].instruction.request.PostOrder.order_price}
+            {@const size = transaction[0].instruction.request.PostOrder.size}
+
+            {@const exchange2 = Object.keys(
+              transaction[1].instruction.exchange,
+            )[0]}
+            {@const size2 = transaction[1].instruction.request.PostOrder.size}
+
+            <tr class="text-center">
+              <td>
+                {#if side == "Buy"}
+                  <p class="text-green-400 bg-green-900 rounded-xl py-0.5">
+                    Buy
+                  </p>
+                {:else}
+                  <p class="text-red-400 bg-red-900 rounded-xl py-0.5">Sell</p>
+                {/if}
+              </td>
+              <td class="py-3">{instrument.base}/{instrument.quote}</td>
+              <td>{exchange} / {exchange2}</td>
+              <td>{transaction[0].executed} / {transaction[1].executed}</td>
+              <td>{orderType}</td>
+              <td>{orderPrice[0] ? orderPrice[0] : "-"}</td>
+              <td>{size.toFixed(4)} / {size2.toFixed(4)}</td>
+              <td>{tradeMode}</td>
+              <td class="w-16">
+                <div class="flex space-x-4 items-center">
+                  <Send
+                    onclick={() => runRequest(id, transaction)}
+                    class="cursor-pointer w-5 stroke-blue-400"
+                  />
+                  <X
+                    onclick={() => deleteRequest(id)}
+                    class="cursor-pointer w-5 stroke-red-400"
+                  />
+                </div>
+              </td>
+            </tr>
+          {/if}
+        {/if}
       {/each}
     </tbody>
   </table>

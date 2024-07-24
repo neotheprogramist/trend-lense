@@ -8,6 +8,7 @@
   import TradeForm from "$components/tradeForm.svelte";
   import TradingHeader from "$components/tradingHeader.svelte";
   import TradingView from "$components/tradingView.svelte";
+  import VolumeChart from "$components/volumeChart.svelte";
   import { anonymousBackend } from "$lib/canisters";
   import { Exchanges, handleExchange } from "$lib/exchange";
   import { instrumentsStore } from "$lib/instruments.svelte";
@@ -19,7 +20,6 @@
     type PostOrderRequest,
   } from "$lib/postOrder.svelte";
   import { isOrdersResponse } from "$lib/response";
-  import VolumeChart from "$components/volumeChart.svelte";
   import { extractOkValue } from "$lib/result";
   import { finishSignature } from "$lib/signature";
   import { wallet } from "$lib/wallet.svelte";
