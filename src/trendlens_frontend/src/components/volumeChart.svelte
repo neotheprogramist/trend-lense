@@ -1,17 +1,10 @@
 <script lang="ts">
   import { anonymousBackend } from "$lib/canisters";
   import { Exchanges, handleExchange } from "$lib/exchange";
-  import {
-    area,
-    curveLinear,
-    Delaunay,
-    range,
-    scaleLinear,
-    scaleUtc,
-  } from "d3";
-  import { onMount, untrack } from "svelte";
-  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
   import { pairToString } from "$lib/pair";
+  import { area, curveLinear, range, scaleLinear, scaleUtc } from "d3";
+  import { untrack } from "svelte";
+  import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
   interface IProps {
     exchanges: Exchanges[];
@@ -25,8 +18,8 @@
   const marginBottom = 30; // the bottom margin, in pixels
   const marginLeft = 50; // the left margin, in pixels
   const inset = 0; // inset the default range, in pixels
-  const width = 600; // the outer width of the chart, in pixels
-  const height = 350; // the outer height of the chart, in pixels
+  const width = 700; // the outer width of the chart, in pixels
+  const height = 500; // the outer height of the chart, in pixels
   const xLabel = ""; // a label for the y-axis
   const yLabel = "↑ Volume (in base coin)"; // a label for the y-axis
   const xFormat = ""; // a format specifier string for the y-axis
@@ -150,7 +143,7 @@
 </script>
 
 <div class="flex h-full">
-  <div class="chart-container flex-3 h-full flex justify-center items-center">
+  <div class="flex-[4_4_0%] flex justify-center items-center">
     <svg {width} {height} viewBox="0 0 {width} {height}" cursor="crosshair">
       {#each areas as subsetArea, i}
         <g class="chartlines" pointer-events="none">
@@ -221,20 +214,17 @@
       </g>
     </svg>
   </div>
-  <div class="ml-20 flex flex-1 flex-col w-16 justify-center">
+  <div class="flex flex-1 flex-col justify-center space-y-5">
     {#each exchanges as e, index}
-      <span style="color: {colors[index]}">{e}</span>
+      <div class="flex items-center">
+        <div style="background-color: {colors[index]}" class="w-4 h-4"></div>
+        <span class="ml-2">{e}</span>
+      </div>
     {/each}
   </div>
 </div>
 
 <style>
-  .chart-container {
-    justify-content: center;
-    align-items: center;
-    /* margin-top: 50px; */
-    margin-left: 8 0px;
-  }
   svg {
     max-width: 100%;
     height: auto;
@@ -265,7 +255,6 @@
     stroke: white;
     stroke-opacity: 0.2;
     font-size: "11px";
-    color: white;
   }
   .tick text {
     fill: white;
