@@ -32,7 +32,9 @@
     Pair,
     SignableInstruction,
   } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
+  import { Toaster } from "$components/shad/ui/sonner";
   import type { PageData } from "./$types";
+  import { toast } from "svelte-sonner";
 
   interface IProps {
     data: PageData;
@@ -126,7 +128,17 @@
 
   const handleExecute = async (request: PostOrderRequest) => {
     const message = await executeRequest(selectedExchanges[0], request);
-    console.log("Message", message);
+
+    if (message.id.length > 0) {
+      toast.success("Order success", {
+        description: 'order id: ' + message.id,
+      });
+    } else {
+      toast.success("Order failed", {
+        description: 'message: ' + message.message,
+      });
+    }
+
   };
 
   const handleInstrumentChange = (i: Pair) => {
@@ -354,3 +366,5 @@
     </Tabs.Root>
   </div>
 </div>
+
+<Toaster />

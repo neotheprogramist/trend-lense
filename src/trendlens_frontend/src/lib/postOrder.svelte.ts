@@ -162,11 +162,15 @@ export const extractApiHttpError = (result: Result_3) => {
   if (isExchangeErr(result)) {
     if (isApiClientError(result.Err)) {
       if (isHttpApiClientError(result.Err.ApiClientError)) {
-        return `HTTP error: ${result.Err.ApiClientError.Http.status} ${result.Err.ApiClientError.Http.body}`;
+        const mess: { message: string } = JSON.parse(
+          result.Err.ApiClientError.Http.body,
+        );
+
+        return { message: mess.message, id: "" };
       }
     }
   }
-  console.log(result)
+  console.log(result);
 
   throw new Error("Unknown API client error");
 };
@@ -204,13 +208,13 @@ export const executeRequest = async (
     BigInt(timestamp),
   );
 
-  console.log(result)
+  console.log(result);
 
   try {
     const response = extractOkValue(result)[0];
 
     if (isPostOrderResponse(response)) {
-      return response.Order.message;
+      return { id: response.Order.id, message: response.Order.message };
     } else {
       throw new Error("Unexpected response");
     }

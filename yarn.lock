@@ -2345,10 +2345,10 @@ mlly@^1.4.2, mlly@^1.7.1:
     pkg-types "^1.1.1"
     ufo "^1.5.3"
 
-mode-watcher@^0.3.1:
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/mode-watcher/-/mode-watcher-0.3.1.tgz#5eb0677b882e9dd675a236ff740bc54a0ac93ab5"
-  integrity sha512-inghSVSXpEENV0SHM98+AvjDmTOjh9EJIrJXMScK42GNkDm5QJL7a/nZQ8M8i8RK7loFHqsQKBKdlXfw5e5C4w==
+mode-watcher@^0.4.0:
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/mode-watcher/-/mode-watcher-0.4.0.tgz#87a406e11edefeb78072538dad1bcbe8db28df3e"
+  integrity sha512-zuHYgY7Cq4NAB1JHj0NpxTKfx6RMH3A2yAoDfjF1UTaIbgWzRyCQRcK/uE9EuVt2PqAGZZbqxRC0h9eB1hfyJQ==
 
 mri@^1.1.0:
   version "1.2.0"
@@ -3044,10 +3044,10 @@ svelte-render@^2.0.1:
   dependencies:
     svelte-subscribe "^2.0.0"
 
-svelte-sonner@^0.3.24:
-  version "0.3.24"
-  resolved "https://registry.yarnpkg.com/svelte-sonner/-/svelte-sonner-0.3.24.tgz#6ae22f40220842ad211236b15c6b2e6635d454ae"
-  integrity sha512-txuL0JBUs0v6qGrr0PGCsbXmKHuthdrAkfISYi8umuveF7+gINb6EXl6VmKY9aHhyxCqvVgqd6yophQNrnor4w==
+svelte-sonner@^0.3.27:
+  version "0.3.27"
+  resolved "https://registry.yarnpkg.com/svelte-sonner/-/svelte-sonner-0.3.27.tgz#e64c2a35de8b08e9f00038a4b30afe891fc45d2e"
+  integrity sha512-+PvbuePNTyTNCepCWqKcFeu+Lo27yYuwfSc7zJvrWjCRMJrWAmccPg3j7jO1W13QoN3TySXU5Trb956VBQiM5Q==
 
 svelte-subscribe@^2.0.0, svelte-subscribe@^2.0.1:
   version "2.0.1"
