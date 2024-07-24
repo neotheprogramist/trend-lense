@@ -124,7 +124,8 @@
   };
 
   const handleExecute = async (request: PostOrderRequest) => {
-    await executeRequest(selectedExchanges[0], request);
+    const message = await executeRequest(selectedExchanges[0], request);
+    console.log("Message", message);
   };
 
   const handleInstrumentChange = (i: Pair) => {

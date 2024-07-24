@@ -1,5 +1,5 @@
 type ApiClientErrors = variant {
-  Http : record { status : nat };
+  Http : record { status : nat; body : text };
   Reject : record { code : RejectionCode; message : text };
 };
 type ApiData = record {
@@ -72,7 +72,7 @@ type Order = record {
   instrument_type : text;
   price : float64;
 };
-type OrderData = record { code : text };
+type OrderData = record { id : text; message : text };
 type OrderSide = variant { Buy; Sell };
 type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
 type Pair = record { base : text; quote : text };

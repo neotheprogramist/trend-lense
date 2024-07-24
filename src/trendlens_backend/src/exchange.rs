@@ -199,9 +199,15 @@ impl ExchangeImpl {
                     let exchange_request = PostOrderBody {
                         product_id: request.instrument_id.to_string(),
                         price: request.order_price,
+                        size: match request.side {
+                            OrderSide::Buy => None,
+                            OrderSide::Sell => Some(request.size),
+                        },
                         side: request.side.into(),
-                        funds: None,
-                        size: Some(request.size),
+                        funds: match request.side {
+                            OrderSide::Buy => Some(request.size),
+                            OrderSide::Sell => None,
+                        },
                         order_type: request.order_type.into(),
                     };
 

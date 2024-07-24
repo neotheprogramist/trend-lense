@@ -116,7 +116,7 @@
             transaction[0].instruction.request.PostOrder.order_price}
           {@const size = transaction[0].instruction.request.PostOrder.size}
 
-          {#if transaction.length == 1}
+          <!-- {#if transaction.length == 1} -->
             <tr class="text-center">
               <td>
                 {#if side == "Buy"}
@@ -148,7 +148,7 @@
               </td>
             </tr>
           {/if}
-        {/if}
+        <!-- {/if} -->
       {/each}
     </tbody>
   </table>
