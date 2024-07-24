@@ -1,6 +1,8 @@
 use std::{borrow::Cow, fmt, mem::size_of, str::FromStr};
 
-use super::response::{AccountInfo, CandleStick, ConcreteInstrument, Order, OrderBook, PlaceOrderDetails};
+use super::response::{
+    AccountInfo, CandleStick, ConcreteInstrument, IndexCandleStick, Order, OrderBook, PlaceOrderDetails, TakerVolume
+};
 use crate::remote_exchanges::ApiRequest;
 use candid::CandidType;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
@@ -71,11 +73,10 @@ impl fmt::Display for InstrumentType {
     }
 }
 
-
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
-pub struct  GetOrderBookRequest {
+pub struct GetOrderBookRequest {
     #[serde(rename = "instId")]
     pub instrument_id: String,
     #[serde(rename = "sz")]
@@ -212,10 +213,8 @@ impl ApiRequest for IndexCandleStickRequest {
     const PUBLIC: bool = true;
     const BODY: bool = false;
 
-    type Response = Vec<CandleStick>;
+    type Response = Vec<IndexCandleStick>;
 }
-
-
 
 #[serde_as]
 #[skip_serializing_none]
@@ -238,7 +237,6 @@ impl ApiRequest for PendingOrdersRequest {
     type Response = Vec<Order>;
 }
 
-
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -260,6 +258,58 @@ impl ApiRequest for OrdersHistoryRequest {
 
     type Response = Vec<Order>;
 }
+
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TakerVolumeRequest {
+    #[serde(rename = "ccy")]
+    pub currency: String,
+    #[serde(rename = "instType")]
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub instrument_type: Option<InstrumentType>,
+    pub begin: Option<u64>,
+    pub end: Option<u64>,
+    pub period: Option<String>,
+}
+
+impl ApiRequest for TakerVolumeRequest {
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "api/v5/rubik/stat/taker-volume";
+    const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = true;
+    const BODY: bool = false;
+
+    type Response = Vec<TakerVolume>;
+}
+
+
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpotCandleStickRequest {
+    #[serde(rename = "instId")]
+    pub index_name: String,
+    #[serde(rename = "before")]
+    pub begin: Option<u64>,
+    #[serde(rename = "after")]
+    pub end: Option<u64>,
+    #[serde(rename = "bar")]
+    pub bar_size: Option<String>,
+    #[serde(rename = "limit")]
+    pub results_limit: Option<u8>,
+}
+
+impl ApiRequest for SpotCandleStickRequest {
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "api/v5/market/candles";
+    const HOST: &'static str = "www.okx.com";
+    const PUBLIC: bool = true;
+    const BODY: bool = false;
+
+    type Response = Vec<CandleStick>;
+}
+
 
 #[cfg(test)]
 mod tests {

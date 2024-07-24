@@ -15,6 +15,7 @@ type Balance = record {
 };
 type Candle = record {
   close_price : float64;
+  volume : float64;
   lowest_price : float64;
   timestamp : nat64;
   highest_price : float64;
@@ -26,6 +27,7 @@ type ExchangeErrors = variant {
   InvalidTimestamps;
   MissingIndex;
   MissingPair;
+  MissingTimestamp;
   MissingApiKey;
   DeserializationFailed : record { message : text };
   UnsupportedPairFormat;
@@ -100,9 +102,10 @@ type Response = variant {
   Balances : vec Balance;
 };
 type Result = variant { Ok : vec Candle; Err : ExchangeErrors };
-type Result_1 = variant { Ok : bool; Err : ExchangeErrors };
-type Result_2 = variant { Ok : vec Response; Err : ExchangeErrors };
-type Result_3 = variant {
+type Result_1 = variant { Ok : vec TimeVolume; Err : ExchangeErrors };
+type Result_2 = variant { Ok : bool; Err : ExchangeErrors };
+type Result_3 = variant { Ok : vec Response; Err : ExchangeErrors };
+type Result_4 = variant {
   Ok : record { nat32; vec SignableInstruction };
   Err : ExchangeErrors;
 };
@@ -111,6 +114,7 @@ type SignableInstruction = record {
   executed : bool;
   instruction : Instruction;
 };
+type TimeVolume = record { volume : float64; timestamp : nat64 };
 type TradeMode = variant { Cash; SpotIsolated; Isolated; Cross };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
@@ -123,12 +127,15 @@ service : () -> {
   get_transactions : () -> (
       opt vec record { nat32; vec SignableInstruction },
     ) query;
+  get_volumes : (Exchange, text, nat64) -> (opt vec TimeVolume) query;
   initialize_pair : (text, Exchange) -> ();
+  initialize_volume_store : (Exchange, text, nat64) -> ();
   pull_candles : (text, Exchange, nat64, nat64) -> (Result);
-  refresh_instruments : (Exchange, InstrumentType) -> (Result_1);
+  pull_volumes : (Exchange, text, nat64) -> (Result_1);
+  refresh_instruments : (Exchange, InstrumentType) -> (Result_2);
   register_api_key : (ApiData) -> (bool);
   remove_api_key : (text) -> (opt ApiData);
-  run_transaction : (nat32, vec text, text, nat64) -> (Result_2);
+  run_transaction : (nat32, vec text, text, nat64) -> (Result_3);
   split_transaction : (
       vec ApiData,
       text,
@@ -137,5 +144,5 @@ service : () -> {
       nat32,
       vec float64,
       nat32,
-    ) -> (Result_3);
+    ) -> (Result_4);
 }

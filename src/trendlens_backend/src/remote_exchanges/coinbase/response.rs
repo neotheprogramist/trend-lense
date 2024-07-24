@@ -1,6 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use crate::{
+    exchange::Candle,
     pair::Pair,
     remote_exchanges::{
         okx::api::InstrumentType,
@@ -282,4 +283,27 @@ pub struct Order {
     #[serde_as(as = "DisplayFromStr")]
     pub status: OrderStatus,
     // pub settled: bool,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct CoinbaseCandle {
+    pub time: u64,
+    pub low: f64,
+    pub high: f64,
+    pub open: f64,
+    pub close: f64,
+    pub volume: f64,
+}
+
+impl Into<Candle> for CoinbaseCandle {
+    fn into(self) -> Candle {
+        Candle {
+            timestamp: self.time,
+            lowest_price: self.low,
+            highest_price: self.high,
+            open_price: self.open,
+            close_price: self.close,
+            volume: self.volume,
+        }
+    }
 }

@@ -253,3 +253,77 @@ impl ApiRequest for GetOrderbookRequest {
 
     type Response = response::OrderBook;
 }
+
+#[derive(Deserialize)]
+pub struct GetProductCandles {
+    pub product_id: String,
+    pub granularity: Option<String>,
+    pub start: Option<String>,
+    pub end: Option<String>,
+}
+
+impl Serialize for GetProductCandles {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("GetProductCandles", 4)?;
+
+        if self.granularity.is_some() {
+            state.serialize_field("granularity", &self.granularity)?;
+        }
+
+        if self.start.is_some() {
+            state.serialize_field("start", &self.start)?;
+        }
+
+        if self.end.is_some() {
+            state.serialize_field("end", &self.end)?;
+        }
+
+        if is_json_serializer::<S>() {
+            state.serialize_field("product_id", &self.product_id)?;
+        }
+
+        state.end()
+    }
+}
+
+#[cfg(test)]
+mod candle_serialize_test {
+    use super::*;
+
+    #[test]
+    fn test_serialize_candles() {
+        let get_product_candles = GetProductCandles {
+            product_id: "BTC-USD".to_string(),
+            granularity: Some("60".to_string()),
+            start: Some("2021-01-01T00:00:00Z".to_string()),
+            end: Some("2021-01-02T00:00:00Z".to_string()),
+        };
+
+        let serialized = serde_qs::to_string(&get_product_candles).unwrap();
+        assert_eq!(
+            serialized,
+            "granularity=60&start=2021-01-01T00%3A00%3A00Z&end=2021-01-02T00%3A00%3A00Z"
+        );
+
+        let serialized = serde_json::to_string(&get_product_candles).unwrap();
+
+        assert_eq!(
+            serialized,
+            r#"{"granularity":"60","start":"2021-01-01T00:00:00Z","end":"2021-01-02T00:00:00Z","product_id":"BTC-USD"}"#
+        );
+    }
+}
+
+impl ApiRequest for GetProductCandles {
+    const BODY: bool = false;
+    const HOST: &'static str = "api.exchange.coinbase.com";
+    const METHOD: HttpMethod = HttpMethod::GET;
+    const URI: &'static str = "products/{product_id}/candles";
+    const PUBLIC: bool = true;
+    const PATH_PARAMS: bool = true;
+
+    type Response = Vec<response::CoinbaseCandle>;
+}
