@@ -135,10 +135,7 @@
 
   let requests = $state<[number, SignableInstruction[]][]>([]);
   let orders = $state<Order[]>([]);
-  let done_orders = $state<Order[]>([]);
-
-  let selectedRequest = $state<SignableInstruction[] | null>(null);
-  let selectedRequestIndex = $state<number | null>(null);
+  let ordersHistory = $state<Order[]>([]);
   let selectedInfoBar = $state<string | undefined>("requests");
 
   const fetchRequests = async () => {
@@ -157,8 +154,6 @@
     if (!wallet.actor) {
       throw new Error("No actor found");
     }
-
-    console.log("fetching orders");
 
     const [requestNumber, instructions] = await wallet.actor.add_transaction(
       selectedExchanges.map((e) => {
@@ -182,7 +177,7 @@
       }),
     );
 
-    const timestamp = Math.round(Date.now() / 1000) - 10;
+    const timestamp = Math.round(Date.now() / 1000) - 4;
     const isoTimestamp = new Date().toISOString();
     let signatures = [];
     let newOrders: Order[] = [];
@@ -227,17 +222,19 @@
       throw new Error("Not type of response" + err);
     }
 
-    orders = newOrders;
+    if (pending) {
+      orders = newOrders;
+    } else {
+      ordersHistory = newOrders;
+    }
   };
 
   const handleRefreshClick = async () => {
     if (selectedInfoBar === "requests") {
       await fetchRequests();
     } else if (selectedInfoBar === "open_orders") {
-      orders = [];
       await fetchOrders(true);
     } else if (selectedInfoBar === "orders_history") {
-      orders = [];
       await fetchOrders(false);
     }
   };
@@ -351,7 +348,9 @@
         <RequestList {requests} />
       </Tabs.Content>
 
-      <Tabs.Content value="orders_history"></Tabs.Content>
+      <Tabs.Content value="orders_history">
+        <OrdersList orders={ordersHistory} withClose={false} />
+      </Tabs.Content>
     </Tabs.Root>
   </div>
 </div>

@@ -187,7 +187,7 @@ export const executeRequest = async (
 
   const [requestNumber, instructions] = await postRequest(exchange, request);
 
-  const timestamp = Math.round(Date.now() / 1000) - 1;
+  const timestamp = Math.round(Date.now() / 1000) - 4;
   const isoTimestamp = new Date().toISOString();
 
   const signature = await finishSignature(
