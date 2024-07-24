@@ -152,9 +152,17 @@ async fn run_transaction(
     ic_cdk::println!("{:?}", tx);
 
     let mut responses = vec![];
-    let mut done_instructions = vec![];
+    let mut instructions = vec![];
+    let mut done_count = 0usize;
+
+    ic_cdk::println!("instructions len {}", tx.iter().count());
 
     for (i, signature) in tx.iter().zip(signature.iter()) {
+        if i.executed {
+            continue;
+        }
+
+        ic_cdk::println!("executing: {}", signature);
         let api_info =
             ApiStore::get_by_api(&identity, &i.instruction.api_key).expect("api info not found");
 
@@ -177,28 +185,39 @@ async fn run_transaction(
             Request::Empty => {
                 panic!("Empty request")
             }
-            Request::Instruments(instruments) => exchange.get_instruments(instruments).await?,
-            Request::Balances(balance) => exchange.get_balance(balance).await?,
-            Request::PostOrder(order) => exchange.post_order(order).await?,
+            Request::Instruments(instruments) => exchange.get_instruments(instruments).await,
+            Request::Balances(balance) => exchange.get_balance(balance).await,
+            Request::PostOrder(order) => exchange.post_order(order).await,
             Request::OrdersList(orders_request) => match orders_request.pending {
-                true => exchange.get_pending_orders(orders_request).await?,
-                false => exchange.get_done_orders(orders_request).await?,
+                true => exchange.get_pending_orders(orders_request).await,
+                false => exchange.get_done_orders(orders_request).await,
             },
         };
 
-        ic_cdk::println!("{:?}", response);
-
-        let done_ix = SignableInstruction {
-            instruction: i.instruction.clone(),
-            signature: i.signature.clone(),
-            executed: true,
+        let instruction = if let Ok(r) = response {
+            ic_cdk::println!("execution successful: {:?}", r);
+            responses.push(r);
+            done_count += 1;
+            SignableInstruction {
+                instruction: i.instruction.clone(),
+                signature: i.signature.clone(),
+                executed: true,
+            }
+        } else {
+            ic_cdk::println!("execution failed");
+            i.clone()
         };
-        done_instructions.push(done_ix);
-        responses.push(response);
+
+        instructions.push(instruction);
     }
 
-    TransactionStore::delete_transaction(&identity, index);
-    TransactionStore::add_transaction(&identity, done_instructions);
+    ic_cdk::println!("executed {}", done_count);
+
+    if tx.iter().count() == done_count {
+        TransactionStore::delete_transaction(&identity, index);
+    }
+
+    TransactionStore::add_transaction(&identity, instructions);
 
     Ok(responses)
 }
@@ -264,6 +283,8 @@ async fn split_transaction(
         .iter()
         .zip(trade_cuts.iter())
         .map(|(k, c)| {
+            let floor_second_place = (c * 100.0).floor() / 100.0;
+
             Ok(Instruction {
                 api_key: k.api_key.clone(),
                 exchange: k.exchange,
@@ -271,7 +292,7 @@ async fn split_transaction(
                     instrument_id: pair.clone(),
                     order_type: OrderType::Market,
                     side: order_side.clone(),
-                    size: *c,
+                    size: floor_second_place,
                     trade_mode: TradeMode::Cash,
                     margin_currency: None,
                     order_price: None,
