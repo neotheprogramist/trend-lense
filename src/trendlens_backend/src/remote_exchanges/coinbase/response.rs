@@ -119,7 +119,10 @@ pub struct OrderResponse {
 
 impl Into<OrderData> for OrderResponse {
     fn into(self) -> OrderData {
-        OrderData { code: self.id }
+        OrderData {
+            id: self.id,
+            message: self.status,
+        }
     }
 }
 

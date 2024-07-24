@@ -1,5 +1,5 @@
 type ApiClientErrors = variant {
-  Http : record { status : nat };
+  Http : record { status : nat; body : text };
   Reject : record { code : RejectionCode; message : text };
 };
 type ApiData = record {
@@ -74,7 +74,7 @@ type Order = record {
   instrument_type : text;
   price : float64;
 };
-type OrderData = record { code : text };
+type OrderData = record { id : text; message : text };
 type OrderSide = variant { Buy; Sell };
 type OrderType = variant { Fok; Ioc; Limit; PostOnly; Market };
 type Pair = record { base : text; quote : text };
@@ -124,7 +124,9 @@ service : () -> {
   get_last_timestamp : (Exchange, text) -> (opt nat64) query;
   get_orderbook : (Exchange, text) -> (float64);
   get_transaction : (nat32) -> (opt vec SignableInstruction) query;
-  get_transactions : () -> (opt vec vec SignableInstruction) query;
+  get_transactions : () -> (
+      opt vec record { nat32; vec SignableInstruction },
+    ) query;
   get_volumes : (Exchange, text, nat64) -> (opt vec TimeVolume) query;
   initialize_pair : (text, Exchange) -> ();
   initialize_volume_store : (Exchange, text, nat64) -> ();

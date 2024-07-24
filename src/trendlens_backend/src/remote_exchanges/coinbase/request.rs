@@ -94,14 +94,50 @@ impl FromStr for OrderType {
 #[derive(Deserialize, Serialize)]
 pub struct PostOrderBody {
     pub product_id: String,
-    pub size: Option<String>,
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub size: Option<f64>,
+    #[serde_as(as = "Option<DisplayFromStr>")]
     pub price: Option<f64>,
+    #[serde_as(as = "Option<DisplayFromStr>")]
     pub funds: Option<f64>,
     #[serde(rename = "type")]
     #[serde_as(as = "DisplayFromStr")]
     pub order_type: OrderType,
     #[serde_as(as = "DisplayFromStr")]
     pub side: OrderSide,
+}
+
+#[cfg(test)]
+mod post_order_test {
+    use super::*;
+
+    #[test]
+    fn test_serialize_post_order_body() {
+        let post_order_body = PostOrderBody {
+            product_id: "BTC-USD".to_string(),
+            size: Some(0.01),
+            price: Some(10000.0),
+            funds: None,
+            order_type: OrderType::Limit,
+            side: OrderSide::Buy,
+        };
+
+        let serialized = serde_qs::to_string(&post_order_body).unwrap();
+        assert_eq!(serialized, "product_id=BTC-USD&size=0.01&price=10000&type=limit&side=buy");
+
+        let post_order_body = PostOrderBody {
+            product_id: "BTC-USD".to_string(),
+            size: None,
+            price: Some(10000.0),
+            funds: None,
+            order_type: OrderType::Limit,
+            side: OrderSide::Buy,
+        };
+
+
+        let serialized = serde_qs::to_string(&post_order_body).unwrap();
+        assert_eq!(serialized, "product_id=BTC-USD&price=10000&type=limit&side=buy");
+    }
 }
 
 impl ApiRequest for PostOrderBody {

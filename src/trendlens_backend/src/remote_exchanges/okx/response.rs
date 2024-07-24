@@ -32,11 +32,6 @@ pub struct ApiResponse<T> {
 
 impl<R: DeserializeOwned> ApiResponseWrapper<R> for ApiResponse<R> {
     fn extract_response(self) -> Result<R, ExchangeErrors> {
-        if self.code != 0 {
-            return Err(ExchangeErrors::ApiClientError(ApiClientErrors::Http {
-                status: Nat(self.code.into()),
-            }));
-        }
 
         Ok(self.data)
     }
@@ -174,14 +169,14 @@ pub struct PlaceOrderDetails {
     pub status_message: String,
 }
 
-#[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
-pub struct PlaceOrderResponse {
-    pub code: String,
-    pub msg: String,
-    pub data: Vec<PlaceOrderDetails>,
-    pub in_time: String,
-    pub out_time: String,
-}
+// #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
+// pub struct PlaceOrderResponse {
+//     pub code: String,
+//     pub msg: String,
+//     pub data: ,
+//     pub in_time: String,
+//     pub out_time: String,
+// }
 
 #[serde_as]
 #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]

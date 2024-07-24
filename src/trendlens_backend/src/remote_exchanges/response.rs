@@ -15,7 +15,8 @@ pub struct Instrument {
 
 #[derive(Deserialize, Debug, Clone, CandidType, Serialize)]
 pub struct OrderData {
-    pub code: String,
+    pub id: String,
+    pub message: String,
 }
 
 #[derive(Deserialize, Debug, Clone, CandidType, Serialize)]

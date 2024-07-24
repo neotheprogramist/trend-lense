@@ -107,7 +107,7 @@ fn get_transaction(index: u32) -> Option<Transaction> {
 }
 
 #[ic_cdk::query]
-fn get_transactions() -> Option<Vec<Transaction>> {
+fn get_transactions() -> Option<Vec<(u32, Transaction)>> {
     let identity = ic_cdk::caller();
 
     TransactionStore::get_transactions(&identity)

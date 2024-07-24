@@ -1,6 +1,6 @@
 use crate::{
     remote_exchanges::{
-        request::{GeneralInstrumentsRequest, GeneralOrdersListRequest},
+        request::{GeneralInstrumentsRequest, GeneralOrdersListRequest, OrderSide},
         response::Order,
         ExchangeErrors, UserData,
     },
@@ -46,9 +46,15 @@ impl UserData for Coinbase {
     ) -> Result<Response, ExchangeErrors> {
         let request_coinbase = PostOrderBody {
             order_type: request.order_type.into(),
-            size: Some(request.size.to_string()),
+            size: match request.side {
+                OrderSide::Buy => None,
+                OrderSide::Sell => Some(request.size),
+            },
             side: request.side.into(),
-            funds: None,
+            funds: match request.side {
+                OrderSide::Buy => Some(request.size),
+                OrderSide::Sell => None,
+            },
             price: request.order_price,
             product_id: request.instrument_id.to_string(),
         };
@@ -100,7 +106,7 @@ impl UserData for Coinbase {
                         order_type: o.order_type.unwrap_or("".to_string()),
                         trade_mode: o.time_in_force.unwrap_or("".to_string()),
                         accumulated_fill_quantity: o.filled_size,
-                        state: o.status.to_string()
+                        state: o.status.to_string(),
                     }),
                     _ => None,
                 })
@@ -144,7 +150,7 @@ impl UserData for Coinbase {
                         order_type: o.order_type.unwrap_or("".to_string()),
                         trade_mode: o.time_in_force.unwrap_or("".to_string()),
                         accumulated_fill_quantity: o.filled_size,
-                        state: o.status.to_string()
+                        state: o.status.to_string(),
                     }),
                     _ => None,
                 })

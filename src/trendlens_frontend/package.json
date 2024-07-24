@@ -23,7 +23,7 @@
     "cmdk-sv": "^0.0.18",
     "d3": "^7.9.0",
     "lightweight-charts": "^4.1.6",
-    "lucide-svelte": "^0.408.0",
+    "lucide-svelte": "^0.414.0",
     "mode-watcher": "^0.3.1",
     "svelte-lightweight-charts": "^2.2.0",
     "svelte-sonner": "^0.3.24",

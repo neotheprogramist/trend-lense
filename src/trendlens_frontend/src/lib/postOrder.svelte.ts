@@ -1,21 +1,30 @@
 import type {
+  PositionSide as BackendPositionSide,
   OrderSide,
   OrderType,
+  Result,
+  Result_1,
+  Result_2,
+  Result_3,
   TradeMode,
-  PositionSide as BackendPositionSide,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-import { handleExchange, Exchanges } from "./exchange";
+import { Exchanges, handleExchange } from "./exchange";
 import { keyStore } from "./keystore.svelte";
 import { pairFromString } from "./pair";
 import {
-  OrderSideType,
   InstrumentType,
+  OrderSideType,
   OrderTypeType,
-  TradeModeType,
   PositionSideType,
+  TradeModeType,
 } from "./request";
 import { isPostOrderResponse } from "./response";
-import { extractOkValue } from "./result";
+import {
+  extractOkValue,
+  isApiClientError,
+  isExchangeErr,
+  isHttpApiClientError,
+} from "./result";
 import { finishSignature } from "./signature";
 import { wallet } from "./wallet.svelte";
 
@@ -27,11 +36,11 @@ export class PostOrderRequest {
   // marginCurrency: string;
   tradeMode = $state<TradeModeType | null>(null);
   positionSide = $state<PositionSideType | null>(null);
-  size = $state<number | undefined>(undefined);
+  size = $state<string | undefined>(undefined);
   orderSide = $state<OrderSideType>(OrderSideType.Buy);
   orderType = $state<OrderTypeType>(OrderTypeType.Market);
 
-  orderPrice = $state<number | undefined>(undefined);
+  orderPrice = $state<string | undefined>(undefined);
   orderPriceRequired = $derived.by(() => {
     return this.orderType != OrderTypeType.Market;
   });
@@ -136,10 +145,10 @@ export const postRequest = async (
           trade_mode: handleTradeMode(request.tradeMode!),
           margin_currency: [],
           order_price:
-            request.orderPrice != undefined ? [request.orderPrice] : [],
+            request.orderPrice != undefined ? [Number(request.orderPrice)] : [],
           order_type: handleOrderType(request.orderType),
           side: handleOrderSide(request.orderSide),
-          size: request.size ?? 0,
+          size: request.size ? Number(request.size) : 0,
           position_side: request.positionSide
             ? [handlePositionSide(request.positionSide)]
             : [],
@@ -147,6 +156,19 @@ export const postRequest = async (
       },
     },
   ]);
+};
+
+export const extractApiHttpError = (result: Result_2) => {
+  if (isExchangeErr(result)) {
+    if (isApiClientError(result.Err)) {
+      if (isHttpApiClientError(result.Err.ApiClientError)) {
+        return `HTTP error: ${result.Err.ApiClientError.Http.status} ${result.Err.ApiClientError.Http.body}`;
+      }
+    }
+  }
+  console.log(result)
+
+  throw new Error("Unknown API client error");
 };
 
 export const executeRequest = async (
@@ -182,17 +204,17 @@ export const executeRequest = async (
     BigInt(timestamp),
   );
 
+  console.log(result)
+
   try {
     const response = extractOkValue(result)[0];
 
     if (isPostOrderResponse(response)) {
-      const order = response.Order;
-
-      console.log(order.code);
+      return response.Order.message;
     } else {
-      throw new Error("Response returned not type of order");
+      throw new Error("Unexpected response");
     }
   } catch (err) {
-    console.error(err);
+    return extractApiHttpError(result);
   }
 };

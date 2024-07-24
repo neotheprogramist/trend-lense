@@ -15,7 +15,7 @@ pub mod request;
 pub struct SignableInstruction {
     pub instruction: Instruction,
     pub signature: String,
-    pub executed: bool
+    pub executed: bool,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, CandidType)]
@@ -52,7 +52,8 @@ impl Deref for Transaction {
 }
 
 type InstructionId = u32;
-type InstructionsTable = StableBTreeMap<InstructionId, StorableWrapper<SignableInstruction>, Memory>;
+type InstructionsTable =
+    StableBTreeMap<InstructionId, StorableWrapper<SignableInstruction>, Memory>;
 type TransactionId = u32;
 type TransactionsTable = StableBTreeMap<TransactionId, StorableWrapper<Vec<InstructionId>>, Memory>;
 type UserTransactionsTable = StableBTreeMap<Principal, StorableWrapper<Vec<TransactionId>>, Memory>;
@@ -84,7 +85,10 @@ pub struct TransactionStore;
 impl TransactionStore {
     fn insert_instruction(instruction: SignableInstruction) -> InstructionId {
         INSTRUCTIONS.with_borrow_mut(|k| {
-            let instruction_id = k.len() as InstructionId;
+            let instruction_id = k
+                .last_key_value()
+                .and_then(|(k, _v)| Some(k + 1))
+                .unwrap_or(0) as InstructionId;
             k.insert(instruction_id, StorableWrapper(instruction));
             instruction_id
         })
@@ -92,7 +96,10 @@ impl TransactionStore {
 
     fn insert_transaction(instructions: Vec<SignableInstruction>) -> TransactionId {
         TRANSACTIONS.with_borrow_mut(|k| {
-            let transaction_id = k.len() as TransactionId;
+            let transaction_id = k
+                .last_key_value()
+                .and_then(|(k, _v)| Some(k + 1))
+                .unwrap_or(0) as TransactionId;
 
             let instructions_ids: Vec<InstructionId> = instructions
                 .into_iter()
@@ -105,7 +112,10 @@ impl TransactionStore {
         })
     }
 
-    pub fn add_transaction(identity: &Principal, instructions: Vec<SignableInstruction>) -> TransactionId {
+    pub fn add_transaction(
+        identity: &Principal,
+        instructions: Vec<SignableInstruction>,
+    ) -> TransactionId {
         let transaction_id = Self::insert_transaction(instructions);
 
         USER_TRANSACTIONS.with_borrow_mut(|k| {
@@ -140,14 +150,19 @@ impl TransactionStore {
         })
     }
 
-    pub fn get_transactions(identity: &Principal) -> Option<Vec<Transaction>> {
+    pub fn get_transactions(identity: &Principal) -> Option<Vec<(u32, Transaction)>> {
         let user_transactions =
             USER_TRANSACTIONS.with_borrow(|k| k.get(identity).and_then(|x| Some(x.clone())))?;
 
         Some(
             user_transactions
                 .iter()
-                .filter_map(|transaction_id| Self::get_transaction(identity, *transaction_id))
+                .filter_map(|transaction_id| {
+                    Some((
+                        *transaction_id,
+                        Self::get_transaction(identity, *transaction_id)?,
+                    ))
+                })
                 .collect::<Vec<_>>(),
         )
     }

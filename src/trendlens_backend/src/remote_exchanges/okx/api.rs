@@ -1,7 +1,7 @@
 use std::{borrow::Cow, fmt, mem::size_of, str::FromStr};
 
 use super::response::{
-    AccountInfo, CandleStick, ConcreteInstrument, IndexCandleStick, Order, OrderBook, PlaceOrderResponse, TakerVolume
+    AccountInfo, CandleStick, ConcreteInstrument, IndexCandleStick, Order, OrderBook, PlaceOrderDetails, TakerVolume
 };
 use crate::remote_exchanges::ApiRequest;
 use candid::CandidType;
@@ -187,7 +187,7 @@ impl ApiRequest for PlaceOrderBody {
     const PUBLIC: bool = false;
     const BODY: bool = true;
 
-    type Response = Vec<PlaceOrderResponse>;
+    type Response = Vec<PlaceOrderDetails>;
 }
 
 #[skip_serializing_none]

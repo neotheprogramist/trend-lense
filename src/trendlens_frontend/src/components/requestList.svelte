@@ -1,90 +1,155 @@
 <script lang="ts">
-  import { Exchanges } from "$lib/exchange";
+  import { Exchanges, toExchanges } from "$lib/exchange";
   import { keyStore } from "$lib/keystore.svelte";
+  import { isPostOrderRequest } from "$lib/request";
+  import { finishSignature } from "$lib/signature";
   import { wallet } from "$lib/wallet.svelte";
+  import { Send, X } from "lucide-svelte";
   import type { SignableInstruction } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-  import Button from "./shad/ui/button/button.svelte";
-  import {
-    isBalancesRequest,
-    isInstrumentsRequest,
-    isPostOrderRequest,
-  } from "$lib/request";
-
-  import * as Card from "$components/shad/ui/card/index";
 
   interface IProps {
-    requests: SignableInstruction[][];
-    onRequestSelect: (id: number) => void;
+    requests: [number, SignableInstruction[]][];
   }
 
-  let { requests, onRequestSelect }: IProps = $props();
+  let { requests }: IProps = $props();
 
+  const deleteRequest = async (id: number) => {
+    if (!wallet.actor) {
+      throw new Error("No actor found");
+    }
+
+    try {
+      await wallet.actor.delete_transaction(id);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const runRequest = async (
+    transactionId: number,
+    transaction: SignableInstruction[],
+  ) => {
+    if (!wallet.actor) {
+      throw new Error("No actor found");
+    }
+
+    if (!transaction || !transactionId) {
+      throw new Error("No transaction found");
+    }
+
+    const timestamp = Math.round(Date.now() / 1000) - 1;
+    const isoTimestamp = new Date().toISOString();
+
+    let signatures = [];
+
+    for (let i = 0; i < transaction.length; i++) {
+      const exchange = toExchanges(transaction[i].instruction.exchange);
+      const key = keyStore.getByExchange(exchange);
+
+      if (!key) {
+        throw new Error("Key not found");
+      }
+
+      const signature = await finishSignature(
+        exchange,
+        transaction[i].signature,
+        key.secretKey,
+        exchange == Exchanges.Coinbase ? timestamp.toString() : isoTimestamp,
+      );
+
+      signatures.push(signature);
+    }
+
+    await wallet.actor.run_transaction(
+      transactionId,
+      signatures,
+      isoTimestamp,
+      BigInt(timestamp),
+    );
+  };
+
+  function filterRequests(requests: [number, SignableInstruction[]][]) {
+    return requests.filter(([id, transaction]) => {
+      if (
+        isPostOrderRequest(transaction[0].instruction.request) &&
+        !transaction[0].executed
+      )
+        return true;
+
+      return false;
+    });
+  }
 </script>
 
-<div class="grid grid-cols-1 lg:grid-cols-2">
-  {#each requests as transaction, id}
-    <Card.Root class="m-5">
-      <Card.Header>
-        <Card.Title>Transaction name</Card.Title>
-        <Card.Description>transaction id: {id}</Card.Description>
-      </Card.Header>
-      <Card.Content class="space-y-6">
-        <h2 class="text-lg">Instructions</h2>
-        <div>
-          {#each transaction as ix}
-            {@const exchange = Object.keys(ix.instruction.exchange)[0]}
-            {@const requestType = Object.keys(ix.instruction.request)[0]}
-            {@const request = ix.instruction.request}
+<div class="flex px-6 mt-5">
+  <table class="w-full">
+    <thead>
+      <tr>
+        <th class="py-4"></th>
+        <th>Instrument</th>
+        <th>Exchange</th>
+        <th>Executed</th>
+        <th>Order Types</th>
+        <th>Order Price</th>
+        <th>Size</th>
+        <th>Trade Mode</th>
+      </tr>
+    </thead>
+    <tbody>
+      {#each filterRequests(requests) as [id, transaction]}
+        {#if isPostOrderRequest(transaction[0].instruction.request)}
+          {@const side = Object.keys(
+            transaction[0].instruction.request.PostOrder.side,
+          )[0]}
+          {@const instrument =
+            transaction[0].instruction.request.PostOrder.instrument_id}
+          {@const exchange = Object.keys(
+            transaction[0].instruction.exchange,
+          )[0]}
+          {@const orderType = Object.keys(
+            transaction[0].instruction.request.PostOrder.order_type,
+          )[0]}
+          {@const tradeMode = Object.keys(
+            transaction[0].instruction.request.PostOrder.trade_mode,
+          )[0]}
+          {@const orderPrice =
+            transaction[0].instruction.request.PostOrder.order_price}
+          {@const size = transaction[0].instruction.request.PostOrder.size}
 
-            <fieldset class="space-y-3 rounded-lg border p-5">
-              <legend class="-ml-1 px-1 text-sm font-medium"
-                >{requestType}</legend
-              >
-              <span class="flex justify-between"
-                >exchange: <span>{exchange}</span></span
-              >
-              <span class="flex justify-between flex-wrap"
-                >api key: <span
-                  >{ix.instruction.api_key.substring(0, 12)}...</span
-                ></span
-              >
-
-              {#if isBalancesRequest(request)}
-                <span class="flex justify-between"
-                  >currency : <span>{request.Balances.currency}</span></span
-                >
-              {:else if isInstrumentsRequest(request)}
-                <span class="flex justify-between"
-                  >instrument: <span>{request.Instruments.instrument_id}</span
-                  ></span
-                >
-                <span class="flex justify-between"
-                  >instrument type: <span
-                    >{request.Instruments.instrument_type}</span
-                  ></span
-                >
-              {:else if isPostOrderRequest(request)}
-                <span class="flex justify-between"
-                  >price: <span>{request.PostOrder.order_price}</span></span
-                >
-                <span class="flex justify-between"
-                  >size: <span>{request.PostOrder.size}</span></span
-                >
-              {/if}
-
-              <span class="flex justify-between"
-                >executed: <span>{ix.executed}</span></span
-              >
-            </fieldset>
-          {/each}
-        </div>
-        <Button
-          variant="outline"
-          class="ml-auto"
-          onclick={() => onRequestSelect(id)}>View</Button
-        >
-      </Card.Content>
-      <Card.Footer></Card.Footer>
-    </Card.Root>
-  {/each}
+          <!-- {#if transaction.length == 1} -->
+            <tr class="text-center">
+              <td>
+                {#if side == "Buy"}
+                  <p class="text-green-400 bg-green-900 rounded-xl py-0.5">
+                    Buy
+                  </p>
+                {:else}
+                  <p class="text-red-400 bg-red-900 rounded-xl py-0.5">Sell</p>
+                {/if}
+              </td>
+              <td class="py-3">{instrument.base}/{instrument.quote}</td>
+              <td>{exchange}</td>
+              <td>{transaction[0].executed}</td>
+              <td>{orderType}</td>
+              <td>{orderPrice[0] ? orderPrice : "-"}</td>
+              <td>{size}</td>
+              <td>{tradeMode}</td>
+              <td class="w-16">
+                <div class="flex space-x-4 items-center">
+                  <Send
+                    onclick={() => runRequest(id, transaction)}
+                    class="cursor-pointer w-5 stroke-blue-400"
+                  />
+                  <X
+                    onclick={() => deleteRequest(id)}
+                    class="cursor-pointer w-5 stroke-red-400"
+                  />
+                </div>
+              </td>
+            </tr>
+          {/if}
+        <!-- {/if} -->
+      {/each}
+    </tbody>
+  </table>
 </div>

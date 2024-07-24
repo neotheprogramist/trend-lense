@@ -11,8 +11,8 @@ use thiserror::Error;
 
 #[derive(Error, Debug, CandidType)]
 pub enum ApiClientErrors {
-    #[error("http call failed with status {status}")]
-    Http { status: Nat },
+    #[error("http call failed with status {status} and body {body}")]
+    Http { status: Nat, body: String },
     #[error("request rejected with code {code:?} and message {message}")]
     Reject {
         message: String,
@@ -124,6 +124,7 @@ impl ApiClient {
                 if response.status != Nat::from(200u32) {
                     return Err(ApiClientErrors::Http {
                         status: response.status,
+                        body: String::from_utf8(response.body).expect("conversion failed"),
                     }
                     .into());
                 }
@@ -135,7 +136,7 @@ impl ApiClient {
                     }
                 })?;
 
-                return Ok(deserialized_response.extract_response().unwrap());
+                deserialized_response.extract_response()
             }
             Err(err) => {
                 ic_cdk::println!("{:?}", err);
