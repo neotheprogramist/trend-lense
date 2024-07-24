@@ -166,7 +166,7 @@
 </script>
 
 <form class="flex flex-col items-center justify-start h-full">
-  <Tabs.Root bind:value={request.orderType} class="space-y-8">
+  <Tabs.Root bind:value={request.orderType} class="space-y-6">
     <div class="w-full mt-6 flex justify-between items-center">
       <span
         class={cn(
