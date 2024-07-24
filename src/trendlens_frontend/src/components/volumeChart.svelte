@@ -130,94 +130,109 @@
   });
 
   const xTicks = $derived(xScale.ticks(xScalefactor));
-  const xTicksFormatted = $derived(
-    xTicks.map((el) => el.toLocaleTimeString()),
-  );
+  const xTicksFormatted = $derived(xTicks.map((el) => el.toLocaleTimeString()));
   const yTicks = $derived(niceY.ticks(yScalefactor));
 
-  onMount(async () => {
+  // @ts-ignore
+  $effect(async () => {
+    xVals = [];
+    yVals = [];
+    points = [];
+    subsets = [];
+    colorVals = [];
+
     for (let i = 0; i < exchanges.length; i++) {
       await getVolumes(exchanges[i], instrument, i);
     }
   });
 
+  $inspect({ xVals, yVals });
 </script>
 
-<div class="chart-container">
-  <svg {width} {height} viewBox="0 0 {width} {height}" cursor="crosshair">
-    {#each areas as subsetArea, i}
-      <g class="chartlines" pointer-events="none">
-        <path
-          class="line"
-          fill={colors[i]}
-          stroke={colors[i]}
-          d={subsetArea}
-          fill-opacity={fillOpacity}
-          stroke-width={strokeWidth}
-          stroke-linecap={strokeLinecap}
-          stroke-linejoin={strokeLinejoin}
-        />
-      </g>
-    {/each}
+<div class="flex h-full">
+  <div class="chart-container flex-3 h-full flex justify-center items-center">
+    <svg {width} {height} viewBox="0 0 {width} {height}" cursor="crosshair">
+      {#each areas as subsetArea, i}
+        <g class="chartlines" pointer-events="none">
+          <path
+            class="line"
+            fill={colors[i]}
+            stroke={colors[i]}
+            d={subsetArea}
+            fill-opacity={fillOpacity}
+            stroke-width={strokeWidth}
+            stroke-linecap={strokeLinecap}
+            stroke-linejoin={strokeLinejoin}
+          />
+        </g>
+      {/each}
 
-    <g
-      class="y-axis"
-      transform="translate({marginLeft}, 0)"
-      pointer-events="none"
-    >
-      <path
-        class="domain"
-        stroke="black"
-        d="M{insetLeft}, {marginTop} V{height - marginBottom + 6}"
-      />
-      {#each yTicks as tick, i}
-        <g class="tick" transform="translate(0, {yScale(tick)})">
-          <line class="tick-start" x1={insetLeft - 6} x2={insetLeft} />
-          {#if horizontalGrid}
-            <line
-              class="tick-grid"
-              x1={insetLeft}
-              x2={width - marginLeft - marginRight}
-            />
-          {/if}
-          <text x="-{marginLeft}" y="5">{tick + " " + yFormat}</text>
-        </g>
-      {/each}
-      <text x="-{marginLeft}" y={marginTop - 10}>{yLabel}</text>
-    </g>
-    <g
-      class="x-axis"
-      transform="translate(0,{height - marginBottom - insetBottom})"
-      pointer-events="none"
-    >
-      <path
-        class="domain"
-        stroke="black"
-        d="M{marginLeft},0.5 H{width - marginRight}"
-      />
-      {#each xTicks as tick, i}
-        <g class="tick" transform="translate({xScale(tick)}, 0)">
-          <line class="tick-start" stroke="black" y2="6" />
-          {#if verticalGrid}
-            <line class="tick-grid" y2={-height} />
-          {/if}
-          <text font-size="8px" x={-marginLeft / 4} y="20"
-            >{xTicksFormatted[i] + xFormat}</text
-          >
-        </g>
-      {/each}
-      <text x={width - marginLeft - marginRight - 40} y={marginBottom}
-        >{xLabel}</text
+      <g
+        class="y-axis"
+        transform="translate({marginLeft}, 0)"
+        pointer-events="none"
       >
-    </g>
-  </svg>
+        <path
+          class="domain"
+          stroke="black"
+          d="M{insetLeft}, {marginTop} V{height - marginBottom + 6}"
+        />
+        {#each yTicks as tick, i}
+          <g class="tick" transform="translate(0, {yScale(tick)})">
+            <line class="tick-start" x1={insetLeft - 6} x2={insetLeft} />
+            {#if horizontalGrid}
+              <line
+                class="tick-grid"
+                x1={insetLeft}
+                x2={width - marginLeft - marginRight}
+              />
+            {/if}
+            <text class="text-sm" x="-{marginLeft}" y="5">{tick}</text>
+          </g>
+        {/each}
+        <text class="text-sm" x="-{marginLeft}" y={marginTop - 10}
+          >{yLabel}</text
+        >
+      </g>
+      <g
+        class="x-axis"
+        transform="translate(0,{height - marginBottom - insetBottom})"
+        pointer-events="none"
+      >
+        <path
+          class="domain"
+          stroke="black"
+          d="M{marginLeft},0.5 H{width - marginRight}"
+        />
+        {#each xTicks as tick, i}
+          <g class="tick" transform="translate({xScale(tick)}, 0)">
+            <line class="tick-start" stroke="black" y2="6" />
+            {#if verticalGrid}
+              <line class="tick-grid" y2={-height} />
+            {/if}
+            <text font-size="8px" x={-marginLeft / 4} y="20"
+              >{xTicksFormatted[i] + xFormat}</text
+            >
+          </g>
+        {/each}
+        <text x={width - marginLeft - marginRight - 40} y={marginBottom}
+          >{xLabel}</text
+        >
+      </g>
+    </svg>
+  </div>
+  <div class="ml-20 flex flex-1 flex-col w-16 justify-center">
+    {#each exchanges as e, index}
+      <span style="color: {colors[index]}">{e}</span>
+    {/each}
+  </div>
 </div>
 
 <style>
   .chart-container {
     justify-content: center;
     align-items: center;
-    margin-top: 50px;
+    /* margin-top: 50px; */
     margin-left: 8 0px;
   }
   svg {

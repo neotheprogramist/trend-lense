@@ -280,7 +280,7 @@
       <Tabs.Content value="trading" class="h-full">
         <TradingView candlesData={candlesFromBackend} />
       </Tabs.Content>
-      <Tabs.Content value="charts">
+      <Tabs.Content class="h-[600px]" value="charts">
         {#if selectedInstrument}
           <VolumeChart
             instrument={selectedInstrument}
