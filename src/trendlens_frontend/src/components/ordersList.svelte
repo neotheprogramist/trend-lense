@@ -1,13 +1,14 @@
 <script lang="ts">
   import { X } from "lucide-svelte";
-  import type { GlobalPendingOrder } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import type { Order } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
   interface IProps {
-    orders: GlobalPendingOrder[];
+    orders: Order[];
     onOrderClose?: (orderId: string) => void;
+    withClose?: boolean;
   }
 
-  let { orders }: IProps = $props();
+  let { orders, withClose = true }: IProps = $props();
 </script>
 
 <div class="flex px-6 mt-5">
@@ -22,7 +23,9 @@
         <th>Trade Mode</th>
         <th>Order Type</th>
         <th>Order Filled</th>
-        <th></th>
+        {#if withClose}
+          <th></th>
+        {/if}
       </tr>
     </thead>
     <tbody>
@@ -42,7 +45,9 @@
           <td>{order.trade_mode}</td>
           <td class="uppercase">{order.order_type}</td>
           <td>{order.accumulated_fill_quantity}</td>
-          <td><X class="cursor-pointer w-5 stroke-red-400" /></td>
+          {#if withClose}
+            <td><X class="cursor-pointer w-5 stroke-red-400" /></td>
+          {/if}
         </tr>
       {/each}
     </tbody>
