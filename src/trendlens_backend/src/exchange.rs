@@ -1,6 +1,7 @@
 use candid::CandidType;
 use ic_stable_structures::{storable::Bound, Storable};
 use serde::{Deserialize, Serialize};
+use core::panic;
 use std::borrow::Cow;
 
 use crate::{
@@ -276,6 +277,17 @@ impl ExchangeImpl {
         }
     }
 
+    pub async fn get_taker_volume(
+        &self,
+        pair: &Pair,
+        range: std::ops::Range<u64>,
+    ) -> Result<Vec<TimeVolume>, ExchangeErrors> {
+        match self {
+            ExchangeImpl::Coinbase(c) => c.get_taker_volume(pair, range).await,
+            ExchangeImpl::Okx(o) => o.get_taker_volume(pair, range).await,
+        }
+    }
+
     pub fn set_data(&self, pair: Pair, data: StorableWrapper<ExchangeData>) {
         match self {
             ExchangeImpl::Coinbase(c) => c.set_data(pair, data),
@@ -298,15 +310,15 @@ impl ExchangeImpl {
         }
     }
 
-    pub async fn fetch_candles(
+    pub async fn fetch_index_candles(
         &self,
         pair: &Pair,
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, super::ExchangeErrors> {
         match self {
-            ExchangeImpl::Coinbase(c) => c.fetch_candles(pair, range, interval).await,
-            ExchangeImpl::Okx(o) => o.fetch_candles(pair, range, interval).await,
+            ExchangeImpl::Okx(o) => o.fetch_index_candles(pair, range, interval).await,
+            _ => panic!("Not implemented"),
         }
     }
 }
@@ -318,4 +330,11 @@ pub struct Candle {
     pub highest_price: f64,
     pub lowest_price: f64,
     pub close_price: f64,
+    pub volume: f64
+}
+
+#[derive(Deserialize, CandidType, Serialize, Clone, PartialEq, Debug)]
+pub struct TimeVolume {
+    pub timestamp: u64,
+    pub volume: f64,
 }

@@ -1,6 +1,6 @@
-use std::{fmt::Display, str::FromStr};
-use serde_this_or_that::as_u64;
 use serde_this_or_that::as_f64;
+use serde_this_or_that::as_u64;
+use std::{fmt::Display, str::FromStr};
 
 use crate::{
     api_client::ApiClientErrors,
@@ -81,7 +81,7 @@ impl Into<GlobalOrderBook> for OrderBook {
 
 #[serde_as]
 #[derive(Debug, Clone, Deserialize, PartialEq)]
-pub struct CandleStick {
+pub struct IndexCandleStick {
     #[serde_as(as = "DisplayFromStr")]
     #[serde(rename = "ts")]
     pub timestamp: u64,
@@ -101,6 +101,34 @@ pub struct CandleStick {
     pub confirm: u8,
 }
 
+#[serde_as]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct CandleStick {
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(rename = "ts")]
+    pub timestamp: u64,
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(rename = "o")]
+    pub open_price: f64,
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(rename = "h")]
+    pub highest_price: f64,
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(rename = "l")]
+    pub lowest_price: f64,
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(rename = "c")]
+    pub close_price: f64,
+    #[serde_as(as = "DisplayFromStr")]
+    #[serde(rename = "vol")]
+    pub volume: f64,
+    #[serde(rename = "volCcy")]
+    pub volume_currency: String,
+    #[serde(rename = "volCcyQuote")]
+    pub volume_currency_quote: String,
+    pub confirm: String,
+}
+
 impl Into<Candle> for CandleStick {
     fn into(self) -> Candle {
         Candle {
@@ -109,6 +137,20 @@ impl Into<Candle> for CandleStick {
             lowest_price: self.lowest_price,
             open_price: self.open_price,
             timestamp: self.timestamp / 1000,
+            volume: self.volume,
+        }
+    }
+}
+
+impl Into<Candle> for IndexCandleStick {
+    fn into(self) -> Candle {
+        Candle {
+            close_price: self.close_price,
+            highest_price: self.highest_price,
+            lowest_price: self.lowest_price,
+            open_price: self.open_price,
+            timestamp: self.timestamp / 1000,
+            volume: 0.0,
         }
     }
 }
@@ -135,8 +177,6 @@ pub struct PlaceOrderDetails {
 //     pub in_time: String,
 //     pub out_time: String,
 // }
-
-
 
 #[serde_as]
 #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
@@ -182,7 +222,7 @@ pub enum OrderState {
     Filled,
     MmpCanceled,
     Live,
-    PartiallyFilled
+    PartiallyFilled,
 }
 
 impl FromStr for OrderState {
@@ -469,7 +509,7 @@ mod tests {
     #[test]
     fn test_deserialize() {
         let response = r#"{"code":"0","msg":"success","data":[{"ts":"1620000000000","o":"1.0","h":"1.0","l":"1.0","c":"1.0","confirm":"1"}]}"#;
-        let response: ApiResponse<Vec<CandleStick>> = serde_json::from_str(response).unwrap();
+        let response: ApiResponse<Vec<IndexCandleStick>> = serde_json::from_str(response).unwrap();
 
         assert_eq!(response.code, 0);
         assert_eq!(response.msg, "success");
@@ -481,4 +521,18 @@ mod tests {
         assert_eq!(response.data[0].close_price, 1.0);
         assert_eq!(response.data[0].confirm, 1);
     }
+}
+
+#[serde_as]
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct TakerVolume {
+    #[serde(rename = "ts")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub timestamp: u64,
+    #[serde(rename = "buyVol")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub buy_volume: f64,
+    #[serde(rename = "sellVol")]
+    #[serde_as(as = "DisplayFromStr")]
+    pub sell_volume: f64,
 }

@@ -19,6 +19,7 @@
     type PostOrderRequest,
   } from "$lib/postOrder.svelte";
   import { isOrdersResponse } from "$lib/response";
+  import VolumeChart from "$components/volumeChart.svelte";
   import { extractOkValue } from "$lib/result";
   import { finishSignature } from "$lib/signature";
   import { wallet } from "$lib/wallet.svelte";
@@ -288,8 +289,17 @@
       <Tabs.Content value="trading" class="h-full">
         <TradingView candlesData={candlesFromBackend} />
       </Tabs.Content>
-      <Tabs.Content value="charts">Charts</Tabs.Content>
-      <Tabs.Content value="info">Info</Tabs.Content>
+      <Tabs.Content class="h-[600px]" value="charts">
+        {#if selectedInstrument}
+          <VolumeChart
+            instrument={selectedInstrument}
+            exchanges={selectedExchanges}
+          />
+        {:else}
+          Select instrument to view volume chart
+        {/if}
+      </Tabs.Content>
+      <Tabs.Content value="info">Change your password here.</Tabs.Content>
     </Tabs.Root>
   </div>
 

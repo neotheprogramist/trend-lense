@@ -1,11 +1,13 @@
+use super::request::{OrderSide, OrderType, TradeMode};
+use super::{ApiRequest, ExchangeErrors};
 use crate::api_client::ApiClient;
 use crate::chain_data::ChainData;
-use crate::exchange::Exchange;
+use crate::exchange::{Candle, Exchange};
 use crate::Pair;
+use api::IndexCandleStickRequest;
 use auth::OkxAuth;
 use ic_cdk::api::management_canister::http_request::HttpMethod;
-use super::request::{OrderSide, OrderType, TradeMode};
-use super::ApiRequest;
+use response::{ApiResponse, IndexCandleStick};
 
 pub mod api;
 pub mod auth;
@@ -20,6 +22,37 @@ pub struct Okx {
 }
 
 impl Okx {
+    pub async fn fetch_index_candles(
+        &self,
+        pair: &Pair,
+        range: std::ops::Range<u64>,
+        interval: u32,
+    ) -> Result<Vec<Candle>, ExchangeErrors> {
+        let index_name = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
+
+        ic_cdk::println!("index_name: {:?}", index_name);
+        let candle_request = IndexCandleStickRequest {
+            after_timestamp: None,
+            before_timestamp: Some(range.start * 1000),
+            bar_size: Some(Okx::interval_string(interval)),
+            index_name,
+            results_limit: None,
+        };
+
+        let candle_response = self
+            .api_client
+            .call::<ApiResponse<Vec<IndexCandleStick>>, IndexCandleStickRequest, OkxAuth>(
+                candle_request,
+                self.auth.as_ref(),
+            )
+            .await?;
+
+        Ok(candle_response
+            .into_iter()
+            .map(|concrete_candle| concrete_candle.into())
+            .collect())
+    }
+
     /// gets interval string from u32 in minutes
     fn interval_string(interval: u32) -> String {
         match interval {
@@ -61,10 +94,7 @@ impl Okx {
 
     /// gets index name from global pair enum
     pub fn instrument_id(pair: &Pair) -> Option<String> {
-        return format!("{}-{}", pair.base, pair.quote)
-            .to_uppercase()
-            .parse()
-            .ok();
+        return Some(format!("{}-{}", pair.base, pair.quote).to_uppercase());
     }
 
     pub fn get_signature_data<R: ApiRequest>(&self, request: R) -> String {

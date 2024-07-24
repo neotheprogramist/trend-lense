@@ -9,6 +9,7 @@ pub enum MemoryLocation {
     Transactions,
     UserTransactions,
     ExchangeInstruments,
+    Volumes
 }
 
 impl MemoryLocation {
@@ -21,6 +22,7 @@ impl MemoryLocation {
             MemoryLocation::Transactions => constants::TRANSACTIONS_TABLE_MEMORY_ID,
             MemoryLocation::UserTransactions => constants::USER_TRANSACTIONS_TABLE_MEMORY_ID,
             MemoryLocation::ExchangeInstruments => constants::EXCHANGE_INSTRUMENTS_TABLE_MEMORY_ID,
+            MemoryLocation::Volumes => constants::VOLUMES_TABLE_MEMORY_ID
         }
     }
 }
