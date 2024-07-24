@@ -35,7 +35,7 @@ export function extractOkValue(
 }
 
 export function isExchangeErr(
-  result: Result | Result_1 | Result_2 | Result_3,
+  result: Result | Result_1 | Result_2 | Result_3 | Result_4,
 ): result is { Err: ExchangeErrors } {
   return (result as { Err: ExchangeErrors }).Err !== undefined;
 }

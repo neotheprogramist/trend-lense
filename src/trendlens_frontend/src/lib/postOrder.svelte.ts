@@ -158,7 +158,7 @@ export const postRequest = async (
   ]);
 };
 
-export const extractApiHttpError = (result: Result_2) => {
+export const extractApiHttpError = (result: Result_3) => {
   if (isExchangeErr(result)) {
     if (isApiClientError(result.Err)) {
       if (isHttpApiClientError(result.Err.ApiClientError)) {
