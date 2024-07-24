@@ -1,4 +1,5 @@
 import type {
+  ApiClientErrors,
   Candle,
   ExchangeErrors,
   Response,
@@ -25,15 +26,30 @@ export function extractOkValue(
   if ("Ok" in result) {
     return result.Ok;
   } else if ("Err" in result) {
-    console.log(result.Err);
-    // throw new Error(`Err: ${JSON.stringify(result.Err)}`);
+    throw new Error(`Contract error`);
   }
 
-  throw new Error("Unexpected result format");
+  throw new Error("Unexpected error");
 }
 
 export function isExchangeErr(
-  result: Result,
+  result: Result | Result_1 | Result_2 | Result_3,
 ): result is { Err: ExchangeErrors } {
   return (result as { Err: ExchangeErrors }).Err !== undefined;
+}
+
+export function isApiClientError(
+  result: ExchangeErrors,
+): result is { ApiClientError: ApiClientErrors } {
+  return (
+    (result as { ApiClientError: ApiClientErrors }).ApiClientError !== undefined
+  );
+}
+
+export function isHttpApiClientError(
+  result: ApiClientErrors,
+): result is { Http: { status: bigint; body: string } } {
+  return (
+    (result as { Http: { status: bigint; body: string } }).Http !== undefined
+  );
 }

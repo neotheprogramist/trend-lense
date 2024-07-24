@@ -5,7 +5,7 @@ use super::{
     },
     auth::OkxAuth,
     response::{
-        AccountInfo, ApiResponse, ConcreteInstrument, Order as OkxOrder, PlaceOrderResponse,
+        AccountInfo, ApiResponse, ConcreteInstrument, Order as OkxOrder, PlaceOrderDetails,
     },
     Okx,
 };
@@ -90,14 +90,15 @@ impl UserData for Okx {
 
         let order_response = self
             .api_client
-            .call::<ApiResponse<Vec<PlaceOrderResponse>>, PlaceOrderBody, OkxAuth>(
+            .call::<ApiResponse<Vec<PlaceOrderDetails>>, PlaceOrderBody, OkxAuth>(
                 exchange_request,
                 self.auth.as_ref(),
             )
             .await?;
 
         Ok(Response::Order(OrderData {
-            code: order_response[0].code.clone(),
+            id: order_response[0].order_id.clone(),
+            message: order_response[0].status_message.clone(),
         }))
     }
 

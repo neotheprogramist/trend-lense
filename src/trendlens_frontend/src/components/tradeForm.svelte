@@ -89,7 +89,7 @@
 
 <form class="flex flex-col items-center justify-start h-full">
   <Tabs.Root bind:value={request.orderType} class="space-y-10">
-    <div class="w-full mt-16 flex justify-between items-center">
+    <div class="w-full flex mt-16 justify-between items-center">
       <span
         class={cn(
           "flex-1 flex rounded-md p-1 text-sm",

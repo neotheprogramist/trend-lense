@@ -124,14 +124,15 @@
   };
 
   const handleExecute = async (request: PostOrderRequest) => {
-    await executeRequest(selectedExchanges[0], request);
+    const message = await executeRequest(selectedExchanges[0], request);
+    console.log("Message", message);
   };
 
   const handleInstrumentChange = (i: Pair) => {
     selectedInstrument = i;
   };
 
-  let requests = $state<SignableInstruction[][]>([]);
+  let requests = $state<[number, SignableInstruction[]][]>([]);
   let orders = $state<Order[]>([]);
   let done_orders = $state<Order[]>([]);
 
