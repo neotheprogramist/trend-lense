@@ -41,8 +41,8 @@
           <td class="py-3">{order.instrument_id}</td>
           <td>{order.instrument_type}</td>
           <td>{order.size}</td>
-          <td>{order.price}</td>
-          <td>{order.trade_mode}</td>
+          <td>{order.price ? order.price : "-"}</td>
+          <td>{order.trade_mode == "" ? "-" : order.trade_mode}</td>
           <td class="uppercase">{order.order_type}</td>
           <td>{order.accumulated_fill_quantity}</td>
           {#if withClose}
