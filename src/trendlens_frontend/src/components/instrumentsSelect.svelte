@@ -3,6 +3,7 @@
   import * as Command from "$components/shad/ui/command";
   import { instrumentsStore } from "$lib/instruments.svelte";
   import type { InstrumentType } from "$lib/request";
+  import { Circle } from "svelte-loading-spinners";
   import type { Pair } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
   interface IProps {
@@ -29,9 +30,13 @@
   }}
 >
   <Command.Input placeholder="Type a instrument to search..." />
-  <Command.List class="max-h-[650px]">
+  <Command.List class="h-[650px] max-h-[650px]">
     {#await instrumentsStore.getUniqueInstruments(instrumentType)}
-      <Command.Loading>Loading…</Command.Loading>
+      <Command.Loading>
+        <div class="mt-60 flex w-full justify-center">
+          <Circle size="40" />
+        </div>
+      </Command.Loading>
     {:then instruments}
       <Command.Empty>No results found.</Command.Empty>
       <Command.Group>
