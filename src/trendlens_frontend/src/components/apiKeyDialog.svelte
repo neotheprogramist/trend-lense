@@ -22,12 +22,12 @@
 
   function checkInputs(): boolean {
     if (!exchange) {
-      status = "exchange is required";
+      status = "Exchange is required";
       return false;
     }
 
     if (apiKey.length == 0 || secretKey.length == 0 || passphrase.length == 0) {
-      status = "invalid keys";
+      status = "Invalid keys";
       return false;
     }
 
@@ -54,7 +54,7 @@
 </script>
 
 <Dialog.Root {open}>
-  <Button><Dialog.Trigger>Add</Dialog.Trigger></Button>
+  <Dialog.Trigger><Button>Add</Button></Dialog.Trigger>
 
   <Dialog.Content class="sm:max-w-[425px]">
     <Dialog.Header>
