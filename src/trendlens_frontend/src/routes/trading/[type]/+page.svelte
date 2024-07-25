@@ -4,6 +4,7 @@
   import OrdersList from "$components/ordersList.svelte";
   import RequestList from "$components/requestList.svelte";
   import Button from "$components/shad/ui/button/button.svelte";
+  import { Toaster } from "$components/shad/ui/sonner";
   import * as Tabs from "$components/shad/ui/tabs";
   import TradeForm from "$components/tradeForm.svelte";
   import TradingHeader from "$components/tradingHeader.svelte";
@@ -26,15 +27,14 @@
   import type { SeriesDataItemTypeMap, UTCTimestamp } from "lightweight-charts";
   import { RefreshCcw } from "lucide-svelte";
   import { onMount } from "svelte";
+  import { toast } from "svelte-sonner";
   import type {
     Candle,
     Order,
     Pair,
     SignableInstruction,
   } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
-  import { Toaster } from "$components/shad/ui/sonner";
   import type { PageData } from "./$types";
-  import { toast } from "svelte-sonner";
 
   interface IProps {
     data: PageData;
@@ -131,14 +131,13 @@
 
     if (message.id.length > 0) {
       toast.success("Order success", {
-        description: 'order id: ' + message.id,
+        description: "order id: " + message.id,
       });
     } else {
       toast.success("Order failed", {
-        description: 'message: ' + message.message,
+        description: "message: " + message.message,
       });
     }
-
   };
 
   const handleInstrumentChange = (i: Pair) => {
@@ -257,7 +256,7 @@
 </script>
 
 <div class="grid md:grid-cols-2 lg:grid-cols-10">
-  <div class="col-span-10 border-l border-r py-5 px-7">
+  <div class="col-span-10 border-l border-r px-7 py-5">
     <div class="color-primary">
       {#if selectedInstrument}
         {selectedInstrument.base + "/" + selectedInstrument.quote}
@@ -267,16 +266,16 @@
     </div>
   </div>
 
-  <div class="col-span-2 border p-2 h-[650px]">
+  <div class="col-span-2 h-[650px] border p-2">
     <InstrumentsSelect
       instrumentType={data.instrumentType}
       onInstrumentSelect={handleInstrumentChange}
     />
   </div>
 
-  <div class="col-span-6 border-t border-b h-[650px]">
+  <div class="col-span-6 h-[650px] border-b border-t">
     <Tabs.Root value="trading">
-      <div class="flex justify-between items-center border-b p-1.5">
+      <div class="flex items-center justify-between border-b p-1.5">
         <Tabs.List>
           <Tabs.Trigger value="trading">Trading</Tabs.Trigger>
           <Tabs.Trigger value="charts">Charts</Tabs.Trigger>
@@ -304,11 +303,11 @@
   </div>
 
   <div
-    class="col-span-2 border flex justify-center items-center relative h-[650px]"
+    class="relative col-span-2 flex h-[650px] items-center justify-center border"
   >
     {#if !wallet.actor}
       <div
-        class="absolute top-0 left-0 w-full h-full backdrop-blur-sm z-10 flex justify-center items-center"
+        class="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center backdrop-blur-sm"
       >
         <Button variant="default" onclick={wallet.connect}
           >Connect wallet</Button
@@ -337,9 +336,9 @@
     {/if}
   </div>
 
-  <div class="col-span-10 border-b border-l border-r p-2 h-96">
+  <div class="col-span-10 h-96 border-b border-l border-r p-2">
     <Tabs.Root bind:value={selectedInfoBar} class="p-2">
-      <div class="flex justify-between items-center">
+      <div class="flex items-center justify-between">
         <Tabs.List>
           <Tabs.Trigger value="open_orders">Open Orders</Tabs.Trigger>
           <Tabs.Trigger value="requests">Requests</Tabs.Trigger>
@@ -348,7 +347,7 @@
 
         <RefreshCcw
           onclick={handleRefreshClick}
-          class="w-5 cursor-pointer hover:-rotate-45 ease-in-out duration-300 hover:stroke-orange-600"
+          class="w-5 cursor-pointer duration-300 ease-in-out hover:-rotate-45 hover:stroke-orange-600"
         />
       </div>
 

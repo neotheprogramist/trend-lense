@@ -14,4 +14,4 @@ class TradingMode {
   }
 }
 
-export let tradingMode = new TradingMode();
+export const tradingMode = new TradingMode();

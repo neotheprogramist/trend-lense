@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Ellipsis } from "lucide-svelte";
-  import * as DropdownMenu from "$components/shad/ui/dropdown-menu/index";
   import { Button } from "$components/shad/ui/button/index";
+  import * as DropdownMenu from "$components/shad/ui/dropdown-menu/index";
+  import { Ellipsis } from "lucide-svelte";
 
   export let id: string;
   export let removeCallback: (id: string) => void;
@@ -22,9 +22,9 @@
   <DropdownMenu.Content>
     <DropdownMenu.Group>
       <DropdownMenu.Label>Actions</DropdownMenu.Label>
-      <DropdownMenu.Item on:click={() => removeCallback(id)}
-        >Remove</DropdownMenu.Item
-      >
+      <DropdownMenu.Item on:click={() => removeCallback(id)}>
+        Remove
+      </DropdownMenu.Item>
     </DropdownMenu.Group>
   </DropdownMenu.Content>
 </DropdownMenu.Root>

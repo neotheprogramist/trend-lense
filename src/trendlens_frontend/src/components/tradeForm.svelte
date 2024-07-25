@@ -87,18 +87,18 @@
   };
 </script>
 
-<form class="flex flex-col items-center justify-start h-full">
+<form class="flex h-full flex-col items-center justify-start">
   <Tabs.Root bind:value={request.orderType} class="space-y-10">
-    <div class="w-full flex mt-16 justify-between items-center">
+    <div class="mt-16 flex w-full items-center justify-between">
       <span
         class={cn(
-          "flex-1 flex rounded-md p-1 text-sm",
+          "flex flex-1 rounded-md p-1 text-sm",
           $mode == "dark" ? "bg-[#292524]" : "bg-[#f5f5f4]",
         )}
       >
         <button
           class={cn(
-            "rounded-md flex-1 text-center py-1",
+            "flex-1 rounded-md py-1 text-center",
             request.orderSide == OrderSideType.Buy
               ? "bg-green-500"
               : "bg-transparent",
@@ -107,7 +107,7 @@
         >
         <button
           class={cn(
-            "rounded-md flex-1 text-center py-1",
+            "flex-1 rounded-md py-1 text-center",
             request.orderSide == OrderSideType.Sell
               ? "bg-red-500"
               : "bg-transparent",
@@ -138,7 +138,7 @@
       {/if}
     </div>
 
-    <div class="w-1/3 text-center space-y-1">
+    <div class="w-1/3 space-y-1 text-center">
       <p class="text-sm">Market price</p>
       <p class="text- font-bold">{currentPrice.toFixed(2)}</p>
     </div>
@@ -156,11 +156,11 @@
             >
             <div
               id="total"
-              class="flex border rounded-md px-3 py-2.5 outline-1"
+              class="flex rounded-md border px-3 py-2.5 outline-1"
             >
               <input
                 type="text"
-                class="flex-1 outline-none bg-transparent"
+                class="flex-1 bg-transparent outline-none"
                 placeholder="0.0"
                 bind:value={request.orderPrice}
               />
@@ -179,14 +179,14 @@
             >
             {#if request.orderSide == OrderSideType.Buy}
               <button
-                class="text-xs mr-2"
+                class="mr-2 text-xs"
                 onclick={() => (request.size = balances.quote.toString())}
               >
                 Max: {getFixedAmount(balances.quote)}
               </button>
             {:else}
               <button
-                class="text-xs mr-2"
+                class="mr-2 text-xs"
                 onclick={() => (request.size = balances.base.toString())}
               >
                 Max: {getFixedAmount(balances.base)}
@@ -194,10 +194,10 @@
             {/if}
           </div>
 
-          <div id="total" class="flex border rounded-md px-3 py-2.5 outline-1">
+          <div id="total" class="flex rounded-md border px-3 py-2.5 outline-1">
             <input
               type="text"
-              class="flex-1 outline-none bg-transparent"
+              class="flex-1 bg-transparent outline-none"
               placeholder="0.0"
               bind:value={request.size}
             />
@@ -215,7 +215,7 @@
       </Tabs.Content>
     </div>
 
-    <div class="flex flex-col w-full space-y-4">
+    <div class="flex w-full flex-col space-y-4">
       <Button onclick={() => onExecute(request)}>Execute</Button>
       <Button variant="outline" onclick={() => onPost(request)}>Post</Button>
     </div>

@@ -62,14 +62,12 @@
       signatures.push(signature);
     }
 
-    const result = await wallet.actor.run_transaction(
+    await wallet.actor.run_transaction(
       transactionId,
       signatures,
       isoTimestamp,
       BigInt(timestamp),
     );
-
-    console.log(result);
   };
 
   $inspect(transactionId);
@@ -91,7 +89,7 @@
             <span class="flex justify-between"
               >exchange: <span>{exchange}</span></span
             >
-            <span class="flex justify-between flex-wrap"
+            <span class="flex flex-wrap justify-between"
               >api key: <span>{ix.instruction.api_key.substring(0, 12)}...</span
               ></span
             >

@@ -1,6 +1,6 @@
-import { connect } from "./canisters";
 import type { ActorSubclass, Identity } from "@dfinity/agent";
 import type { _SERVICE } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+import { connect } from "./canisters";
 
 interface IWallet {
   get connected(): boolean;
@@ -16,7 +16,6 @@ class Wallet implements IWallet {
   constructor() {}
 
   get connected() {
-		console.log(this.m_connected)
     return this.m_connected;
   }
 
@@ -30,13 +29,10 @@ class Wallet implements IWallet {
 
   public async connect() {
     if (!this.m_connected) {
-			console.log('connecting')
       const { actor, identity } = await connect();
       this.m_connected = true;
       this.m_actor = actor;
       this.m_identity = identity;
-
-			console.log(this.m_connected)
     }
   }
 

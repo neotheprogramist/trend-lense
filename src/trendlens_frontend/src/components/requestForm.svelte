@@ -69,7 +69,7 @@
   />
 {/snippet}
 
-<form class="w-100% space-x-2 grid grid-cols-2">
+<form class="w-100% grid grid-cols-2 space-x-2">
   {#each keys as key}
     {@const k = key as keyof R}
     {@const v = request[k]}

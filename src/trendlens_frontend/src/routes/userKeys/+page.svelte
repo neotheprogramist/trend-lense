@@ -1,20 +1,18 @@
 <script lang="ts">
   import ApiKeyDialog from "$components/apiKeyDialog.svelte";
   import DataTable from "$components/dataTable.svelte";
-  import { wallet } from "$lib/wallet.svelte";
-  import type { ApiData } from "../../../../declarations/trendlens_backend/trendlens_backend.did";
-  import { handleExchange, type Exchanges } from "$lib/exchange";
-  import { keyStore, type ApiWithSecret } from "$lib/keystore.svelte";
   import {
     ApiRegisterStatus,
     handleApiData,
     type ApiRegisterStatusType,
   } from "$lib/apiAddition";
+  import { keyStore, type ApiWithSecret } from "$lib/keystore.svelte";
+  import { wallet } from "$lib/wallet.svelte";
   import { onMount } from "svelte";
 
   const saveApiData = async (data: ApiWithSecret) => {
     if (!wallet.connected || !wallet.actor) {
-      console.log("Wallet not connected");
+      console.error("Wallet not connected");
       return;
     }
 
@@ -27,7 +25,7 @@
     }
 
     try {
-      keyStore.keys = keyStore.keys.filter(e => e.apiKey !== apiKey);
+      keyStore.keys = keyStore.keys.filter((e) => e.apiKey !== apiKey);
       await wallet.actor.remove_api_key(apiKey);
       keyStore.remove(apiKey);
     } catch (err) {

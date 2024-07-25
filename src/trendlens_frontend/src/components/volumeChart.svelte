@@ -143,7 +143,7 @@
 </script>
 
 <div class="flex h-full">
-  <div class="flex-[4_4_0%] flex justify-center items-center">
+  <div class="flex flex-[4_4_0%] items-center justify-center">
     <svg {width} {height} viewBox="0 0 {width} {height}" cursor="crosshair">
       {#each areas as subsetArea, i}
         <g class="chartlines" pointer-events="none">
@@ -217,7 +217,7 @@
   <div class="flex flex-1 flex-col justify-center space-y-5">
     {#each exchanges as e, index}
       <div class="flex items-center">
-        <div style="background-color: {colors[index]}" class="w-4 h-4"></div>
+        <div style="background-color: {colors[index]}" class="h-4 w-4"></div>
         <span class="ml-2">{e}</span>
       </div>
     {/each}

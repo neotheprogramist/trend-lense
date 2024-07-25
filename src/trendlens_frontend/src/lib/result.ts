@@ -16,9 +16,11 @@ export function extractOkValue(result: Result): Array<Candle>;
 export function extractOkValue(result: Result_1): Array<TimeVolume>;
 export function extractOkValue(result: Result_2): boolean;
 export function extractOkValue(result: Result_3): Array<Response>;
-export function extractOkValue(result: Result_4): [number, Array<SignableInstruction>];
 export function extractOkValue(
-  result: Result | Result_1 | Result_2 | Result_3 |  Result_4,
+  result: Result_4,
+): [number, Array<SignableInstruction>];
+export function extractOkValue(
+  result: Result | Result_1 | Result_2 | Result_3 | Result_4,
 ):
   | Array<Candle>
   | Array<Response>

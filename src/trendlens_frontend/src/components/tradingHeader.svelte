@@ -25,7 +25,7 @@
   <div class="flex space-x-3">
     {#each availableExchanges as e}
       <Badge
-        class="rounded-sm px-4 h-8"
+        class="h-8 rounded-sm px-4"
         variant={!selectedExchanges.includes(e) ? "outline" : undefined}
         onclick={() => toggleExchange(e)}>{e}</Badge
       >
