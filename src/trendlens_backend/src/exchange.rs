@@ -310,6 +310,18 @@ impl ExchangeImpl {
         }
     }
 
+    pub async fn fetch_candles(
+        &self,
+        pair: &Pair,
+        range: std::ops::Range<u64>,
+        interval: u32,
+    ) -> Result<Vec<Candle>, super::ExchangeErrors> {
+        match self {
+            ExchangeImpl::Coinbase(c) => c.fetch_candles(pair, range, interval).await,
+            ExchangeImpl::Okx(o) => o.fetch_candles(pair, range, interval).await
+        }
+    }
+
     pub async fn fetch_index_candles(
         &self,
         pair: &Pair,

@@ -340,7 +340,7 @@ async fn pull_candles(
 
     // !!!! hardcoded interval
     let fetched_candles = match range_to_fetch {
-        Some(ref range) => exchange.fetch_index_candles(&pair, range.clone(), 1).await?,
+        Some(ref range) => exchange.fetch_candles(&pair, range.clone(), 60).await?,
         None => {
             vec![]
         }

@@ -62,7 +62,7 @@ impl From<GlobalOrderType> for OrderType {
         match value {
             GlobalOrderType::Limit => OrderType::Limit,
             GlobalOrderType::Market => OrderType::Market,
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
     }
 }
@@ -123,7 +123,10 @@ mod post_order_test {
         };
 
         let serialized = serde_qs::to_string(&post_order_body).unwrap();
-        assert_eq!(serialized, "product_id=BTC-USD&size=0.01&price=10000&type=limit&side=buy");
+        assert_eq!(
+            serialized,
+            "product_id=BTC-USD&size=0.01&price=10000&type=limit&side=buy"
+        );
 
         let post_order_body = PostOrderBody {
             product_id: "BTC-USD".to_string(),
@@ -134,9 +137,11 @@ mod post_order_test {
             side: OrderSide::Buy,
         };
 
-
         let serialized = serde_qs::to_string(&post_order_body).unwrap();
-        assert_eq!(serialized, "product_id=BTC-USD&price=10000&type=limit&side=buy");
+        assert_eq!(
+            serialized,
+            "product_id=BTC-USD&price=10000&type=limit&side=buy"
+        );
     }
 }
 
@@ -175,7 +180,7 @@ mod test {
     fn test_serialize_statuses() {
         let statuses = Statuses(vec!["open".to_string(), "pending".to_string()]);
         let serialized = serde_qs::to_string(&statuses).unwrap();
-      
+
         assert_eq!(serialized, "status=open&status=pending");
     }
 
@@ -201,10 +206,8 @@ pub struct OrdersRequest {
     pub market_type: Option<String>,
     pub limit: u64,
     #[serde(flatten)]
-    pub status: Option<Statuses>
+    pub status: Option<Statuses>,
 }
-
-
 
 impl ApiRequest for OrdersRequest {
     const BODY: bool = false;

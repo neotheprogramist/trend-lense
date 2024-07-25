@@ -61,8 +61,10 @@
     const volumes = await anonymousBackend.get_volumes(
       handleExchange(exchange),
       pairToString(pair),
-      BigInt(timestamp_secs - 60 * 60 * 24),
+      BigInt(timestamp_secs - 2 * 60 * 60),
     );
+
+    console.log(volumes);
 
     if (volumes.length === 0) {
       return [];
@@ -70,8 +72,12 @@
 
     const volumesUnwrapped = volumes[0];
 
+    if (volumesUnwrapped.length == 1) {
+      return [];
+    }
+
     for (let i = 0; i < volumesUnwrapped.length; i++) {
-      xVals.push(Number(volumesUnwrapped[i].timestamp));
+      xVals.push(Number(volumesUnwrapped[i].timestamp) * 1000);
       yVals.push(volumesUnwrapped[i].volume);
       colorVals.push(id);
       points.push({
@@ -139,7 +145,7 @@
     }
   });
 
-  $inspect({ xVals, yVals });
+  $inspect(xVals, yVals);
 </script>
 
 <div class="flex h-full">

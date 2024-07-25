@@ -35,6 +35,7 @@
     SignableInstruction,
   } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
   import type { PageData } from "./$types";
+  import { pairToString } from "$lib/pair";
 
   interface IProps {
     data: PageData;
@@ -53,7 +54,7 @@
     quote: number;
   }>({ base: 0, quote: 0 });
 
-  let selectedExchanges = $state<Exchanges[]>([Exchanges.Okx]);
+  let selectedExchanges = $state<Exchanges[]>([Exchanges.Coinbase]);
   let selectedInstrument = $state<Pair | null>({ base: "BTC", quote: "EUR" });
   let currentPrice = $state<number>(0);
 
@@ -92,7 +93,7 @@
 
   const updateCandles = async () => {
     if (selectedInstrument) {
-      await fetchCandles(selectedExchanges[0], "BTC-USD");
+      await fetchCandles(selectedExchanges[0], pairToString(selectedInstrument));
     }
   };
 
@@ -249,8 +250,10 @@
     }
   };
 
-  onMount(() => {
-    updateCandles();
+  $effect(() => {
+    if (selectedInstrument && selectedExchanges.length > 0){
+      updateCandles();
+    }
   });
 </script>
 
@@ -278,7 +281,6 @@
         <Tabs.List>
           <Tabs.Trigger value="trading">Trading</Tabs.Trigger>
           <Tabs.Trigger value="charts">Charts</Tabs.Trigger>
-          <Tabs.Trigger value="info">Info</Tabs.Trigger>
         </Tabs.List>
 
         <TradingHeader bind:selectedExchanges {availableExchanges} />
@@ -297,7 +299,6 @@
           Select instrument to view volume chart
         {/if}
       </Tabs.Content>
-      <Tabs.Content value="info">Change your password here.</Tabs.Content>
     </Tabs.Root>
   </div>
 
@@ -335,7 +336,7 @@
     {/if}
   </div>
 
-  <div class="col-span-10 border-b border-l border-r p-2">
+  <div class="col-span-10 min-h-96 border-b border-l border-r p-2">
     <Tabs.Root bind:value={selectedInfoBar} class="p-2">
       <div class="flex items-center justify-between">
         <Tabs.List>
