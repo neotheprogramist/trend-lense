@@ -76,9 +76,7 @@
     return [];
   });
 
-  const transformCandleData = (
-    candles: Candle[],
-  ): SeriesDataItemTypeMap["Candlestick"][] => {
+  const transformCandleData = (candles: Candle[]) => {
     return candles
       .map((candle) => {
         return {
@@ -114,9 +112,10 @@
         ),
       );
 
-      currentPrice = newCandles[newCandles.length - 1].close_price;
       const transformedCandles = transformCandleData(newCandles);
-      candlesFromBackend = transformedCandles;
+      currentPrice = transformedCandles[transformedCandles.length - 1].close;
+      candlesFromBackend =
+        transformedCandles as SeriesDataItemTypeMap["Candlestick"][];
     } catch (err) {
       console.error("Error fetching candles", err);
     }
@@ -147,7 +146,7 @@
   let requests = $state<[number, SignableInstruction[]][]>([]);
   let orders = $state<Order[]>([]);
   let ordersHistory = $state<Order[]>([]);
-  let selectedInfoBar = $state<string | undefined>("requests");
+  let selectedInfoBar = $state<string | undefined>("open_orders");
 
   const fetchRequests = async () => {
     if (!wallet.actor) {
@@ -336,7 +335,7 @@
     {/if}
   </div>
 
-  <div class="col-span-10 h-96 border-b border-l border-r p-2">
+  <div class="col-span-10 border-b border-l border-r p-2">
     <Tabs.Root bind:value={selectedInfoBar} class="p-2">
       <div class="flex items-center justify-between">
         <Tabs.List>
