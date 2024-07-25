@@ -3,6 +3,11 @@
 
   let navData = [
     {
+      title: "Home",
+      href: "/",
+      isActive: false,
+    },
+    {
       title: "Trading",
       href: "/trading/spot",
       isActive: false,
@@ -18,10 +23,6 @@
 </script>
 
 <div class="hidden md:flex">
-  <a href="/" class="mr-5 flex items-center">
-    <div class="bg-primary">logo</div>
-  </a>
-
   <nav class="flex items-center space-x-4 text-sm lg:space-x-6">
     {#each nav as { title, href, isActive }, i}
       <a
