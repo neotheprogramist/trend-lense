@@ -11,7 +11,7 @@
   let { orders, withClose = true }: IProps = $props();
 </script>
 
-<div class="flex px-6 mt-5">
+<div class="mt-5 flex px-6">
   <table class="w-full">
     <thead>
       <tr>
@@ -33,9 +33,9 @@
         <tr class="text-center">
           <td>
             {#if order.side == "buy"}
-              <p class="text-green-400 bg-green-900 rounded-xl py-0.5">Buy</p>
+              <p class="rounded-xl bg-green-900 py-0.5 text-green-400">Buy</p>
             {:else}
-              <p class="text-red-400 bg-red-900 rounded-xl py-0.5">Sell</p>
+              <p class="rounded-xl bg-red-900 py-0.5 text-red-400">Sell</p>
             {/if}
           </td>
           <td class="py-3">{order.instrument_id}</td>
@@ -46,7 +46,7 @@
           <td class="uppercase">{order.order_type}</td>
           <td>{order.accumulated_fill_quantity}</td>
           {#if withClose}
-            <td><X class="cursor-pointer w-5 stroke-red-400" /></td>
+            <td><X class="w-5 cursor-pointer stroke-red-400" /></td>
           {/if}
         </tr>
       {/each}

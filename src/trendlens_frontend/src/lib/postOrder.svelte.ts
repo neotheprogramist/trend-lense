@@ -2,9 +2,6 @@ import type {
   PositionSide as BackendPositionSide,
   OrderSide,
   OrderType,
-  Result,
-  Result_1,
-  Result_2,
   Result_3,
   TradeMode,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
@@ -170,7 +167,6 @@ export const extractApiHttpError = (result: Result_3) => {
       }
     }
   }
-  console.log(result);
 
   throw new Error("Unknown API client error");
 };
@@ -207,8 +203,6 @@ export const executeRequest = async (
     isoTimestamp,
     BigInt(timestamp),
   );
-
-  console.log(result);
 
   try {
     const response = extractOkValue(result)[0];

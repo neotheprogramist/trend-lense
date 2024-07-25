@@ -1,6 +1,6 @@
+import type { ApiData as BackendApiData } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 import { handleExchange } from "./exchange";
 import type { ApiData } from "./keystore.svelte";
-import type { ApiData as BackendApiData } from "../../../declarations/trendlens_backend/trendlens_backend.did";
 
 const BaseStatus = {
   NotConnected: "wallet not connected",

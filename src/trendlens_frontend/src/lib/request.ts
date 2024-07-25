@@ -4,7 +4,6 @@ import type {
   GeneralPostOrderRequest,
   Request,
 } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-import type { ValueOf } from "./apiAddition";
 
 export enum RequestType {
   Empty = "Empty",
@@ -242,7 +241,6 @@ export type ExchangeRequest =
   | InstrumentsRequest
   | BalanceRequests
   | PostOrderRequest;
-
 
 export function isInstrumentsRequest(
   request: Request,

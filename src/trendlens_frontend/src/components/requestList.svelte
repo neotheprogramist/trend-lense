@@ -18,11 +18,7 @@
       throw new Error("No actor found");
     }
 
-    try {
-      await wallet.actor.delete_transaction(id);
-    } catch (e) {
-      console.error(e);
-    }
+    await wallet.actor.delete_transaction(id);
   };
 
   const runRequest = async (
@@ -81,7 +77,7 @@
   }
 </script>
 
-<div class="flex px-6 mt-5">
+<div class="mt-5 flex px-6">
   <table class="w-full">
     <thead>
       <tr>
@@ -120,11 +116,11 @@
             <tr class="text-center">
               <td>
                 {#if side == "Buy"}
-                  <p class="text-green-400 bg-green-900 rounded-xl py-0.5">
+                  <p class="rounded-xl bg-green-900 py-0.5 text-green-400">
                     Buy
                   </p>
                 {:else}
-                  <p class="text-red-400 bg-red-900 rounded-xl py-0.5">Sell</p>
+                  <p class="rounded-xl bg-red-900 py-0.5 text-red-400">Sell</p>
                 {/if}
               </td>
               <td class="py-3">{instrument.base}/{instrument.quote}</td>
@@ -135,14 +131,14 @@
               <td>{size}</td>
               <td>{tradeMode}</td>
               <td class="w-16">
-                <div class="flex space-x-4 items-center">
+                <div class="flex items-center space-x-4">
                   <Send
                     onclick={() => runRequest(id, transaction)}
-                    class="cursor-pointer w-5 stroke-blue-400"
+                    class="w-5 cursor-pointer stroke-blue-400"
                   />
                   <X
                     onclick={() => deleteRequest(id)}
-                    class="cursor-pointer w-5 stroke-red-400"
+                    class="w-5 cursor-pointer stroke-red-400"
                   />
                 </div>
               </td>
@@ -176,11 +172,11 @@
             <tr class="text-center">
               <td>
                 {#if side == "Buy"}
-                  <p class="text-green-400 bg-green-900 rounded-xl py-0.5">
+                  <p class="rounded-xl bg-green-900 py-0.5 text-green-400">
                     Buy
                   </p>
                 {:else}
-                  <p class="text-red-400 bg-red-900 rounded-xl py-0.5">Sell</p>
+                  <p class="rounded-xl bg-red-900 py-0.5 text-red-400">Sell</p>
                 {/if}
               </td>
               <td class="py-3">{instrument.base}/{instrument.quote}</td>
@@ -191,14 +187,14 @@
               <td>{size.toFixed(4)} / {size2.toFixed(4)}</td>
               <td>{tradeMode}</td>
               <td class="w-16">
-                <div class="flex space-x-4 items-center">
+                <div class="flex items-center space-x-4">
                   <Send
                     onclick={() => runRequest(id, transaction)}
-                    class="cursor-pointer w-5 stroke-blue-400"
+                    class="w-5 cursor-pointer stroke-blue-400"
                   />
                   <X
                     onclick={() => deleteRequest(id)}
-                    class="cursor-pointer w-5 stroke-red-400"
+                    class="w-5 cursor-pointer stroke-red-400"
                   />
                 </div>
               </td>

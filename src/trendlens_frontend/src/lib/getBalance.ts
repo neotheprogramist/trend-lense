@@ -62,7 +62,6 @@ export const getBalance = async (
       throw new Error("Response returned not type of balances");
     }
   } catch (err) {
-    console.error(err);
     return [];
   }
 };

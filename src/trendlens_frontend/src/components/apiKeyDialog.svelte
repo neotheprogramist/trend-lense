@@ -1,12 +1,12 @@
 <script lang="ts">
   import * as Dialog from "$components/shad/ui/dialog/index";
-  import Button from "./shad/ui/button/button.svelte";
-  import { Label } from "./shad/ui/label/index";
-  import Input from "./shad/ui/input/input.svelte";
-  import { Exchanges } from "$lib/exchange";
-  import BindableSelect from "./bindableSelect.svelte";
   import type { ApiRegisterStatusType } from "$lib/apiAddition";
+  import { Exchanges } from "$lib/exchange";
   import type { ApiWithSecret } from "$lib/keystore.svelte";
+  import BindableSelect from "./bindableSelect.svelte";
+  import Button from "./shad/ui/button/button.svelte";
+  import Input from "./shad/ui/input/input.svelte";
+  import { Label } from "./shad/ui/label/index";
 
   interface IProps {
     onUpload: (localData: ApiWithSecret) => Promise<ApiRegisterStatusType>;
@@ -44,7 +44,7 @@
       exchange: exchange!,
     };
 
-		status = 'registering...'
+    status = "registering...";
     status = await onUpload(localData);
 
     if (status == "key registered") {
@@ -67,7 +67,7 @@
     <div class="grid gap-3 py-4">
       <div class="grid grid-cols-4 items-center gap-4">
         <Label for="api_key">Exchange</Label>
-        <div class="col-span-3 w-100">
+        <div class="w-100 col-span-3">
           <BindableSelect
             bind:value={exchange}
             items={Object.keys(Exchanges)}
@@ -105,7 +105,7 @@
       </div>
     </div>
     <Dialog.Footer>
-      <span class="text-sm mr-auto p-3">{status}</span>
+      <span class="mr-auto p-3 text-sm">{status}</span>
       <Button type="submit" on:click={handleClick}>Upload</Button>
     </Dialog.Footer>
   </Dialog.Content>

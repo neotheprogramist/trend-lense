@@ -16,9 +16,7 @@ export const finishSignature = async (
   secret: string,
   timestamp: string,
 ): Promise<string> => {
-  console.log(timestamp);
   const preHashString = timestamp + signatureData;
-  console.log(preHashString);
 
   const keyData = base64ToArrayBuffer(
     exchange == Exchanges.Okx ? btoa(secret) : secret,
