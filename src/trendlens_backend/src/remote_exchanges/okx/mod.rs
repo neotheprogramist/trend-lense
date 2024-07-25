@@ -56,9 +56,9 @@ impl Okx {
     /// gets interval string from u32 in minutes
     fn interval_string(interval: u32) -> String {
         match interval {
-            0..=1 => "1m",
-            2..=3 => "3m",
-            4..=u32::MAX => "5m",
+            0..=60 => "1m",
+            61..=180 => "3m",
+            181..=u32::MAX => "5m",
         }
         .to_string()
     }

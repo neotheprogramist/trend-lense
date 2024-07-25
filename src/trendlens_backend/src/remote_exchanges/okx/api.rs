@@ -297,7 +297,7 @@ pub struct SpotCandleStickRequest {
     #[serde(rename = "bar")]
     pub bar_size: Option<String>,
     #[serde(rename = "limit")]
-    pub results_limit: Option<u8>,
+    pub results_limit: Option<u32>,
 }
 
 impl ApiRequest for SpotCandleStickRequest {
