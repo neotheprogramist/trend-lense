@@ -15,7 +15,7 @@ use crate::{
         ExchangeErrors,
     },
 };
-use candid::{CandidType, Nat};
+use candid::CandidType;
 use serde::{self, de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
@@ -32,7 +32,6 @@ pub struct ApiResponse<T> {
 
 impl<R: DeserializeOwned> ApiResponseWrapper<R> for ApiResponse<R> {
     fn extract_response(self) -> Result<R, ExchangeErrors> {
-
         Ok(self.data)
     }
 }

@@ -24,6 +24,8 @@ type Candle = record {
 type Exchange = variant { Okx; Coinbase };
 type ExchangeErrors = variant {
   ApiClientError : ApiClientErrors;
+  Proxy;
+  ResponseNotFound;
   InvalidTimestamps;
   MissingIndex;
   MissingPair;
@@ -51,6 +53,17 @@ type GeneralPostOrderRequest = record {
   instrument_id : Pair;
   order_price : opt float64;
   position_side : opt PositionSide;
+};
+type HttpFailureReason = variant { ProxyError : text; RequestTimeout };
+type HttpHeader = record { value : text; name : text };
+type HttpResponse = record {
+  status : nat;
+  body : vec nat8;
+  headers : vec HttpHeader;
+};
+type HttpResult = variant {
+  Success : HttpResponse;
+  Failure : HttpFailureReason;
 };
 type Instruction = record {
   api_key : text;
@@ -116,6 +129,7 @@ type SignableInstruction = record {
 };
 type TimeVolume = record { volume : float64; timestamp : nat64 };
 type TradeMode = variant { Cash; SpotIsolated; Isolated; Cross };
+type TransformArgs = record { context : vec nat8; response : HttpResponse };
 service : () -> {
   __get_candid_interface_tmp_hack : () -> (text) query;
   add_transaction : (vec Instruction) -> (nat32, vec SignableInstruction);
@@ -128,6 +142,7 @@ service : () -> {
       opt vec record { nat32; vec SignableInstruction },
     ) query;
   get_volumes : (Exchange, text, nat64) -> (opt vec TimeVolume) query;
+  http_response_callback : (nat64, HttpResult) -> ();
   initialize_pair : (text, Exchange) -> ();
   initialize_volume_store : (Exchange, text, nat64) -> ();
   pull_candles : (text, Exchange, nat64, nat64) -> (Result);
@@ -136,6 +151,7 @@ service : () -> {
   register_api_key : (ApiData) -> (bool);
   remove_api_key : (text) -> (opt ApiData);
   run_transaction : (nat32, vec text, text, nat64) -> (Result_3);
+  set_proxy_principal : (principal) -> ();
   split_transaction : (
       vec ApiData,
       text,
@@ -145,4 +161,5 @@ service : () -> {
       vec float64,
       nat32,
     ) -> (Result_4);
+  transform : (TransformArgs) -> (HttpResponse) query;
 }

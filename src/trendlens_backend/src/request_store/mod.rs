@@ -4,10 +4,10 @@ use crate::{
     storable_wrapper::StorableWrapper,
 };
 use candid::{CandidType, Principal};
-use ic_stable_structures::StableBTreeMap;
+use ic_stable_structures::{storable::Bound, StableBTreeMap, Storable};
 use request::Request;
 use serde::{Deserialize, Serialize};
-use std::{cell::RefCell, ops::Deref};
+use std::{borrow::Cow, cell::RefCell, ops::Deref};
 
 pub mod request;
 
@@ -28,21 +28,6 @@ pub struct Instruction {
 #[derive(Debug, Deserialize, Serialize, Clone, CandidType)]
 pub struct Transaction(pub Vec<SignableInstruction>);
 
-pub struct TransactionIterator<'a> {
-    instructions: &'a Vec<Instruction>,
-    index: usize,
-}
-
-impl<'a> Iterator for TransactionIterator<'a> {
-    type Item = &'a Instruction;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let instruction = self.instructions.get(self.index);
-        self.index += 1;
-        instruction
-    }
-}
-
 impl Deref for Transaction {
     type Target = Vec<SignableInstruction>;
 
@@ -56,7 +41,26 @@ type InstructionsTable =
     StableBTreeMap<InstructionId, StorableWrapper<SignableInstruction>, Memory>;
 type TransactionId = u32;
 type TransactionsTable = StableBTreeMap<TransactionId, StorableWrapper<Vec<InstructionId>>, Memory>;
-type UserTransactionsTable = StableBTreeMap<Principal, StorableWrapper<Vec<TransactionId>>, Memory>;
+type UserTransactionsTable =
+    StableBTreeMap<MyPrincipal, StorableWrapper<Vec<TransactionId>>, Memory>;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct MyPrincipal(pub Principal);
+
+impl Storable for MyPrincipal {
+    const BOUND: ic_stable_structures::storable::Bound = Bound::Bounded {
+        max_size: 29,
+        is_fixed_size: false,
+    };
+
+    fn to_bytes(&self) -> Cow<[u8]> {
+        self.0.as_slice().to_vec().into()
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        MyPrincipal(Principal::from_slice(&bytes.to_owned()))
+    }
+}
 
 thread_local! {
     static INSTRUCTIONS: RefCell<InstructionsTable> = RefCell::new(
@@ -119,9 +123,9 @@ impl TransactionStore {
         let transaction_id = Self::insert_transaction(instructions);
 
         USER_TRANSACTIONS.with_borrow_mut(|k| {
-            let mut before = k.get(identity).unwrap_or_default();
+            let mut before = k.get(&MyPrincipal(identity.clone())).unwrap_or_default();
             before.push(transaction_id);
-            k.insert(*identity, before);
+            k.insert(MyPrincipal(identity.clone()), before);
         });
 
         transaction_id
@@ -131,8 +135,12 @@ impl TransactionStore {
         identity: &Principal,
         transaction_id: TransactionId,
     ) -> Option<Transaction> {
-        let has_transaction =
-            USER_TRANSACTIONS.with_borrow(|k| Some(k.get(identity)?.contains(&transaction_id)))?;
+        let has_transaction = USER_TRANSACTIONS.with_borrow(|k| {
+            Some(
+                k.get(&MyPrincipal(identity.clone()))?
+                    .contains(&transaction_id),
+            )
+        })?;
 
         if !has_transaction {
             return None;
@@ -151,8 +159,10 @@ impl TransactionStore {
     }
 
     pub fn get_transactions(identity: &Principal) -> Option<Vec<(u32, Transaction)>> {
-        let user_transactions =
-            USER_TRANSACTIONS.with_borrow(|k| k.get(identity).and_then(|x| Some(x.clone())))?;
+        let user_transactions = USER_TRANSACTIONS.with_borrow(|k| {
+            k.get(&MyPrincipal(identity.clone()))
+                .and_then(|x| Some(x.clone()))
+        })?;
 
         Some(
             user_transactions
@@ -172,9 +182,9 @@ impl TransactionStore {
         transaction_id: TransactionId,
     ) -> Option<Vec<StorableWrapper<SignableInstruction>>> {
         USER_TRANSACTIONS.with_borrow_mut(|k| {
-            let mut before = k.get(identity).unwrap_or_default();
+            let mut before = k.get(&MyPrincipal(identity.clone())).unwrap_or_default();
             before.retain(|x| *x != transaction_id);
-            k.insert(*identity, before);
+            k.insert(MyPrincipal(identity.clone()), before);
         });
 
         let instructions_to_remove = TRANSACTIONS.with_borrow_mut(|k| k.remove(&transaction_id))?;

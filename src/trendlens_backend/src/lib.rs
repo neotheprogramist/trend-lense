@@ -1,11 +1,15 @@
-use std::str::FromStr;
+use std::{cell::RefCell, collections::HashMap, str::FromStr};
 
 use crate::pair::Pair;
 use api_store::{ApiData, ApiStore};
+use candid::Principal;
 use chain_data::{ExchangeData, TimestampBased};
 use exchange::{Candle, Exchange, ExchangeImpl, TimeVolume};
-use ic_cdk::{query, update};
+use ic_cdk::{
+    api::management_canister::http_request::{HttpResponse, TransformArgs}, query, trap, update
+};
 use instruments::save_instruments;
+use proxy_canister_types::{HttpRequestId, HttpResult};
 use remote_exchanges::{
     coinbase::{Coinbase, CoinbaseAuth},
     okx::{api::InstrumentType, auth::OkxAuth, Okx},
@@ -30,6 +34,30 @@ mod remote_exchanges;
 mod request_store;
 mod storable_wrapper;
 mod volume_store;
+
+thread_local! {
+    static PROXY_CANISTER_ID: RefCell<Principal> = RefCell::new(Principal::anonymous());
+    static CALLBACK_RESPONSES: RefCell<HashMap<HttpRequestId, HttpResult>> = RefCell::new(HashMap::new());
+}
+
+#[update]
+fn http_response_callback(request_id: HttpRequestId, res: HttpResult) {
+    if ic_cdk::caller() != PROXY_CANISTER_ID.with(|id| id.borrow().clone()) {
+        trap("Caller is not the proxy canister");
+    }
+
+    CALLBACK_RESPONSES.with(|callbacks| {
+        let mut callbacks = callbacks.borrow_mut();
+        callbacks.insert(request_id, res);
+    });
+}
+
+#[update]
+fn set_proxy_principal(proxy_canister_id: Principal) {
+    PROXY_CANISTER_ID.with(|id| {
+        id.replace(proxy_canister_id);
+    });
+}
 
 #[ic_cdk::query]
 fn __get_candid_interface_tmp_hack() -> String {
@@ -442,6 +470,17 @@ async fn pull_volumes(
     });
 
     Ok(fetched_volumes)
+}
+
+#[query]
+pub fn transform(raw: TransformArgs) -> HttpResponse {
+    let res = HttpResponse {
+        status: raw.response.status.clone(),
+        body: raw.response.body.clone(),
+        ..Default::default()
+    };
+
+    res
 }
 
 ic_cdk::export_candid!();

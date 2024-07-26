@@ -35,7 +35,11 @@ pub enum ExchangeErrors {
     #[error("api key not found")]
     MissingApiKey,
     #[error("pair is not initialized")]
-    MissingTimestamp
+    MissingTimestamp,
+    #[error("http call failed")]
+    Proxy,
+    #[error("response not found")]
+    ResponseNotFound,
 }
 
 #[async_trait::async_trait]

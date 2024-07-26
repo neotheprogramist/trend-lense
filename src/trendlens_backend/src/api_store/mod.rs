@@ -1,7 +1,5 @@
 use crate::{
-    exchange::Exchange,
-    memory::{Memory, MemoryLocation, MEMORY_MANAGER},
-    storable_wrapper::StorableWrapper,
+    exchange::Exchange, memory::{Memory, MemoryLocation, MEMORY_MANAGER}, request_store::MyPrincipal, storable_wrapper::StorableWrapper
 };
 use candid::{CandidType, Principal};
 use ic_stable_structures::StableBTreeMap;
@@ -10,7 +8,7 @@ use std::cell::RefCell;
 
 type ApiId = u32;
 type ApiKey = String;
-type UserApiKeysTable = StableBTreeMap<(Principal, ApiId), StorableWrapper<ApiData>, Memory>;
+type UserApiKeysTable = StableBTreeMap<(MyPrincipal, ApiId), StorableWrapper<ApiData>, Memory>;
 type ApiIndexes = StableBTreeMap<ApiKey, ApiId, Memory>;
 
 thread_local! {
@@ -48,7 +46,7 @@ impl ApiStore {
                 .unwrap_or(0)
                 .checked_add(1)?;
 
-            a.insert((*identity, insert_index), StorableWrapper(data));
+            a.insert((MyPrincipal(identity.clone()), insert_index), StorableWrapper(data));
 
             Some(insert_index)
         })?;
@@ -67,13 +65,13 @@ impl ApiStore {
     pub fn remove_key(identity: &Principal, api_key: &String) -> Option<ApiData> {
         let id = Self::get_id(api_key)?;
 
-        USER_API_KEYS.with_borrow_mut(|k| k.remove(&(*identity, id)).as_deref().cloned())
+        USER_API_KEYS.with_borrow_mut(|k| k.remove(&(MyPrincipal(identity.clone()), id)).as_deref().cloned())
     }
 
     pub fn get_by_api(identity: &Principal, api_key: &String) -> Option<ApiData> {
         let id = Self::get_id(api_key)?;
 
-        USER_API_KEYS.with_borrow(|k| k.get(&(*identity, id)).as_deref().cloned())
+        USER_API_KEYS.with_borrow(|k| k.get(&(MyPrincipal(identity.clone()), id)).as_deref().cloned())
     }
 }
 
@@ -99,7 +97,7 @@ mod tests {
         );
 
         assert!(API_KEYS_INDEX.with_borrow(|k| k.get(&data.api_key)).is_some());
-        assert!(USER_API_KEYS.with_borrow(|k| k.get(&(principal, 1))).is_some());
+        assert!(USER_API_KEYS.with_borrow(|k| k.get(&(MyPrincipal(principal.clone()), 1))).is_some());
     }
 
     #[test]
