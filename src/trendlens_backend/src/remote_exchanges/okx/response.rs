@@ -3,7 +3,6 @@ use serde_this_or_that::as_u64;
 use std::{fmt::Display, str::FromStr};
 
 use crate::{
-    api_client::ApiClientErrors,
     exchange::Candle,
     pair::Pair,
     remote_exchanges::{
@@ -15,7 +14,7 @@ use crate::{
         ExchangeErrors,
     },
 };
-use candid::{CandidType, Nat};
+use candid::CandidType;
 use serde::{self, de::DeserializeOwned, Deserialize, Serialize};
 use serde_with::{serde_as, DisplayFromStr};
 
@@ -32,7 +31,6 @@ pub struct ApiResponse<T> {
 
 impl<R: DeserializeOwned> ApiResponseWrapper<R> for ApiResponse<R> {
     fn extract_response(self) -> Result<R, ExchangeErrors> {
-
         Ok(self.data)
     }
 }
@@ -169,15 +167,6 @@ pub struct PlaceOrderDetails {
     pub status_message: String,
 }
 
-// #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
-// pub struct PlaceOrderResponse {
-//     pub code: String,
-//     pub msg: String,
-//     pub data: ,
-//     pub in_time: String,
-//     pub out_time: String,
-// }
-
 #[serde_as]
 #[derive(Serialize, Deserialize, CandidType, Debug, Clone)]
 pub struct Order {
@@ -309,62 +298,6 @@ pub struct AssetDetail {
     cash_balance: String,
     #[serde(rename = "uTime")]
     update_time: String,
-    // #[serde(rename = "isoEq")]
-    // isolated_margin_equity: String,
-    // #[serde(rename = "availEq")]
-    // available_equity: String,
-    // #[serde(rename = "disEq")]
-    // discount_equity: String,
-    // #[serde(rename = "fixedBal")]
-    // fixed_balance: String,
-    // #[serde(rename = "availBal")]
-    // available_balance: String,
-    // #[serde(rename = "frozenBal")]
-    // frozen_balance: String,
-    // #[serde(rename = "ordFrozen")]
-    // margin_frozen: String,
-    // #[serde(rename = "liab")]
-    // liabilities: String,
-    // #[serde(rename = "upl")]
-    // unrealized_profit_loss: String,
-    // #[serde(rename = "uplLiab")]
-    // upl_liabilities: String,
-    // #[serde(rename = "crossLiab")]
-    // cross_liabilities: String,
-    // #[serde(rename = "rewardBal")]
-    // reward_balance: String,
-    // #[serde(rename = "isoLiab")]
-    // isolated_liabilities: String,
-    // #[serde(rename = "mgnRatio")]
-    // margin_ratio: String,
-    // #[serde(rename = "interest")]
-    // accrued_interest: String,
-    // #[serde(rename = "twap")]
-    // twap: String,
-    // #[serde(rename = "maxLoan")]
-    // max_loan: String,
-    // #[serde(rename = "eqUsd")]
-    // equity_usd: String,
-    // #[serde(rename = "borrowFroz")]
-    // potential_borrowing_imr: String,
-    // #[serde(rename = "notionalLever")]
-    // leverage: String,
-    // #[serde(rename = "stgyEq")]
-    // strategy_equity: String,
-    // #[serde(rename = "isoUpl")]
-    // isolated_unrealized_profit_loss: String,
-    // #[serde(rename = "spotInUseAmt")]
-    // spot_in_use_amount: String,
-    // #[serde(rename = "clSpotInUseAmt")]
-    // user_defined_spot_risk_offset_amount: String,
-    // #[serde(rename = "maxSpotInUseAmt")]
-    // max_spot_risk_offset_amount: String,
-    // #[serde(rename = "spotIsoBal")]
-    // spot_isolated_balance: String,
-    // #[serde(rename = "imr")]
-    // initial_margin_requirement: String,
-    // #[serde(rename = "mmr")]
-    // maintenance_margin_requirement: String,
 }
 
 impl FromStr for Pair {
@@ -446,51 +379,7 @@ pub struct ConcreteInstrument {
     #[serde(rename = "baseCcy")]
     base_currency: Option<String>,
     #[serde(rename = "quoteCcy")]
-    quote_currency: Option<String>,
-    // #[serde(rename = "settleCcy")]
-    // settlement_currency: Option<String>,
-    // #[serde(rename = "ctVal")]
-    // contract_value: Option<String>,
-    // #[serde(rename = "ctMult")]
-    // contract_multiplier: Option<String>,
-    // #[serde(rename = "ctValCcy")]
-    // contract_value_currency: Option<String>,
-    // #[serde(rename = "optType")]
-    // option_type: Option<String>,
-    // #[serde(rename = "stk")]
-    // strike_price: Option<String>,
-    // #[serde(rename = "listTime")]
-    // listing_time: Option<String>,
-    // #[serde(rename = "expTime")]
-    // expiry_time: Option<String>,
-    // #[serde(rename = "lever")]
-    // leverage: Option<String>,
-    // #[serde(rename = "tickSz")]
-    // tick_size: String,
-    // #[serde(rename = "lotSz")]
-    // lot_size: String,
-    // #[serde(rename = "minSz")]
-    // minimum_order_size: String,
-    // #[serde(rename = "ctType")]
-    // contract_type: Option<String>,
-    // #[serde(rename = "state")]
-    // state: String,
-    // #[serde(rename = "maxLmtSz")]
-    // max_limit_size: String,
-    // #[serde(rename = "maxMktSz")]
-    // max_market_size: String,
-    // #[serde(rename = "maxLmtAmt")]
-    // max_limit_amount: Option<String>,
-    // #[serde(rename = "maxMktAmt")]
-    // max_market_amount: Option<String>,
-    // #[serde(rename = "maxTwapSz")]
-    // max_twap_size: String,
-    // #[serde(rename = "maxIcebergSz")]
-    // max_iceberg_size: String,
-    // #[serde(rename = "maxTriggerSz")]
-    // max_trigger_size: String,
-    // #[serde(rename = "maxStopSz")]
-    // max_stop_size: String,
+    quote_currency: Option<String>
 }
 
 impl Into<Instrument> for ConcreteInstrument {

@@ -87,7 +87,6 @@ impl ApiRequest for GetOrderBookRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/market/books";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = true;
     const BODY: bool = false;
 
     type Response = Vec<OrderBook>;
@@ -109,7 +108,6 @@ impl ApiRequest for GetInstrumentsRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/account/instruments";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = false;
     const BODY: bool = false;
 
     type Response = Vec<ConcreteInstrument>;
@@ -131,7 +129,6 @@ impl ApiRequest for GetInstrumentsRequestPublic {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/public/instruments";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = true;
     const BODY: bool = false;
 
     type Response = Vec<ConcreteInstrument>;
@@ -149,7 +146,6 @@ impl ApiRequest for GetBalanceRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/account/balance";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = false;
     const BODY: bool = false;
 
     type Response = Vec<AccountInfo>;
@@ -184,7 +180,6 @@ impl ApiRequest for PlaceOrderBody {
     const METHOD: HttpMethod = HttpMethod::POST;
     const URI: &'static str = "api/v5/trade/order";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = false;
     const BODY: bool = true;
 
     type Response = Vec<PlaceOrderDetails>;
@@ -210,7 +205,6 @@ impl ApiRequest for IndexCandleStickRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/market/index-candles";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = true;
     const BODY: bool = false;
 
     type Response = Vec<IndexCandleStick>;
@@ -231,7 +225,6 @@ impl ApiRequest for PendingOrdersRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/trade/orders-pending";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = false;
     const BODY: bool = false;
 
     type Response = Vec<Order>;
@@ -253,7 +246,6 @@ impl ApiRequest for OrdersHistoryRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/trade/orders-history";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = false;
     const BODY: bool = false;
 
     type Response = Vec<Order>;
@@ -277,7 +269,6 @@ impl ApiRequest for TakerVolumeRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/rubik/stat/taker-volume";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = true;
     const BODY: bool = false;
 
     type Response = Vec<TakerVolume>;
@@ -304,7 +295,6 @@ impl ApiRequest for SpotCandleStickRequest {
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "api/v5/market/candles";
     const HOST: &'static str = "www.okx.com";
-    const PUBLIC: bool = true;
     const BODY: bool = false;
 
     type Response = Vec<CandleStick>;

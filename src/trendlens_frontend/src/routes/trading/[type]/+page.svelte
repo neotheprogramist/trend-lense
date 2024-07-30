@@ -356,7 +356,7 @@
       </Tabs.Content>
 
       <Tabs.Content value="requests">
-        <RequestList {requests} />
+        <RequestList bind:requests={requests} />
       </Tabs.Content>
 
       <Tabs.Content value="orders_history">

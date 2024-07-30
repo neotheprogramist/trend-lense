@@ -43,35 +43,3 @@ impl TimestampBased for CandlesStore {
             .collect::<Vec<_>>()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    // use super::*;
-
-    // fn create_candle(timestamp: u64) -> Candle {
-    //     Candle {
-    //         timestamp,
-    //         open_price: 1.0,
-    //         close_price: 1.0,
-    //         highest_price: 1.0,
-    //         lowest_price: 1.0,
-    //     }
-    // }
-
-    // #[test]
-    // fn test_candles_store() {
-    //     let mut candles = CandlesStore {
-    //         data: BTreeMap::new(),
-    //     };
-
-    //     let candles_array = vec![create_candle(1), create_candle(2), create_candle(3)];
-
-    //     candles.insert_many(candles_array.clone());
-
-    //     assert_eq!(candles.last_timestamp(), Some(3));
-    //     assert_eq!(
-    //         candles.get_between(0..2),
-    //         vec![candles_array.get(0).unwrap().clone()]
-    //     );
-    // }
-}

@@ -26,6 +26,7 @@
   import Slider from "./shad/ui/slider/slider.svelte";
   import * as Tabs from "./shad/ui/tabs/index";
   import { cn } from "./utils";
+  import { toast } from "svelte-sonner";
 
   interface IProps {
     instrument: Pair;
@@ -90,6 +91,10 @@
       1,
     );
 
+    toast.success("Split status", {
+      description: "requests prepared, refresh request list",
+    });
+
     return extractOkValue(response);
   };
 
@@ -122,12 +127,31 @@
       signatures.push(signature);
     }
 
-    await wallet.actor.run_transaction(
+    const result = await wallet.actor.run_transaction(
       requestNumber,
       signatures,
       isoTimestamp,
       BigInt(timestamp),
     );
+
+    try {
+      const unwrapped = extractOkValue(result);
+
+      if (unwrapped.length > 0) {
+        toast.info("Split status", {
+          description:
+            "executed: " + unwrapped.length + "/" + signatures.length,
+        });
+      } else {
+        toast.error("Split failed", {
+          description: "at least one split instruction failed, refresh request list to view",
+        });
+      }
+    } catch (err) {
+      toast.error("Split failed", {
+        description: "unknown",
+      });
+    }
   };
 
   const getFixedAmount = (amount: number) => {

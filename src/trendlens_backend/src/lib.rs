@@ -56,7 +56,6 @@ fn register_api_key(exchange_api: ApiData) -> bool {
     let principal = ic_cdk::caller();
 
     ApiStore::register_key(&principal, exchange_api);
-    // There should be test if key is a valid key
 
     true
 }
@@ -216,11 +215,11 @@ async fn run_transaction(
 
     ic_cdk::println!("executed {}", done_count);
 
-    if tx.iter().count() == done_count {
-        TransactionStore::delete_transaction(&identity, index);
-    }
+    TransactionStore::delete_transaction(&identity, index);
 
-    TransactionStore::add_transaction(&identity, instructions);
+    if tx.iter().count() != done_count {
+        TransactionStore::add_transaction(&identity, instructions);
+    }
 
     Ok(responses)
 }
@@ -327,7 +326,7 @@ async fn pull_candles(
     let exchange = ExchangeImpl::new(exchange);
     let mut exchange_data = exchange
         .get_data(pair.clone())
-        .ok_or(ExchangeErrors::MissingPair)?;
+        .ok_or(ExchangeErrors::MissingCandles)?;
 
     let last_candle_timestamp = exchange_data
         .candles
@@ -416,7 +415,7 @@ async fn pull_volumes(
     let timestamp = VOLUME_STORE.with_borrow(|v| -> Result<u64, ExchangeErrors> {
         let store = v
             .get(&(exchange, pair.clone()))
-            .ok_or(ExchangeErrors::MissingPair)?;
+            .ok_or(ExchangeErrors::MissingVolumes)?;
 
         store
             .last_timestamp()

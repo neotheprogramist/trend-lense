@@ -5,7 +5,6 @@ use crate::remote_exchanges::{
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-// this should be generic but right now its based on concrete types, easy to replace later
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, CandidType)]
 pub enum Request {
