@@ -9,6 +9,7 @@
   import { request } from "http";
   import { extractOkValue } from "$lib/result";
   import { toast } from "svelte-sonner";
+  import { exec } from "child_process";
 
   interface IProps {
     requests: [number, SignableInstruction[]][];
@@ -21,7 +22,13 @@
       throw new Error("No actor found");
     }
 
+    const executeToast = toast.info("Deleting request", {
+      duration: 10000,
+    });
+
     await wallet.actor.delete_transaction(id);
+
+    toast.dismiss(executeToast)
 
     requests = requests.filter(([elId, _]) => elId != id);
   };
@@ -61,12 +68,19 @@
       signatures.push(signature);
     }
 
+    const executeToast = toast.loading("Execution status", {
+      description: "executing: " + signatures.length + " instructions",
+      duration: 10000,
+    });
+
     const result = await wallet.actor.run_transaction(
       transactionId,
       signatures,
       isoTimestamp,
       BigInt(timestamp),
     );
+
+    toast.dismiss(executeToast);
 
     try {
       const unwrapped = extractOkValue(result);
@@ -78,7 +92,7 @@
         });
       } else {
         toast.error("Execution failed", {
-          description: "requests failed",
+          description: "at least one of instructions failed",
         });
       }
     } catch (err) {

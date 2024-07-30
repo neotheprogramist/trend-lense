@@ -81,6 +81,11 @@
       throw new Error("Not all keys are present");
     }
 
+    const executeToast = toast.loading("Split status", {
+      description: "creating split requests to execute",
+      duration: 10000,
+    });
+
     const response = await wallet.actor.split_transaction(
       keys.map((e) => handleApiData(e)),
       pairToString(instrument),
@@ -91,8 +96,10 @@
       1,
     );
 
+    toast.dismiss(executeToast);
+
     toast.success("Split status", {
-      description: "requests prepared, refresh request list",
+      description: "requests added, refresh request list to view",
     });
 
     return extractOkValue(response);
@@ -127,6 +134,11 @@
       signatures.push(signature);
     }
 
+    const executeToast = toast.loading("Split status", {
+      description: "executing request",
+      duration: 10000,
+    });
+
     const result = await wallet.actor.run_transaction(
       requestNumber,
       signatures,
@@ -134,21 +146,24 @@
       BigInt(timestamp),
     );
 
+    toast.dismiss(executeToast)
+
     try {
       const unwrapped = extractOkValue(result);
 
       if (unwrapped.length > 0) {
-        toast.info("Split status", {
+        toast.info("Split execution", {
           description:
             "executed: " + unwrapped.length + "/" + signatures.length,
         });
       } else {
-        toast.error("Split failed", {
-          description: "at least one split instruction failed, refresh request list to view",
+        toast.error("Split execution", {
+          description:
+            "at least one split instruction failed, refresh request list to view",
         });
       }
     } catch (err) {
-      toast.error("Split failed", {
+      toast.error("Split execution failed", {
         description: "unknown",
       });
     }
