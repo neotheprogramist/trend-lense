@@ -30,6 +30,12 @@
       ],
       "type": "assets",
       "workspace": "trendlens_frontend"
+    },
+    "idempotency-proxy": {
+      "type": "custom",
+      "candid": "https://github.com/ldclabs/idempotent-proxy/releases/download/v1.1.6/idempotent_proxy_canister.did",
+      "wasm": "https://github.com/ldclabs/idempotent-proxy/releases/download/v1.1.6/idempotent_proxy_canister.wasm.gz",
+      "init_arg": "(opt variant {Init = record { ecdsa_key_name = \"test_key_1\"; proxy_token_refresh_interval = 3600; subnet_size = 1; service_fee = 10_000_000; }})"
     }
   },
   "defaults": {
