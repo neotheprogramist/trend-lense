@@ -28,7 +28,7 @@ impl Okx {
         range: std::ops::Range<u64>,
         interval: u32,
     ) -> Result<Vec<Candle>, ExchangeErrors> {
-        let index_name = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
+        let index_name = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::InvalidIndex)?;
 
         ic_cdk::println!("index_name: {:?}", index_name);
         let candle_request = IndexCandleStickRequest {
@@ -92,7 +92,6 @@ impl Okx {
         .to_string()
     }
 
-    /// gets index name from global pair enum
     pub fn instrument_id(pair: &Pair) -> Option<String> {
         return Some(format!("{}-{}", pair.base, pair.quote).to_uppercase());
     }

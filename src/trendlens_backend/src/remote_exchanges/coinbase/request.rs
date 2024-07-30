@@ -17,7 +17,6 @@ impl ApiRequest for GetProfileAccountsRequest {
     const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "accounts";
-    const PUBLIC: bool = true;
 
     type Response = Vec<response::Account>;
 }
@@ -32,7 +31,6 @@ impl ApiRequest for GetProfilesRequest {
     const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "profiles";
-    const PUBLIC: bool = true;
 
     type Response = Vec<response::Profile>;
 }
@@ -45,7 +43,6 @@ impl ApiRequest for GetAllPairsRequest {
     const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "products";
-    const PUBLIC: bool = true;
 
     type Response = Vec<response::ConcreteInstrument>;
 }
@@ -150,7 +147,6 @@ impl ApiRequest for PostOrderBody {
     const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
     const METHOD: HttpMethod = HttpMethod::POST;
     const URI: &'static str = "orders";
-    const PUBLIC: bool = false;
 
     type Response = response::OrderResponse;
 }
@@ -214,7 +210,6 @@ impl ApiRequest for OrdersRequest {
     const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "orders";
-    const PUBLIC: bool = false;
 
     type Response = Vec<response::Order>;
 }
@@ -251,7 +246,6 @@ impl ApiRequest for GetOrderbookRequest {
     const HOST: &'static str = "api-public.sandbox.exchange.coinbase.com";
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "products/{product_id}/book";
-    const PUBLIC: bool = true;
     const PATH_PARAMS: bool = true;
 
     type Response = response::OrderBook;
@@ -325,7 +319,6 @@ impl ApiRequest for GetProductCandles {
     const HOST: &'static str = "api.exchange.coinbase.com";
     const METHOD: HttpMethod = HttpMethod::GET;
     const URI: &'static str = "products/{product_id}/candles";
-    const PUBLIC: bool = true;
     const PATH_PARAMS: bool = true;
 
     type Response = Vec<response::CoinbaseCandle>;

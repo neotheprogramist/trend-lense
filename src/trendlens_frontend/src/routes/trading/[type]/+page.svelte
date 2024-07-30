@@ -36,6 +36,7 @@
   } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
   import type { PageData } from "./$types";
   import { pairToString } from "$lib/pair";
+  import { exec } from "child_process";
 
   interface IProps {
     data: PageData;
@@ -93,7 +94,10 @@
 
   const updateCandles = async () => {
     if (selectedInstrument) {
-      await fetchCandles(selectedExchanges[0], pairToString(selectedInstrument));
+      await fetchCandles(
+        selectedExchanges[0],
+        pairToString(selectedInstrument),
+      );
     }
   };
 
@@ -123,11 +127,25 @@
   };
 
   const handlePost = async (request: PostOrderRequest) => {
+    const executeToast = toast.loading("Order status", {
+      description: "adding request",
+      duration: 10000,
+    });
+
     await postRequest(selectedExchanges[0], request);
+
+    toast.dismiss(executeToast);
   };
 
   const handleExecute = async (request: PostOrderRequest) => {
+    const executeToast = toast.loading("Order status", {
+      description: "executing request",
+      duration: 10000,
+    });
+
     const message = await executeRequest(selectedExchanges[0], request);
+
+    toast.dismiss(executeToast);
 
     if (message.id.length > 0) {
       toast.success("Order success", {
@@ -241,6 +259,11 @@
   };
 
   const handleRefreshClick = async () => {
+    const executeToast = toast.loading("Load status", {
+      description: "Fetching " + selectedInfoBar,
+      duration: 10000,
+    });
+
     if (selectedInfoBar === "requests") {
       await fetchRequests();
     } else if (selectedInfoBar === "open_orders") {
@@ -248,10 +271,12 @@
     } else if (selectedInfoBar === "orders_history") {
       await fetchOrders(false);
     }
+
+    toast.dismiss(executeToast);
   };
 
   $effect(() => {
-    if (selectedInstrument && selectedExchanges.length > 0){
+    if (selectedInstrument && selectedExchanges.length > 0) {
       updateCandles();
     }
   });
@@ -356,7 +381,7 @@
       </Tabs.Content>
 
       <Tabs.Content value="requests">
-        <RequestList {requests} />
+        <RequestList bind:requests />
       </Tabs.Content>
 
       <Tabs.Content value="orders_history">

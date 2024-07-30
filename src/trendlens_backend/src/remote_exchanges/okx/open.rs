@@ -38,7 +38,7 @@ impl OpenData for Okx {
                 end: Some(end * 1000),
                 begin: Some(current * 1000),
                 bar_size: Some(Okx::interval_string(interval)),
-                index_name: Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?,
+                index_name: Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::InvalidIndex)?,
                 results_limit: Some(300),
             };
 
@@ -107,7 +107,7 @@ impl OpenData for Okx {
         pair: &Pair,
         size: u32,
     ) -> Result<GlobalOrderBook, ExchangeErrors> {
-        let instrument_id = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::MissingIndex)?;
+        let instrument_id = Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::InvalidIndex)?;
 
         let orderbook_request = GetOrderBookRequest {
             instrument_id,
@@ -125,7 +125,7 @@ impl OpenData for Okx {
         Ok(response
             .into_iter()
             .next()
-            .ok_or(ExchangeErrors::MissingPair)?
+            .ok_or(ExchangeErrors::MissingOrderbook)?
             .into())
     }
 }

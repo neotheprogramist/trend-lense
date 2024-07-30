@@ -24,12 +24,14 @@ type Candle = record {
 type Exchange = variant { Okx; Coinbase };
 type ExchangeErrors = variant {
   ApiClientError : ApiClientErrors;
+  InvalidIndex;
+  MissingCandles;
   InvalidTimestamps;
-  MissingIndex;
-  MissingPair;
+  MissingOrderbook;
   MissingTimestamp;
   MissingApiKey;
   DeserializationFailed : record { message : text };
+  MissingVolumes;
   UnsupportedPairFormat;
 };
 type GeneralBalanceRequest = record { currency : opt vec text };

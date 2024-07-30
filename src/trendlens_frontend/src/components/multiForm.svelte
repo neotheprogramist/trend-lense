@@ -26,6 +26,7 @@
   import Slider from "./shad/ui/slider/slider.svelte";
   import * as Tabs from "./shad/ui/tabs/index";
   import { cn } from "./utils";
+  import { toast } from "svelte-sonner";
 
   interface IProps {
     instrument: Pair;
@@ -80,6 +81,11 @@
       throw new Error("Not all keys are present");
     }
 
+    const executeToast = toast.loading("Split status", {
+      description: "creating split requests to execute",
+      duration: 10000,
+    });
+
     const response = await wallet.actor.split_transaction(
       keys.map((e) => handleApiData(e)),
       pairToString(instrument),
@@ -89,6 +95,12 @@
       allVolumeRatios,
       1,
     );
+
+    toast.dismiss(executeToast);
+
+    toast.success("Split status", {
+      description: "requests added, refresh request list to view",
+    });
 
     return extractOkValue(response);
   };
@@ -122,12 +134,39 @@
       signatures.push(signature);
     }
 
-    await wallet.actor.run_transaction(
+    const executeToast = toast.loading("Split status", {
+      description: "executing request",
+      duration: 10000,
+    });
+
+    const result = await wallet.actor.run_transaction(
       requestNumber,
       signatures,
       isoTimestamp,
       BigInt(timestamp),
     );
+
+    toast.dismiss(executeToast)
+
+    try {
+      const unwrapped = extractOkValue(result);
+
+      if (unwrapped.length > 0) {
+        toast.info("Split execution", {
+          description:
+            "executed: " + unwrapped.length + "/" + signatures.length,
+        });
+      } else {
+        toast.error("Split execution", {
+          description:
+            "at least one split instruction failed, refresh request list to view",
+        });
+      }
+    } catch (err) {
+      toast.error("Split execution failed", {
+        description: "unknown",
+      });
+    }
   };
 
   const getFixedAmount = (amount: number) => {

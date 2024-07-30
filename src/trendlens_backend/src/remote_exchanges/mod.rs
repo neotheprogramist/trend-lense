@@ -20,22 +20,26 @@ pub mod response;
 
 #[derive(Debug, Error, CandidType)]
 pub enum ExchangeErrors {
-    #[error("api error")]
+    #[error("api client error")]
     ApiClientError(#[from] ApiClientErrors),
-    #[error("this exchange has no such index")]
-    MissingIndex,
-    #[error("this exchange has no such pair")]
-    MissingPair,
+    #[error("index format conversion failed")]
+    InvalidIndex,
+    #[error("candle store for given pair is not initialized")]
+    MissingCandles,
+    #[error("volume store for given pair is not initialized")]
+    MissingVolumes,
     #[error("provided timestamps are invalid")]
     InvalidTimestamps,
-    #[error("pair format given is not supported")]
+    #[error("given pair format is not supported, supported format is TOKEN-TOKEN")]
     UnsupportedPairFormat,
     #[error("could not deserialize: {message}")]
     DeserializationFailed { message: String },
-    #[error("api key not found")]
+    #[error("given api key not found on contract")]
     MissingApiKey,
-    #[error("pair is not initialized")]
-    MissingTimestamp
+    #[error("missing timestamp, pair/volumes are not initialized")]
+    MissingTimestamp,
+    #[error("given orderbook data do not exist")]
+    MissingOrderbook
 }
 
 #[async_trait::async_trait]
@@ -129,7 +133,6 @@ mod path_formatter_test {
             const URI: &'static str = "/test/{product_id}/{name}";
             const HOST: &'static str = "test.com";
             const BODY: bool = false;
-            const PUBLIC: bool = false;
 
             type Response = ();
         }
@@ -149,7 +152,6 @@ pub trait ApiRequest: Serialize {
     const URI: &'static str;
     const HOST: &'static str;
     const BODY: bool;
-    const PUBLIC: bool;
     const PATH_PARAMS: bool = false;
 
     type Response: for<'de> Deserialize<'de>;

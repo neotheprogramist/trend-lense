@@ -6,19 +6,31 @@
   import { wallet } from "$lib/wallet.svelte";
   import { Send, X } from "lucide-svelte";
   import type { SignableInstruction } from "../../../declarations/trendlens_backend/trendlens_backend.did";
+  import { request } from "http";
+  import { extractOkValue } from "$lib/result";
+  import { toast } from "svelte-sonner";
+  import { exec } from "child_process";
 
   interface IProps {
     requests: [number, SignableInstruction[]][];
   }
 
-  let { requests }: IProps = $props();
+  let { requests = $bindable() }: IProps = $props();
 
   const deleteRequest = async (id: number) => {
     if (!wallet.actor) {
       throw new Error("No actor found");
     }
 
+    const executeToast = toast.info("Deleting request", {
+      duration: 10000,
+    });
+
     await wallet.actor.delete_transaction(id);
+
+    toast.dismiss(executeToast)
+
+    requests = requests.filter(([elId, _]) => elId != id);
   };
 
   const runRequest = async (
@@ -56,12 +68,38 @@
       signatures.push(signature);
     }
 
-    await wallet.actor.run_transaction(
+    const executeToast = toast.loading("Execution status", {
+      description: "executing: " + signatures.length + " instructions",
+      duration: 10000,
+    });
+
+    const result = await wallet.actor.run_transaction(
       transactionId,
       signatures,
       isoTimestamp,
       BigInt(timestamp),
     );
+
+    toast.dismiss(executeToast);
+
+    try {
+      const unwrapped = extractOkValue(result);
+
+      if (unwrapped.length > 0) {
+        toast.info("Execution status", {
+          description:
+            "executed: " + unwrapped.length + "/" + signatures.length,
+        });
+      } else {
+        toast.error("Execution failed", {
+          description: "at least one of instructions failed",
+        });
+      }
+    } catch (err) {
+      toast.error("Execution failed", {
+        description: "unknown",
+      });
+    }
   };
 
   function filterRequests(requests: [number, SignableInstruction[]][]) {
