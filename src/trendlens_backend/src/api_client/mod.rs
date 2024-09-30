@@ -11,7 +11,7 @@ use std::{cell::RefCell, str::FromStr};
 use thiserror::Error;
 
 thread_local! {
-    static PROXY_CANISTER_ID: RefCell<Principal> = RefCell::new(Principal::from_str("ahdfa-wyaaa-aaaal-ajpba-cai").unwrap());
+    static PROXY_CANISTER_ID: RefCell<Principal> = RefCell::new(Principal::from_str("gjdhr-3iaaa-aaaak-qlkga-cai").unwrap());
 
     static IDEMPOTENCY_COUNTER: RefCell<u64> = RefCell::new(0);
 }
