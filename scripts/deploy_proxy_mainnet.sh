@@ -1,4 +1,4 @@
-dfx deploy --ic idempotency_proxy --argument "(opt variant {
+dfx deploy --ic idempotency-proxy --argument "(opt variant {
     Init = record { 
         ecdsa_key_name = \"dfx_key_new\"; 
         proxy_token_refresh_interval = 3600; 
