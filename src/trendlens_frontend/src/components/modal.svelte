@@ -1,9 +1,13 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
+
   interface IProps {
     showModal: boolean;
+    header?: Snippet;
+    content?: Snippet;
   }
 
-  let { showModal = $bindable() }: IProps = $props();
+  let { showModal = $bindable(), header, content }: IProps = $props();
 
   let dialog: HTMLDialogElement;
 
@@ -19,9 +23,9 @@
   on:click|self={() => dialog.close()}
 >
   <div on:click|stopPropagation>
-    <slot name="header" />
+    {@render header?.()}
     <hr />
-    <slot />
+    {@render content?.()}
   </div>
 </dialog>
 
