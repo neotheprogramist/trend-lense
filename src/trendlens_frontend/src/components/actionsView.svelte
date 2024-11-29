@@ -1,29 +1,92 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { TradingClient } from "$lib/tradingClient";
   import type { Action } from "$lib/tradingClient";
   import {
     ColorType,
-    CrosshairMode,
-    type SeriesMarker,
     type Time,
     type SeriesMarkerPosition,
     type SeriesMarkerShape,
-    type IChartApi,
-    type ISeriesApi,
   } from "lightweight-charts";
   import { mode } from "mode-watcher";
   import { Chart, LineSeries } from "svelte-lightweight-charts";
+  import * as Select from "$components/shad/ui/select";
+  import { Button } from "$components/shad/ui/button";
+  import { CalendarDays } from "lucide-svelte";
+  import { Calendar } from "lucide-svelte";
+  import { type DateRange } from "bits-ui";
+  import {
+    DateFormatter,
+    type DateValue,
+    getLocalTimeZone,
+    today,
+  } from "@internationalized/date";
+  import { cn } from "./utils";
+  import { RangeCalendar } from "$components/shad/ui/range-calendar";
+  import * as Popover from "$components/shad/ui/popover";
 
-  let predictedActions: Action[] = [];
+  let predictedActions = $state<Action[]>([]);
   let loading = $state(false);
   let error = $state<string | null>(null);
   let { isVisible }: { isVisible: boolean } = $props();
 
+  type RangeOption = { label: string; value: string };
 
-  onMount(async () => {
-    await fetchPredictions();
+  const ranges: RangeOption[] = [
+    { label: "Last 7 days", value: "7d" },
+    { label: "Last 14 days", value: "14d" },
+    { label: "Last 30 days", value: "30d" },
+    { label: "Custom Range", value: "custom" },
+  ];
+
+  let selectedRange = $state<string>("30d");
+
+  const df = new DateFormatter("en-US", { dateStyle: "medium" });
+
+  let dateRange = $state<DateRange>({
+    start: today(getLocalTimeZone()).subtract({ days: 30 }),
+    end: today(getLocalTimeZone()).subtract({ days: 15 }),
   });
+
+  $inspect(dateRange);
+
+  let startValue = $state<DateValue | undefined>(undefined);
+
+  function getDateRange(range: string): { start: Date; end: Date } {
+    if (range === "custom" && dateRange?.start && dateRange?.end) {
+      return {
+        start: dateRange.start.toDate(getLocalTimeZone()),
+        end: dateRange.end.toDate(getLocalTimeZone()),
+      };
+    }
+
+    const end = new Date();
+    end.setDate(end.getDate());
+    const start = new Date();
+
+    switch (range) {
+      case "7d":
+        start.setDate(start.getDate() - 7);
+        break;
+      case "14d":
+        start.setDate(start.getDate() - 14);
+        break;
+      case "30d":
+        start.setDate(start.getDate() - 30);
+        break;
+      default:
+        throw new Error(`Invalid range: ${range}`);
+    }
+
+    return { start, end };
+  }
+
+  async function handleRangeChange(value: string) {
+    selectedRange = value;
+
+    if (selectedRange !== "custom") {
+      await fetchPredictions();
+    }
+  }
 
   async function fetchPredictions() {
     console.log("fetchPredictions");
@@ -32,17 +95,16 @@
       error = null;
       const client = new TradingClient();
 
-      // Get current date and format it
-      const endDate = new Date();
-      const startDate = new Date();
-      endDate.setDate(endDate.getDate() - 1);
-      startDate.setDate(startDate.getDate() - 30);
-
+      const { start, end } = getDateRange(selectedRange);
+    
       const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
+      console.log("start", formatDate(start));
+      console.log("end", formatDate(end));
+
       const response = await client.getActions({
-        start: formatDate(startDate),
-        end: formatDate(endDate),
+        start: formatDate(start),
+        end: formatDate(end),
         pair: "BTC-USD",
         interval: "1d",
       });
@@ -60,30 +122,32 @@
   }
 
   let lineData = $derived(
-    predictedActions
+    [...predictedActions]
       .sort(
         (a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       )
       .map((action) => {
-        const time = new Date(action.timestamp).getTime() / 1000;
+        const date = new Date(action.timestamp);
+        date.setUTCHours(date.getUTCHours() + 1);
         return {
-          time: time as Time,
+          time: (date.getTime() / 1000) as Time,
           value: action.action === 0 ? 0.5 : action.action === 1 ? 0 : 1,
         };
       }),
   );
 
   let markers = $derived(
-    predictedActions
+    [...predictedActions]
       .sort(
         (a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       )
       .map((action) => {
-        const time = new Date(action.timestamp).getTime() / 1000;
+        const date = new Date(action.timestamp);
+        date.setUTCHours(date.getUTCHours() + 1);
         return {
-          time: time as Time,
+          time: (date.getTime() / 1000) as Time,
           position: "inBar" as SeriesMarkerPosition,
           color: getActionColor(action.action),
           shape: (action.action === 0
@@ -186,7 +250,90 @@
     },
   };
 
+  const maxDate = today(getLocalTimeZone());
+  const minDate = maxDate.subtract({ days: 30 });
+
+  $inspect(markers, predictedActions, lineData);
 </script>
+
+<!-- Add this before the chart -->
+<div class="flex items-center justify-between p-4">
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-2">
+      <CalendarDays class="h-4 w-4" />
+      <Select.Root
+        selected={selectedRange}
+        onSelectedChange={(v) => {
+          v && handleRangeChange(v.value as string);
+        }}
+        options={ranges}
+      >
+        <Select.Trigger class="w-[180px]">
+          <Select.Value placeholder="Select range" />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Group>
+            {#each ranges as range}
+              <Select.Item value={range.value}>{range.label}</Select.Item>
+            {/each}
+          </Select.Group>
+        </Select.Content>
+      </Select.Root>
+    </div>
+
+    {#if selectedRange === "custom"}
+      <div class="grid gap-2">
+        <Popover.Root openFocus>
+          <Popover.Trigger asChild let:builder>
+            <Button
+              variant="outline"
+              class={cn(
+                "w-[300px] justify-start text-left font-normal",
+                !dateRange && "text-muted-foreground",
+              )}
+              builders={[builder]}
+            >
+              <Calendar class="mr-2 h-4 w-4" />
+              {#if dateRange && dateRange.start}
+                {#if dateRange.end}
+                  {df.format(dateRange.start.toDate(getLocalTimeZone()))} - {df.format(
+                    dateRange.end.toDate(getLocalTimeZone()),
+                  )}
+                {:else}
+                  {df.format(dateRange.start.toDate(getLocalTimeZone()))}
+                {/if}
+              {:else if startValue}
+                {df.format(startValue.toDate(getLocalTimeZone()))}
+              {:else}
+                Pick a date
+              {/if}
+            </Button>
+          </Popover.Trigger>
+          <Popover.Content class="w-auto p-0" align="start">
+            <RangeCalendar
+              bind:value={dateRange}
+              bind:startValue
+              placeholder={dateRange?.start}
+              initialFocus
+              numberOfMonths={2}
+              maxValue={maxDate}
+              minValue={minDate}
+            />
+          </Popover.Content>
+        </Popover.Root>
+      </div>
+    {/if}
+  </div>
+
+  <Button
+    variant="outline"
+    size="sm"
+    onclick={fetchPredictions}
+    disabled={loading}
+  >
+    Refresh
+  </Button>
+</div>
 
 {#if loading}
   <div class="flex items-center justify-center">
@@ -235,6 +382,10 @@
               lineType={2}
               priceFormat={{ type: "custom", formatter: () => "" }}
             />
+          {:else}
+            <!-- <div class="flex items-center justify-center">
+              <span class="text-muted-foreground">Choose a range</span>
+            </div> -->
           {/if}
         </Chart>
       {/key}
@@ -249,16 +400,8 @@
     min-height: 400px;
   }
 
-  .loading {
-    /* Add your loading styles */
-  }
-
   .error-message {
     color: red;
     padding: 1rem;
-  }
-
-  .actions-container {
-    /* Add your container styles */
   }
 </style>
