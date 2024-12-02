@@ -35,6 +35,7 @@
     { label: "Last 7 days", value: "7d" },
     { label: "Last 14 days", value: "14d" },
     { label: "Last 30 days", value: "30d" },
+    { label: "Last 60 days", value: "60d" },
     { label: "Custom Range", value: "custom" },
   ];
 
@@ -73,6 +74,9 @@
       case "30d":
         start.setDate(start.getDate() - 30);
         break;
+      case "60d":
+        start.setDate(start.getDate() - 60);
+        break;
       default:
         throw new Error(`Invalid range: ${range}`);
     }
@@ -97,7 +101,10 @@
 
       const { start, end } = getDateRange(selectedRange);
     
-      const formatDate = (date: Date) => date.toISOString().split("T")[0];
+      const formatDate = (date: Date) => {
+        const utcDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        return utcDate.toISOString().split("T")[0];
+      };
 
       console.log("start", formatDate(start));
       console.log("end", formatDate(end));
@@ -251,7 +258,7 @@
   };
 
   const maxDate = today(getLocalTimeZone());
-  const minDate = maxDate.subtract({ days: 30 });
+  const minDate = maxDate.subtract({ days: 60 });
 
   $inspect(markers, predictedActions, lineData);
 </script>

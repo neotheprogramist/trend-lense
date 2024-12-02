@@ -32,6 +32,8 @@ mod request_store;
 mod storable_wrapper;
 mod volume_store;
 
+pub const CANDLE_INTERVAL_SECONDS: u32 = 24 * 60 * 60;
+
 #[ic_cdk::query]
 fn __get_candid_interface_tmp_hack() -> String {
     include_str!("../trendlens_backend.did").to_string()
@@ -340,7 +342,9 @@ async fn pull_candles(
 
     // !!!! hardcoded interval
     let fetched_candles = match range_to_fetch {
-        Some(ref range) => exchange.fetch_candles(&pair, range.clone(), 60).await?,
+        Some(ref range) => exchange
+            .fetch_candles(&pair, range.clone(), CANDLE_INTERVAL_SECONDS)
+            .await?,
         None => {
             vec![]
         }

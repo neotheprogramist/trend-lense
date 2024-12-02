@@ -47,10 +47,12 @@
 
   const ONE_MINUTE = 60 * 1000;
   const ONE_HOUR = 60 * ONE_MINUTE;
+  const ONE_DAY = 24 * ONE_HOUR;
+  const ONE_MONTH = 30 * ONE_DAY;
 
   let candlesFromBackend = $state<SeriesDataItemTypeMap["Candlestick"][]>([]);
   let fetchInterval = $state(5000);
-  let lastTimestamp = $state<number>(Date.now() - ONE_HOUR * 12);
+  let lastTimestamp = $state<number>(Date.now() - 4 * ONE_MONTH);
   let balances = $state<{
     base: number;
     quote: number;

@@ -21,4 +21,4 @@ dfx start --background --clean
 dfx deploy
 . "$SCRIPT_DIR/init_proxy_local.sh" "$DFX_IDENTITY"
 . "$SCRIPT_DIR/init_backend_local.sh" "$DFX_IDENTITY"
-. "$SCRIPT_DIR/setup_backend_time_periods.sh" "$DFX_IDENTITY" "BTC-EUR" "Okx Coinbase" "24h"
+. "$SCRIPT_DIR/setup_backend_time_periods.sh" "$DFX_IDENTITY" "BTC-EUR" "Okx Coinbase" "120d"

@@ -5,6 +5,7 @@ use super::Okx;
 use crate::exchange::TimeVolume;
 use crate::remote_exchanges::request::GeneralInstrumentsRequest;
 use crate::remote_exchanges::response::{Instrument, OrderBook as GlobalOrderBook};
+use crate::CANDLE_INTERVAL_SECONDS;
 use crate::{
     exchange::Candle,
     pair::Pair,
@@ -39,7 +40,7 @@ impl OpenData for Okx {
                 begin: Some(current * 1000),
                 bar_size: Some(Okx::interval_string(interval)),
                 index_name: Okx::instrument_id(pair).ok_or_else(|| ExchangeErrors::InvalidIndex)?,
-                results_limit: Some(300),
+                results_limit: Some(MAX_RESPONSE_CANDLES_COUNT),
             };
 
             let candle_response = self
@@ -68,7 +69,10 @@ impl OpenData for Okx {
         pair: &Pair,
         range: std::ops::Range<u64>,
     ) -> Result<Vec<TimeVolume>, ExchangeErrors> {
-        let candles = self.fetch_candles(pair, range, 300).await.unwrap();
+        let candles = self
+            .fetch_candles(pair, range, CANDLE_INTERVAL_SECONDS)
+            .await
+            .unwrap();
 
         Ok(candles
             .into_iter()

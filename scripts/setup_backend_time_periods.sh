@@ -30,8 +30,17 @@ case $PERIOD in
     "30d")
         SECONDS_AGO=$((30 * 24 * 3600))
         ;;
+    "60d")
+        SECONDS_AGO=$((60 * 24 * 3600))
+        ;;
+    "90d")
+        SECONDS_AGO=$((90 * 24 * 3600))
+        ;;
+    "120d")
+        SECONDS_AGO=$((120 * 24 * 3600))
+        ;;
     *)
-        echo "Invalid time period. Use: 12h, 1d, 2d, 7d, or 30d"
+        echo "Invalid time period. Use: 12h, 1d, 2d, 7d, 30d, 60d, 90d, 120d"
         exit 1
         ;;
 esac
