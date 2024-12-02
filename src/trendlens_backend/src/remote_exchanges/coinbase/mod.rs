@@ -1,6 +1,7 @@
 use super::response::OrderBook as GlobalOrderBook;
 use super::{ApiRequest, ExchangeErrors, OpenData};
 use crate::exchange::TimeVolume;
+use crate::CANDLE_INTERVAL_SECONDS;
 use crate::{
     api_client::ApiClient,
     chain_data::ChainData,
@@ -33,7 +34,8 @@ impl Coinbase {
     pub fn interval_string(interval: u32) -> String {
         match interval {
             0..=60 => "60",
-            61..=u32::MAX => "300",
+            61..=300 => "300",
+            _ => "86400",
         }
         .to_string()
     }
@@ -116,7 +118,7 @@ impl OpenData for Coinbase {
         pair: &Pair,
         range: std::ops::Range<u64>,
     ) -> Result<Vec<TimeVolume>, ExchangeErrors> {
-        self.fetch_candles(pair, range, 300).await.map(|candles| {
+        self.fetch_candles(pair, range,CANDLE_INTERVAL_SECONDS).await.map(|candles| {
             candles
                 .into_iter()
                 .map(|candle| TimeVolume {

@@ -6,11 +6,9 @@
   import { wallet } from "$lib/wallet.svelte";
   import { Send, X } from "lucide-svelte";
   import type { SignableInstruction } from "../../../declarations/trendlens_backend/trendlens_backend.did";
-  import { request } from "http";
   import { extractOkValue } from "$lib/result";
   import { toast } from "svelte-sonner";
-  import { exec } from "child_process";
-
+  
   interface IProps {
     requests: [number, SignableInstruction[]][];
   }

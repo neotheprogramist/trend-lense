@@ -12,6 +12,7 @@
   import VolumeChart from "$components/volumeChart.svelte";
   import { anonymousBackend } from "$lib/canisters";
   import { Exchanges, handleExchange } from "$lib/exchange";
+  import { TradingClient, type Action, type LastObservation, type Observation } from "$lib/tradingClient";
   import { instrumentsStore } from "$lib/instruments.svelte";
   import { handleInstrumentType } from "$lib/instrumentType";
   import { keyStore } from "$lib/keystore.svelte";
@@ -36,7 +37,7 @@
   } from "../../../../../declarations/trendlens_backend/trendlens_backend.did";
   import type { PageData } from "./$types";
   import { pairToString } from "$lib/pair";
-  import { exec } from "child_process";
+  import ActionsView from "$components/actionsView.svelte";
 
   interface IProps {
     data: PageData;
@@ -46,14 +47,17 @@
 
   const ONE_MINUTE = 60 * 1000;
   const ONE_HOUR = 60 * ONE_MINUTE;
+  const ONE_DAY = 24 * ONE_HOUR;
+  const ONE_MONTH = 30 * ONE_DAY;
 
   let candlesFromBackend = $state<SeriesDataItemTypeMap["Candlestick"][]>([]);
   let fetchInterval = $state(5000);
-  let lastTimestamp = $state<number>(Date.now() - ONE_HOUR * 12);
+  let lastTimestamp = $state<number>(Date.now() - 4 * ONE_MONTH);
   let balances = $state<{
     base: number;
     quote: number;
   }>({ base: 0, quote: 0 });
+  let predictedActions = $state<Action[]>([]);
 
   let selectedExchanges = $state<Exchanges[]>([Exchanges.Coinbase]);
   let selectedInstrument = $state<Pair | null>({ base: "BTC", quote: "EUR" });
@@ -136,6 +140,9 @@
 
     toast.dismiss(executeToast);
   };
+
+
+  $inspect(predictedActions);
 
   const handleExecute = async (request: PostOrderRequest) => {
     const executeToast = toast.loading("Order status", {
@@ -280,6 +287,15 @@
       updateCandles();
     }
   });
+
+  let selectedTab = $state<string>("trading");
+
+  const handleTabVisibility = (value: string | undefined) => {
+    if (value) {
+      console.log('handleTabVisibility', value);
+      selectedTab = value;
+    }
+  };
 </script>
 
 <div class="grid md:grid-cols-2 lg:grid-cols-10">
@@ -301,11 +317,12 @@
   </div>
 
   <div class="col-span-6 h-[650px] border-b border-t">
-    <Tabs.Root value="trading">
+    <Tabs.Root value="trading" onValueChange={handleTabVisibility}>
       <div class="flex items-center justify-between border-b p-1.5">
         <Tabs.List>
           <Tabs.Trigger value="trading">Trading</Tabs.Trigger>
           <Tabs.Trigger value="charts">Charts</Tabs.Trigger>
+          <Tabs.Trigger value="actions">Actions</Tabs.Trigger>
         </Tabs.List>
 
         <TradingHeader bind:selectedExchanges {availableExchanges} />
@@ -323,6 +340,9 @@
         {:else}
           Select instrument to view volume chart
         {/if}
+      </Tabs.Content>
+      <Tabs.Content class="h-[600px]" value="actions">
+        <ActionsView isVisible={selectedTab === "actions"} />
       </Tabs.Content>
     </Tabs.Root>
   </div>
@@ -350,6 +370,7 @@
         instrumentType={data.instrumentType}
         onExecute={handleExecute}
         onPost={handlePost}
+
       />
     {:else}
       <MultiForm

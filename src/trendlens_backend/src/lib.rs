@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use crate::pair::Pair;
 use api_store::{ApiData, ApiStore};
+use candid::Principal;
 use chain_data::{ExchangeData, TimestampBased};
 use exchange::{Candle, Exchange, ExchangeImpl, TimeVolume};
 use ic_cdk::{query, update};
@@ -30,6 +31,8 @@ mod remote_exchanges;
 mod request_store;
 mod storable_wrapper;
 mod volume_store;
+
+pub const CANDLE_INTERVAL_SECONDS: u32 = 24 * 60 * 60;
 
 #[ic_cdk::query]
 fn __get_candid_interface_tmp_hack() -> String {
@@ -339,7 +342,9 @@ async fn pull_candles(
 
     // !!!! hardcoded interval
     let fetched_candles = match range_to_fetch {
-        Some(ref range) => exchange.fetch_candles(&pair, range.clone(), 60).await?,
+        Some(ref range) => exchange
+            .fetch_candles(&pair, range.clone(), CANDLE_INTERVAL_SECONDS)
+            .await?,
         None => {
             vec![]
         }
@@ -441,6 +446,12 @@ async fn pull_volumes(
     });
 
     Ok(fetched_volumes)
+}
+
+#[update]
+fn set_proxy_canister_id(canister_id: String) {
+    api_client::PROXY_CANISTER_ID
+        .with_borrow_mut(|c| *c = Principal::from_str(&canister_id).unwrap());
 }
 
 ic_cdk::export_candid!();

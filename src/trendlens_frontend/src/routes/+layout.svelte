@@ -6,6 +6,8 @@
   import { ModeWatcher } from "mode-watcher";
   import { onMount } from "svelte";
 
+  let { children } = $props();
+
   let showModal = $state(false);
 
   onMount(() => {
@@ -16,11 +18,12 @@
 <ModeWatcher />
 
 <Modal bind:showModal>
-  <h1 slot="header" class="text-center text-4xl font-bold text-orange-600">
-    Disclaimer
-  </h1>
+  {#snippet header()}
+    <h1 class="text-center text-4xl font-bold text-orange-600">Disclaimer</h1>
+  {/snippet}
 
-  <div class="mt-6 flex flex-col space-y-10">
+  {#snippet content()}
+    <div class="mt-6 flex flex-col space-y-10">
     <p class="text-center">
       This application is for testing purposes only. Do not use real private
       keys or sensitive information from exchanges. Using genuine data may lead
@@ -35,12 +38,13 @@
       }}>Continue</Button
     >
   </div>
+  {/snippet}
 </Modal>
 
 <div class="relative flex min-h-screen flex-col bg-background">
   <Header />
 
   <div class="container max-w-[1800px]">
-    <slot />
+    {@render children()}
   </div>
 </div>

@@ -52,6 +52,8 @@
   let subsets = $state<number[]>([]);
   let colorVals = $state<number[]>([]);
 
+  const ONE_MONTH = 30 * 24 * 60 * 60;
+
   const getVolumes = async (exchange: Exchanges, pair: Pair, id: number) => {
     if (!anonymousBackend) {
       throw new Error("Wallet not initialized");
@@ -61,10 +63,9 @@
     const volumes = await anonymousBackend.get_volumes(
       handleExchange(exchange),
       pairToString(pair),
-      BigInt(timestamp_secs - 2 * 60 * 60),
+      BigInt(timestamp_secs - ONE_MONTH),
     );
 
-    console.log(volumes);
 
     if (volumes.length === 0) {
       return [];
@@ -76,6 +77,7 @@
       return [];
     }
 
+
     for (let i = 0; i < volumesUnwrapped.length; i++) {
       xVals.push(Number(volumesUnwrapped[i].timestamp) * 1000);
       yVals.push(volumesUnwrapped[i].volume);
@@ -86,6 +88,7 @@
         color: id,
       });
     }
+
     subsets.push(id);
   };
 
@@ -129,7 +132,10 @@
   });
 
   const xTicks = $derived(xScale.ticks(xScalefactor));
-  const xTicksFormatted = $derived(xTicks.map((el) => el.toLocaleTimeString()));
+  const xTicksFormatted = $derived(xTicks.map(date => {
+    const d = new Date(date);
+    return `${d.getDate()}/${d.getMonth() + 1}`;  // Format as DD/MM
+  }));
   const yTicks = $derived(niceY.ticks(yScalefactor));
 
   // @ts-ignore
@@ -144,8 +150,6 @@
       await getVolumes(exchanges[i], instrument, i);
     }
   });
-
-  $inspect(xVals, yVals);
 </script>
 
 <div class="flex h-full">
@@ -210,7 +214,7 @@
               <line class="tick-grid" y2={-height} />
             {/if}
             <text font-size="8px" x={-marginLeft / 4} y="20"
-              >{xTicksFormatted[i] + xFormat}</text
+              >{xTicksFormatted[i]}</text
             >
           </g>
         {/each}
