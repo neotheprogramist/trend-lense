@@ -33,10 +33,10 @@ for EXCHANGE in "${EXCHANGES[@]}"; do
     dfx canister call "$BACKEND_CANISTER" refresh_instruments "(variant { $EXCHANGE }, variant { Spot })"
 done
 
-echo "Initializing volume store..."
-dfx canister call "$BACKEND_CANISTER" initialize_volume_store "(variant { ${EXCHANGES[0]} }, \"$PAIR\", $START_TIMESTAMP)"
 
 for EXCHANGE in "${EXCHANGES[@]}"; do
+    echo "Initializing volume store..."
+    dfx canister call "$BACKEND_CANISTER" initialize_volume_store "(variant { $EXCHANGE }, \"$PAIR\", $START_TIMESTAMP)"
     echo "Pulling data for $EXCHANGE..."
     dfx canister call "$BACKEND_CANISTER" pull_volumes "(variant { $EXCHANGE }, \"$PAIR\", $END_TIMESTAMP)"
     dfx canister call "$BACKEND_CANISTER" pull_candles "(\"$PAIR\", variant { $EXCHANGE }, $START_TIMESTAMP, $END_TIMESTAMP)"

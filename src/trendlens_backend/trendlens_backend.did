@@ -138,6 +138,7 @@ service : () -> {
   register_api_key : (ApiData) -> (bool);
   remove_api_key : (text) -> (opt ApiData);
   run_transaction : (nat32, vec text, text, nat64) -> (Result_3);
+  set_proxy_canister_id : (text) -> ();
   split_transaction : (
       vec ApiData,
       text,
