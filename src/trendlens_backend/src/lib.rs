@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 use crate::pair::Pair;
 use api_store::{ApiData, ApiStore};
+use candid::Principal;
 use chain_data::{ExchangeData, TimestampBased};
 use exchange::{Candle, Exchange, ExchangeImpl, TimeVolume};
 use ic_cdk::{query, update};
@@ -441,6 +442,12 @@ async fn pull_volumes(
     });
 
     Ok(fetched_volumes)
+}
+
+#[update]
+fn set_proxy_canister_id(canister_id: String) {
+    api_client::PROXY_CANISTER_ID
+        .with_borrow_mut(|c| *c = Principal::from_str(&canister_id).unwrap());
 }
 
 ic_cdk::export_candid!();

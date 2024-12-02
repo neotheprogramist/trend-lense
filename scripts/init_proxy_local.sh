@@ -1,5 +1,5 @@
-# for this to work on local machine you need to replace call to local ones
-# same with ids
+#!/bin/bash
+
 MYID=$(dfx identity get-principal)
 BACKEND=$(dfx canister id trendlens_backend)
 
